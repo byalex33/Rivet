@@ -1,0 +1,9 @@
+# Available placeholders are shown in the defaults below.
+header: "<gold><bold><player>'s statistics</bold></gold>"
+lines:
+  - "<gray>Playtime:</gray> <white><playtime></white>"
+  - "<gray>Deaths:</gray> <white><deaths></white> <dark_gray>•</dark_gray> <gray>Player kills:</gray> <white><player_kills></white>"
+  - "<gray>Mob kills:</gray> <white><mob_kills></white> <dark_gray>•</dark_gray> <gray>Jumps:</gray> <white><jumps></white>"
+  - "<gray>Blocks broken:</gray> <white><blocks_broken></white> <dark_gray>•</dark_gray> <gray>Placed:</gray> <white><blocks_placed></white>"
+  - "<gray>Distance:</gray> <white><distance></white>"
+  - "<gray>Time since first join:</gray> <white><since_first_join></white>"

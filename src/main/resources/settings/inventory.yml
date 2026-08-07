@@ -1,1 +1,3 @@
-# Inventory commands currently use gameplay-preserving built-in defaults.
+# /invsee and staff ender-chest access support online players only. Offline
+# access is intentionally omitted because loading player files behind Paper's
+# back is unsafe and can overwrite newer data.

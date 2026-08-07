@@ -119,6 +119,86 @@ commands:
     description: Create glowing cuboid outlines
     usage: /glow wand
     permission: rivet.glow
+  spawn:
+    description: Teleport to the server spawn
+    permission: rivet.spawn
+  setspawn:
+    description: Set the server spawn
+    permission: rivet.spawn.set
+  tpa:
+    description: Request to teleport to a player
+    usage: /tpa <player>
+    permission: rivet.tpa
+  tpahere:
+    description: Request that a player teleports to you
+    usage: /tpahere <player>
+    permission: rivet.tpa
+  tpaccept:
+    description: Accept a teleport request
+    usage: /tpaccept [player]
+    permission: rivet.tpa
+  tpdeny:
+    description: Deny a teleport request
+    usage: /tpdeny [player]
+    permission: rivet.tpa
+  kit:
+    description: List or receive a configured kit
+    usage: /kit [name]
+    permission: rivet.kit
+  back:
+    description: Return to your latest death location
+    permission: rivet.back
+  afk:
+    description: Toggle AFK status
+    permission: rivet.afk
+  invsee:
+    description: Open an online player's inventory
+    usage: /invsee <player>
+    permission: rivet.inventory.invsee
+  enderchest:
+    aliases: [ec]
+    description: Open your or another online player's ender chest
+    usage: /enderchest [player]
+    permission: rivet.inventory.enderchest
+  nick:
+    description: Set or remove a nickname
+    usage: /nick <nickname|off>
+    permission: rivet.nick
+  stats:
+    description: Show player statistics
+    usage: /stats [player]
+    permission: rivet.stats
+  trash:
+    description: Open a disposable item inventory
+    permission: rivet.trash
+  craft:
+    description: Open a portable crafting table
+    permission: rivet.utility.craft
+  anvil:
+    description: Open a portable anvil
+    permission: rivet.utility.anvil
+  smithing:
+    description: Open a portable smithing table
+    permission: rivet.utility.smithing
+  stonecutter:
+    description: Open a portable stonecutter
+    permission: rivet.utility.stonecutter
+  grindstone:
+    description: Open a portable grindstone
+    permission: rivet.utility.grindstone
+  sit:
+    description: Toggle a sitting pose
+    permission: rivet.pose.sit
+  lay:
+    description: Toggle a laying pose
+    permission: rivet.pose.lay
+  crawl:
+    description: Toggle a crawling pose
+    permission: rivet.pose.crawl
+  head:
+    description: Give yourself a cached player's head
+    usage: /head <player>
+    permission: rivet.head
 permissions:
   rivet.gamemode:
     default: op
@@ -156,3 +236,55 @@ permissions:
     default: op
   rivet.eggcapture:
     default: true
+  rivet.spawn:
+    default: true
+  rivet.spawn.set:
+    default: op
+  rivet.tpa:
+    default: true
+  rivet.kit:
+    default: true
+  rivet.kit.starter:
+    default: true
+  rivet.kit.*:
+    default: op
+  rivet.back:
+    default: true
+  rivet.afk:
+    default: true
+  rivet.inventory.invsee:
+    default: op
+  rivet.inventory.enderchest:
+    default: true
+  rivet.inventory.enderchest.others:
+    default: op
+  rivet.nick:
+    default: true
+  rivet.nick.format:
+    default: op
+  rivet.nick.others:
+    default: op
+  rivet.stats:
+    default: true
+  rivet.stats.others:
+    default: op
+  rivet.trash:
+    default: true
+  rivet.utility.craft:
+    default: true
+  rivet.utility.anvil:
+    default: true
+  rivet.utility.smithing:
+    default: true
+  rivet.utility.stonecutter:
+    default: true
+  rivet.utility.grindstone:
+    default: true
+  rivet.pose.sit:
+    default: true
+  rivet.pose.lay:
+    default: true
+  rivet.pose.crawl:
+    default: true
+  rivet.head:
+    default: op

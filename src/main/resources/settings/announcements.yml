@@ -1,0 +1,16 @@
+interval-seconds: 300
+skip-when-empty: true
+
+sound:
+  enabled: false
+  name: BLOCK_NOTE_BLOCK_PLING
+  volume: 0.8
+  pitch: 1.2
+
+announcements:
+  discord:
+    enabled: true
+    message: "<gray>Join our Discord at <aqua>discord.example.com</aqua>"
+  homes:
+    enabled: true
+    message: "<yellow>Remember to use <white>/sethome</white>!</yellow>"

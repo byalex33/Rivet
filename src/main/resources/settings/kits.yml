@@ -1,0 +1,29 @@
+# Kits use simple item maps. Optional fields: amount, name, lore, enchantments.
+# Armour and offhand items are moved into the player's inventory before being replaced.
+kits:
+  starter:
+    cooldown-seconds: 86400
+    items:
+      - material: STONE_SWORD
+      - material: STONE_PICKAXE
+      - material: BREAD
+        amount: 16
+    armor:
+      helmet:
+        material: LEATHER_HELMET
+      chestplate:
+        material: LEATHER_CHESTPLATE
+      leggings:
+        material: LEATHER_LEGGINGS
+      boots:
+        material: LEATHER_BOOTS
+    offhand:
+      material: TORCH
+      amount: 16
+
+messages:
+  list: "<gold>Available kits:</gold> <white><kits></white>"
+  unknown: "<red>That kit does not exist.</red>"
+  no-permission: "<red>You cannot use the <white><kit></white> kit.</red>"
+  cooldown: "<red>Kit <white><kit></white> is available in <seconds> seconds.</red>"
+  received: "<green>Received kit <white><kit></white>.</green>"

@@ -1,0 +1,7 @@
+# Each portable vanilla interface can be disabled independently.
+interfaces:
+  craft: true
+  anvil: true
+  smithing: true
+  stonecutter: true
+  grindstone: true

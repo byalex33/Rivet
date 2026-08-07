@@ -1,0 +1,11 @@
+# Set to 0 to disable automatic AFK detection.
+automatic-after-minutes: 10
+exclude-from-sleep: true
+
+indicator:
+  enabled: true
+  format: " <gray>[AFK]</gray>"
+
+messages:
+  afk: "<yellow><player> is now AFK.</yellow>"
+  return: "<green><player> is no longer AFK.</green>"

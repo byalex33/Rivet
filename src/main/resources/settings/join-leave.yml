@@ -1,0 +1,22 @@
+join:
+  enabled: true
+  message: "<green><player> joined the server.</green>"
+leave:
+  enabled: true
+  message: "<red><player> left the server.</red>"
+first-join:
+  enabled: true
+  message: "<gold>Welcome <white><player></white> to the server for the first time!</gold>"
+
+welcome-title:
+  enabled: true
+  title: "<gold>Welcome, <player>!</gold>"
+  subtitle: "<gray>Enjoy your stay.</gray>"
+welcome-chat:
+  enabled: false
+  message: "<yellow>Welcome to the server, <white><player></white>!</yellow>"
+motd:
+  enabled: false
+  lines:
+    - "<gold><bold>Server information</bold></gold>"
+    - "<gray>Use <white>/help</white> to get started.</gray>"

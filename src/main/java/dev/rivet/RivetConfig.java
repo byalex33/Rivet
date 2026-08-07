@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,8 @@ final class RivetConfig {
     static final List<String> MODULES = List.of(
         "chat", "homes", "warps", "graves", "breeders", "egg-capture", "tree-feller",
         "mob-heads", "holograms", "glow", "permissions", "worlds", "staff",
-        "environment", "inventory");
+        "environment", "inventory", "spawn", "tpa", "kits", "afk", "join-leave",
+        "announcements", "nicknames", "statistics", "trash", "utilities", "poses");
 
     private final RivetPlugin plugin;
     private final File settingsDirectory;
@@ -46,7 +48,9 @@ final class RivetConfig {
             saveResource("settings/" + module + ".yml");
             settings.put(module, YamlConfiguration.loadConfiguration(settingsFile(module)));
         }
-        modules = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "modules.yml"));
+        File modulesFile = new File(plugin.getDataFolder(), "modules.yml");
+        addMissingModuleSwitches(modulesFile);
+        modules = YamlConfiguration.loadConfiguration(modulesFile);
         migrateLegacyConfig(worldsSettingsExisted);
     }
 
@@ -79,6 +83,20 @@ final class RivetConfig {
         if (!new File(plugin.getDataFolder(), path).exists()) {
             plugin.saveResource(path, false);
         }
+    }
+
+    private void addMissingModuleSwitches(File file) throws IOException {
+        YamlConfiguration current = YamlConfiguration.loadConfiguration(file);
+        List<String> missing = MODULES.stream().filter(module -> !current.contains(module)).toList();
+        if (missing.isEmpty()) {
+            return;
+        }
+        StringBuilder addition = new StringBuilder(System.lineSeparator())
+            .append("# Module switches added by a Rivet update.").append(System.lineSeparator());
+        missing.forEach(module -> addition.append(module).append(": true")
+            .append(System.lineSeparator()));
+        Files.writeString(file.toPath(), addition, StandardOpenOption.APPEND);
+        plugin.getLogger().info("Added " + missing.size() + " new module switches to modules.yml.");
     }
 
     private void migrateFile(String oldPath, String newPath) throws IOException {

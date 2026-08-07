@@ -1,2 +1,30 @@
-# Graves currently use gameplay-preserving built-in defaults.
-# Saved graves are stored in ../data/graves.yml.
+# Saved graves and latest death locations are stored in ../data/graves.yml.
+death-message: "<red>You died at <white><x>, <y>, <z></white> in <gray><world></gray>.</red>"
+
+back:
+  teleport-delay-seconds: 3
+  cooldown-seconds: 30
+  cancel-on-move: true
+  messages:
+    none: "<red>No death location is saved.</red>"
+    wait: "<yellow>Returning in <white><seconds></white> seconds. Do not move.</yellow>"
+    cancelled: "<red>Back teleport cancelled because you moved.</red>"
+    cooldown: "<red>You can use /back again in <seconds> seconds.</red>"
+    teleported: "<green>Returned to your latest death location.</green>"
+
+ownership:
+  # When true, only the owner can initially open a grave.
+  owner-only: true
+  # 0 means other players are never allowed. Otherwise access opens after this delay.
+  allow-others-after-seconds: 0
+
+expiry:
+  # 0 means graves never expire. Expired items are dropped only when their world is available.
+  seconds: 0
+  drop-items: true
+
+tracking-compass:
+  enabled: true
+  name: "<gold>Grave Tracker</gold>"
+  lore:
+    - "<gray>Points to your latest active grave.</gray>"

@@ -1,0 +1,6 @@
+maximum-length: 24
+
+messages:
+  set: "<green>Nickname updated.</green>"
+  removed: "<yellow>Nickname removed.</yellow>"
+  invalid: "<red>Nicknames must be 1-<max> visible characters with no control characters.</red>"

@@ -15,3 +15,14 @@ worlds: true
 staff: true
 environment: true
 inventory: true
+spawn: true
+tpa: true
+kits: true
+afk: true
+join-leave: true
+announcements: true
+nicknames: true
+statistics: true
+trash: true
+utilities: true
+poses: true

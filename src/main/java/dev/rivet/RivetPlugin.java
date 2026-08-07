@@ -2,10 +2,12 @@ package dev.rivet;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.title.Title;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -77,6 +79,18 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private HologramModule holograms;
     private PermissionModule permissions;
     private TreeFeller treeFeller;
+    private DelayedTeleport delayedTeleports;
+    private SpawnModule spawn;
+    private TpaModule tpa;
+    private KitsModule kits;
+    private AfkModule afk;
+    private JoinLeaveModule joinLeave;
+    private AnnouncementsModule announcements;
+    private NicknameModule nicknames;
+    private StatisticsModule statistics;
+    private TrashModule trash;
+    private UtilitiesModule utilities;
+    private PosesModule poses;
     private RivetConfig files;
     private YamlConfiguration homes;
     private YamlConfiguration warps;
@@ -96,6 +110,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         warps = data("warps");
         worldData = data("worlds");
         new Metrics(this, 33219);
+        if (moduleEnabled("spawn") || moduleEnabled("tpa") || moduleEnabled("graves")) {
+            delayedTeleports = new DelayedTeleport(this);
+            getServer().getPluginManager().registerEvents(delayedTeleports, this);
+        }
         if (moduleEnabled("breeders")) {
             autoBreeder = new AutoBreeder(this);
             getServer().getPluginManager().registerEvents(autoBreeder, this);
@@ -117,7 +135,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             getServer().getPluginManager().registerEvents(glows, this);
         }
         if (moduleEnabled("graves")) {
-            graves = new GraveModule(this);
+            graves = new GraveModule(this, delayedTeleports);
             getServer().getPluginManager().registerEvents(graves, this);
         }
         if (moduleEnabled("holograms")) {
@@ -128,11 +146,54 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             treeFeller = new TreeFeller(this);
             getServer().getPluginManager().registerEvents(treeFeller, this);
         }
+        if (moduleEnabled("spawn")) {
+            spawn = new SpawnModule(this, delayedTeleports);
+            getServer().getPluginManager().registerEvents(spawn, this);
+        }
+        if (moduleEnabled("tpa")) {
+            tpa = new TpaModule(this, delayedTeleports);
+            getServer().getPluginManager().registerEvents(tpa, this);
+        }
+        if (moduleEnabled("kits")) {
+            kits = new KitsModule(this);
+        }
+        if (moduleEnabled("nicknames")) {
+            nicknames = new NicknameModule(this);
+            getServer().getPluginManager().registerEvents(nicknames, this);
+        }
+        if (moduleEnabled("afk")) {
+            afk = new AfkModule(this);
+            getServer().getPluginManager().registerEvents(afk, this);
+        }
+        if (moduleEnabled("join-leave")) {
+            joinLeave = new JoinLeaveModule(this);
+            getServer().getPluginManager().registerEvents(joinLeave, this);
+        }
+        if (moduleEnabled("announcements")) {
+            announcements = new AnnouncementsModule(this);
+        }
+        if (moduleEnabled("statistics")) {
+            statistics = new StatisticsModule(this);
+        }
+        if (moduleEnabled("trash")) {
+            trash = new TrashModule(this);
+            getServer().getPluginManager().registerEvents(trash, this);
+        }
+        if (moduleEnabled("utilities")) {
+            utilities = new UtilitiesModule(this);
+        }
+        if (moduleEnabled("poses")) {
+            poses = new PosesModule(this);
+            getServer().getPluginManager().registerEvents(poses, this);
+        }
         if (moduleEnabled("worlds") || moduleEnabled("staff") || moduleEnabled("mob-heads")) {
             getServer().getPluginManager().registerEvents(this, this);
         }
         if (permissions != null) {
             getServer().getOnlinePlayers().forEach(permissions::apply);
+        }
+        if (nicknames != null) {
+            getServer().getOnlinePlayers().forEach(this::refreshDisplayName);
         }
         if (moduleEnabled("worlds")) {
             migrateLegacyWorldMarkers();
@@ -155,6 +216,27 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (treeFeller != null) {
             treeFeller.shutdown();
+        }
+        if (graves != null) {
+            graves.shutdown();
+        }
+        if (tpa != null) {
+            tpa.shutdown();
+        }
+        if (announcements != null) {
+            announcements.shutdown();
+        }
+        if (afk != null) {
+            afk.shutdown();
+        }
+        if (poses != null) {
+            poses.shutdown();
+        }
+        if (nicknames != null) {
+            nicknames.shutdown();
+        }
+        if (delayedTeleports != null) {
+            delayedTeleports.shutdown();
         }
     }
 
@@ -226,6 +308,12 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (name.equals("glow")) {
             return glows.command(sender, args);
         }
+        if (name.equals("nick")) {
+            return nicknames.command(sender, args);
+        }
+        if (name.equals("stats")) {
+            return statistics.command(sender, args);
+        }
         if (!(sender instanceof Player player)) {
             send(sender, "<red>This command is only available to players.");
             return true;
@@ -262,6 +350,18 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "tp" -> teleportPlayer(player, args);
             case "vanish" -> toggleVanish(player);
             case "fly" -> toggleFlight(player, args);
+            case "spawn", "setspawn" -> spawn.command(player, name, args);
+            case "tpa", "tpahere", "tpaccept", "tpdeny" -> tpa.command(player, name, args);
+            case "kit" -> kits.command(player, args);
+            case "back" -> graves.back(player, args);
+            case "afk" -> afk.command(player, args);
+            case "invsee" -> inventoryView(player, args);
+            case "enderchest" -> enderChest(player, args);
+            case "trash" -> trash.command(player, args);
+            case "craft", "anvil", "smithing", "stonecutter", "grindstone" ->
+                utilities.command(player, name, args);
+            case "sit", "lay", "crawl" -> poses.command(player, name, args);
+            case "head" -> playerHead(player, args);
             default -> false;
         };
     }
@@ -292,6 +392,14 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "msg", "tp" -> args.length == 1 ? getServer().getOnlinePlayers().stream()
                     .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
                     .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
+                case "tpa", "tpahere", "tpaccept", "tpdeny" -> sender instanceof Player player
+                    ? tpa.completions(player, command.getName(), args) : List.of();
+                case "kit" -> sender instanceof Player player ? kits.completions(player, args) : List.of();
+                case "nick" -> nicknames.completions(sender, args);
+                case "stats" -> statistics.completions(sender, args);
+                case "invsee", "enderchest", "head" -> args.length == 1
+                    ? getServer().getOnlinePlayers().stream().map(Player::getName)
+                        .sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
                 default -> List.of();
             };
         } catch (IOException exception) {
@@ -690,6 +798,70 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         return true;
     }
 
+    private boolean inventoryView(Player player, String[] args) {
+        if (args.length != 1) {
+            send(player, "<red>Usage: /invsee <player>");
+            return true;
+        }
+        Player target = getServer().getPlayerExact(args[0]);
+        if (target == null || !player.canSee(target)) {
+            send(player, "<red>That player is not online.");
+            return true;
+        }
+        player.openInventory(target.getInventory());
+        send(player, "<gray>Opened <white>" + target.getName() + "</white>'s inventory.");
+        return true;
+    }
+
+    private boolean enderChest(Player player, String[] args) {
+        Player target = player;
+        if (args.length == 1 && player.hasPermission("rivet.inventory.enderchest.others")) {
+            target = getServer().getPlayerExact(args[0]);
+            if (target == null || !player.canSee(target)) {
+                send(player, "<red>That player is not online.");
+                return true;
+            }
+        } else if (args.length != 0) {
+            send(player, "<red>Usage: /enderchest [player]");
+            return true;
+        }
+        player.openInventory(target.getEnderChest());
+        return true;
+    }
+
+    private boolean playerHead(Player player, String[] args) {
+        if (args.length != 1 || !args[0].matches("[A-Za-z0-9_]{1,16}")) {
+            send(player, "<red>Usage: /head <player>");
+            return true;
+        }
+        Player online = getServer().getPlayerExact(args[0]);
+        OfflinePlayer target = online == null ? getServer().getOfflinePlayerIfCached(args[0]) : online;
+        if (target == null || target.getName() == null) {
+            send(player, "<red>That player profile is not known to this server.");
+            return true;
+        }
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) head.getItemMeta();
+        meta.setPlayerProfile(target.getPlayerProfile());
+        var placeholders = new net.kyori.adventure.text.minimessage.tag.resolver.TagResolver[] {
+            Placeholder.unparsed("player", target.getName()),
+            Placeholder.unparsed("requester", player.getName())
+        };
+        meta.displayName(MM.deserialize(settings("mob-heads").getString("player-heads.display-name",
+            "<gold><player>'s Head</gold>"), placeholders));
+        List<String> lore = settings("mob-heads").getStringList("player-heads.lore");
+        if (lore.isEmpty()) {
+            lore = List.of("<gray>Requested by <requester></gray>");
+        }
+        meta.lore(lore.stream()
+            .map(line -> MM.deserialize(line, placeholders)).toList());
+        head.setItemMeta(meta);
+        player.getInventory().addItem(head).values()
+            .forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+        send(player, "<green>Gave you <white>" + target.getName() + "</white>'s head.");
+        return true;
+    }
+
     private boolean killAll(Player player) {
         var mobs = player.getWorld().getEntitiesByClass(Mob.class);
         mobs.forEach(Mob::remove);
@@ -857,6 +1029,24 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (holograms != null) {
             holograms.refresh(player);
         }
+        refreshDisplayName(player);
+    }
+
+    void teleportFeedback(Player player, String destination) {
+        effect(player, "<aqua>" + destination + "</aqua>", "<gray>Teleported</gray>",
+            Sound.ENTITY_ENDERMAN_TELEPORT, Particle.PORTAL);
+    }
+
+    void refreshDisplayName(Player player) {
+        Component name = nicknames == null ? Component.text(player.getName()) : nicknames.displayName(player);
+        if (afk != null && afk.isAfk(player.getUniqueId()) && afk.showIndicator()) {
+            name = name.append(afk.indicator());
+        }
+        player.displayName(name);
+    }
+
+    public boolean isAfk(Player player) {
+        return afk != null && afk.isAfk(player.getUniqueId());
     }
 
     private void refreshVanishVisibility(Player viewer) {
@@ -1029,11 +1219,22 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "setwarp", "warp", "delwarp" -> "warps";
             case "hologram" -> "holograms";
             case "glow" -> "glow";
+            case "spawn", "setspawn" -> "spawn";
+            case "tpa", "tpahere", "tpaccept", "tpdeny" -> "tpa";
+            case "kit" -> "kits";
+            case "back" -> "graves";
+            case "afk" -> "afk";
+            case "nick" -> "nicknames";
+            case "stats" -> "statistics";
+            case "trash" -> "trash";
+            case "craft", "anvil", "smithing", "stonecutter", "grindstone" -> "utilities";
+            case "sit", "lay", "crawl" -> "poses";
+            case "head" -> "mob-heads";
             case "perm", "group" -> "permissions";
             case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall" -> "worlds";
             case "gmc", "gms", "tp", "vanish", "fly" -> "staff";
             case "day", "night", "noon", "midnight", "sun", "rain", "thunder" -> "environment";
-            case "clear", "i" -> "inventory";
+            case "clear", "i", "invsee", "enderchest" -> "inventory";
             default -> null;
         };
     }

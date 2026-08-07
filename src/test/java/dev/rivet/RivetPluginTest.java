@@ -2,6 +2,7 @@ package dev.rivet;
 
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.Location;
 import org.bukkit.WorldType;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.EntityType;
@@ -110,6 +111,7 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
+        assertEquals(55, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
         assertEquals("chat", RivetPlugin.moduleForCommand("msg"));
@@ -122,6 +124,12 @@ public final class RivetPluginTest {
         assertEquals("permissions", RivetPlugin.moduleForCommand("perm"));
         assertEquals("holograms", RivetPlugin.moduleForCommand("hologram"));
         assertEquals("glow", RivetPlugin.moduleForCommand("glow"));
+        assertEquals("spawn", RivetPlugin.moduleForCommand("setspawn"));
+        assertEquals("tpa", RivetPlugin.moduleForCommand("tpaccept"));
+        assertEquals("graves", RivetPlugin.moduleForCommand("back"));
+        assertEquals("inventory", RivetPlugin.moduleForCommand("invsee"));
+        assertEquals("mob-heads", RivetPlugin.moduleForCommand("head"));
+        assertEquals("poses", RivetPlugin.moduleForCommand("crawl"));
         assertNull(RivetPlugin.moduleForCommand("unknown"));
     }
 
@@ -137,6 +145,55 @@ public final class RivetPluginTest {
 
         assertEquals("new-world", current.getString("homes.player.world"));
         assertEquals(12, current.getInt("homes.player.x"));
+    }
+
+    @Test
+    public void expiresTpaRequestsAndCalculatesCooldowns() {
+        assertEquals(false, TpaModule.expired(1_000, 60_000, 60_999));
+        assertEquals(true, TpaModule.expired(1_000, 60_000, 61_000));
+        assertEquals(30, TpaModule.cooldownRemaining(1_000, 30, 1_000));
+        assertEquals(1, TpaModule.cooldownRemaining(1_000, 30, 30_999));
+        assertEquals(0, TpaModule.cooldownRemaining(1_000, 30, 31_000));
+    }
+
+    @Test
+    public void calculatesKitCooldowns() {
+        assertEquals(60, KitsModule.cooldownRemaining(10_000, 60, 10_000));
+        assertEquals(0, KitsModule.cooldownRemaining(10_000, 60, 70_000));
+    }
+
+    @Test
+    public void transitionsToAutomaticAfkAtTheThreshold() {
+        assertEquals(false, AfkModule.shouldAutoAfk(1_000, 60_000, 60_999));
+        assertEquals(true, AfkModule.shouldAutoAfk(1_000, 60_000, 61_000));
+        assertEquals(false, AfkModule.shouldAutoAfk(1_000, 0, 100_000));
+    }
+
+    @Test
+    public void appliesGraveOwnershipAndExpiryRules() {
+        java.util.UUID owner = java.util.UUID.randomUUID();
+        java.util.UUID other = java.util.UUID.randomUUID();
+        assertEquals(true, GraveModule.canOpen(owner, owner, 1_000, true, 0, 10_000));
+        assertEquals(false, GraveModule.canOpen(owner, other, 1_000, true, 60, 60_999));
+        assertEquals(true, GraveModule.canOpen(owner, other, 1_000, true, 60, 61_000));
+        assertEquals(true, GraveModule.canOpen(owner, other, 1_000, false, 0, 1_000));
+        assertEquals(false, GraveModule.expired(1_000, 60, 60_999));
+        assertEquals(true, GraveModule.expired(1_000, 60, 61_000));
+    }
+
+    @Test
+    public void onlyCancelsDelayedTeleportsForActualMovement() {
+        Location origin = new Location(null, 1, 2, 3, 0, 0);
+        assertEquals(false, DelayedTeleport.moved(origin, new Location(null, 1, 2, 3, 90, 0)));
+        assertEquals(true, DelayedTeleport.moved(origin, new Location(null, 1.2, 2, 3)));
+    }
+
+    @Test
+    public void validatesVisibleNicknameLengthAndControls() {
+        assertEquals(true, NicknameModule.validNickname("Alex", 16));
+        assertEquals(false, NicknameModule.validNickname("", 16));
+        assertEquals(false, NicknameModule.validNickname("a".repeat(17), 16));
+        assertEquals(false, NicknameModule.validNickname("bad\nname", 16));
     }
 
     @Test
