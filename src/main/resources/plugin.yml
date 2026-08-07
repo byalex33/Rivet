@@ -90,6 +90,14 @@ commands:
     description: Reply to your last private message
     usage: /r <message>
     permission: rivet.message
+  socialspy:
+    aliases: [ss]
+    description: Toggle private-message social spy
+    permission: rivet.socialspy
+  ignore:
+    description: Manage ignored private-message senders
+    usage: /ignore <player|list|clear>
+    permission: rivet.ignore
   tp:
     description: Teleport to a player
     usage: /tp <player>
@@ -102,6 +110,18 @@ commands:
     description: Toggle flight
     usage: /fly
     permission: rivet.fly
+  heal:
+    description: Restore health for yourself or another player
+    usage: /heal [player]
+    permission: rivet.heal
+  feed:
+    description: Restore hunger for yourself or another player
+    usage: /feed [player]
+    permission: rivet.feed
+  god:
+    description: Toggle invulnerability for yourself or another player
+    usage: /god [player]
+    permission: rivet.god
   perm:
     description: Manage user permissions
     usage: /perm <add|remove|list|check|reload>
@@ -160,6 +180,18 @@ commands:
     description: Open your or another online player's ender chest
     usage: /enderchest [player]
     permission: rivet.inventory.enderchest
+  repair:
+    description: Repair a held item or all carried equipment
+    usage: /repair [all]
+    permission: rivet.repair
+  rename:
+    description: Rename the held item
+    usage: /rename <name|clear>
+    permission: rivet.rename
+  lore:
+    description: Edit lore on the held item
+    usage: /lore <add|set|remove|clear>
+    permission: rivet.lore
   nick:
     description: Set or remove a nickname
     usage: /nick <nickname|off>
@@ -199,6 +231,24 @@ commands:
     description: Give yourself a cached player's head
     usage: /head <player>
     permission: rivet.head
+  backpack:
+    aliases: [bp]
+    description: Open your persistent personal backpack
+    permission: rivet.backpack
+  daily:
+    description: Claim your daily reward
+    permission: rivet.daily
+  rtp:
+    description: Teleport to a safe random location
+    usage: /rtp [world]
+    permission: rivet.rtp
+  near:
+    description: List nearby visible players
+    permission: rivet.near
+  rivet:
+    description: Show Rivet information or reload configuration
+    usage: /rivet [reload]
+    permission: rivet.admin
 permissions:
   rivet.gamemode:
     default: op
@@ -218,6 +268,12 @@ permissions:
     default: op
   rivet.message:
     default: true
+  rivet.socialspy:
+    default: op
+  rivet.ignore:
+    default: true
+  rivet.ignore.bypass:
+    default: op
   rivet.teleport:
     default: op
   rivet.vanish:
@@ -225,6 +281,18 @@ permissions:
   rivet.vanish.see:
     default: op
   rivet.fly:
+    default: op
+  rivet.heal:
+    default: op
+  rivet.heal.others:
+    default: op
+  rivet.feed:
+    default: op
+  rivet.feed.others:
+    default: op
+  rivet.god:
+    default: op
+  rivet.god.others:
     default: op
   rivet.permissions.manage:
     default: op
@@ -258,6 +326,18 @@ permissions:
     default: true
   rivet.inventory.enderchest.others:
     default: op
+  rivet.repair:
+    default: op
+  rivet.repair.all:
+    default: op
+  rivet.rename:
+    default: op
+  rivet.rename.format:
+    default: op
+  rivet.lore:
+    default: op
+  rivet.lore.format:
+    default: op
   rivet.nick:
     default: true
   rivet.nick.format:
@@ -287,4 +367,39 @@ permissions:
   rivet.pose.crawl:
     default: true
   rivet.head:
+    default: op
+  rivet.backpack:
+    default: true
+  rivet.backpack.rows.1:
+    default: false
+  rivet.backpack.rows.2:
+    default: false
+  rivet.backpack.rows.3:
+    default: false
+  rivet.backpack.rows.4:
+    default: false
+  rivet.backpack.rows.5:
+    default: false
+  rivet.backpack.rows.6:
+    default: false
+  rivet.backpack.rows.*:
+    default: op
+    children:
+      rivet.backpack.rows.1: true
+      rivet.backpack.rows.2: true
+      rivet.backpack.rows.3: true
+      rivet.backpack.rows.4: true
+      rivet.backpack.rows.5: true
+      rivet.backpack.rows.6: true
+  rivet.daily:
+    default: true
+  rivet.rtp:
+    default: true
+  rivet.rtp.world:
+    default: op
+  rivet.rtp.cooldown.bypass:
+    default: op
+  rivet.near:
+    default: true
+  rivet.admin:
     default: op

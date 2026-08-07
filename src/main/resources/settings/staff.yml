@@ -1,1 +1,14 @@
-# Staff tools currently use gameplay-preserving built-in defaults.
+# Staff command feedback supports MiniMessage.
+god:
+  # When false, god mode is cleared on logout and plugin shutdown.
+  persist-across-reconnects: false
+
+messages:
+  heal: "<green>Healed <white><target></white>.</green>"
+  heal-target: "<green>You were healed by <white><player></white>.</green>"
+  feed: "<green>Fed <white><target></white>.</green>"
+  feed-target: "<green>You were fed by <white><player></white>.</green>"
+  god-enabled: "<green>God mode enabled for <white><target></white>.</green>"
+  god-disabled: "<yellow>God mode disabled for <white><target></white>.</yellow>"
+  god-target-enabled: "<green>God mode was enabled.</green>"
+  god-target-disabled: "<yellow>God mode was disabled.</yellow>"

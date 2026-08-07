@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -111,8 +112,9 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
-        assertEquals(55, plugin.getConfigurationSection("commands").getKeys(false).size());
+        assertEquals(68, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
+            .stream().filter(command -> !command.equals("rivet"))
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
         assertEquals("chat", RivetPlugin.moduleForCommand("msg"));
         assertEquals("homes", RivetPlugin.moduleForCommand("home"));
@@ -130,7 +132,108 @@ public final class RivetPluginTest {
         assertEquals("inventory", RivetPlugin.moduleForCommand("invsee"));
         assertEquals("mob-heads", RivetPlugin.moduleForCommand("head"));
         assertEquals("poses", RivetPlugin.moduleForCommand("crawl"));
+        assertEquals("backpacks", RivetPlugin.moduleForCommand("backpack"));
+        assertEquals("daily", RivetPlugin.moduleForCommand("daily"));
+        assertEquals("rtp", RivetPlugin.moduleForCommand("rtp"));
+        assertEquals("near", RivetPlugin.moduleForCommand("near"));
+        assertNull(RivetPlugin.moduleForCommand("rivet"));
         assertNull(RivetPlugin.moduleForCommand("unknown"));
+    }
+
+    @Test
+    public void resolvesTheLargestPermittedBackpackWithoutShrinkingTheDefault() {
+        assertEquals(3, BackpacksModule.resolvedRows(3, row -> false));
+        assertEquals(6, BackpacksModule.resolvedRows(2, row -> row == 4 || row == 6));
+        assertEquals(6, BackpacksModule.resolvedRows(99, row -> false));
+        assertEquals(1, BackpacksModule.resolvedRows(0, row -> false));
+    }
+
+    @Test
+    public void backpackSavesVisibleSlotsWithoutDeletingHiddenOverflow() {
+        assertEquals(Arrays.asList("new", null, "hidden-a", "hidden-b"),
+            BackpacksModule.mergeContents(List.of("old", "old", "hidden-a", "hidden-b"),
+                Arrays.asList("new", null), 4));
+    }
+
+    @Test
+    public void evaluatesDailyClaimsAndStreakResetsFromServerTime() {
+        assertEquals(new DailyModule.ClaimState(false, 3, 1_000),
+            DailyModule.evaluate(1_000, 3, 10_000, 20_000, 10_000));
+        assertEquals(new DailyModule.ClaimState(true, 4, 0),
+            DailyModule.evaluate(1_000, 3, 10_000, 20_000, 11_000));
+        assertEquals(new DailyModule.ClaimState(true, 1, 0),
+            DailyModule.evaluate(1_000, 3, 10_000, 20_000, 21_000));
+        assertEquals(new DailyModule.ClaimState(false, 3, 20_000),
+            DailyModule.evaluate(50_000, 3, 10_000, 20_000, 40_000));
+    }
+
+    @Test
+    public void cyclesOnlyAcrossConfiguredDailyRewardDays() {
+        YamlConfiguration config = new YamlConfiguration();
+        config.createSection("rewards.1");
+        config.createSection("rewards.2");
+        assertEquals(1, DailyModule.rewardDay(config.getConfigurationSection("rewards"), 3, true));
+        assertEquals(-1, DailyModule.rewardDay(config.getConfigurationSection("rewards"), 3, false));
+    }
+
+    @Test
+    public void validatesRtpRadiiBiomesAndDangerousGround() {
+        assertEquals(true, RtpModule.validRadius(100, 500));
+        assertEquals(false, RtpModule.validRadius(500, 100));
+        assertEquals(100, RtpModule.randomRadius(100, 500, 0), .0001);
+        assertEquals(true, RtpModule.biomeAllowed("minecraft:plains", List.of("plains"), List.of()));
+        assertEquals(false, RtpModule.biomeAllowed("minecraft:desert", List.of(), List.of("desert")));
+        assertEquals(true, RtpModule.safeGround(true, Material.GRASS_BLOCK));
+        assertEquals(false, RtpModule.safeGround(true, Material.MAGMA_BLOCK));
+    }
+
+    @Test
+    public void persistsDirectionalIgnoreRelationships() {
+        UUID owner = UUID.randomUUID();
+        UUID ignored = UUID.randomUUID();
+        YamlConfiguration data = new YamlConfiguration();
+        data.set("ignored." + owner, List.of(ignored.toString()));
+        assertEquals(true, ChatModule.ignores(data, owner, ignored));
+        assertEquals(false, ChatModule.ignores(data, ignored, owner));
+    }
+
+    @Test
+    public void socialSpyNeverDuplicatesParticipantMessages() {
+        UUID sender = UUID.randomUUID();
+        UUID recipient = UUID.randomUUID();
+        UUID spy = UUID.randomUUID();
+        assertEquals(true, ChatModule.shouldReceiveSpy(spy, sender, recipient, true, true));
+        assertEquals(false, ChatModule.shouldReceiveSpy(sender, sender, recipient, true, true));
+        assertEquals(false, ChatModule.shouldReceiveSpy(recipient, sender, recipient, true, true));
+        assertEquals(false, ChatModule.shouldReceiveSpy(spy, sender, recipient, false, true));
+    }
+
+    @Test
+    public void repairsOnlyDamagedDurableItemsAndValidatesItemText() {
+        assertEquals(true, ItemTools.repairEligible(true, 1));
+        assertEquals(false, ItemTools.repairEligible(true, 0));
+        assertEquals(false, ItemTools.repairEligible(false, 1));
+        assertEquals(true, ItemTools.validText("Useful name", 20));
+        assertEquals(false, ItemTools.validText("", 20));
+        assertEquals(false, ItemTools.validText("bad\nname", 20));
+        assertEquals(false, ItemTools.validText("too long", 3));
+    }
+
+    @Test
+    public void detectsModuleSwitchChangesWithoutHotApplyingThem() {
+        YamlConfiguration configured = new YamlConfiguration();
+        RivetConfig.MODULES.forEach(module -> configured.set(module, true));
+        Map<String, Boolean> active = new java.util.HashMap<>();
+        RivetConfig.MODULES.forEach(module -> active.put(module, true));
+        configured.set("daily", false);
+        assertEquals(List.of("daily"), RivetConfig.changedModules(active, configured));
+    }
+
+    @Test
+    public void disabledModuleCommandsAreCaughtByTheCentralGate() {
+        assertEquals(true, RivetPlugin.commandDisabled("backpack", module -> false));
+        assertEquals(false, RivetPlugin.commandDisabled("backpack", module -> true));
+        assertEquals(false, RivetPlugin.commandDisabled("rivet", module -> false));
     }
 
     @Test

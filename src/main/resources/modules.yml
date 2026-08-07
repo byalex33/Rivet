@@ -26,3 +26,7 @@ statistics: true
 trash: true
 utilities: true
 poses: true
+backpacks: true
+daily: true
+rtp: true
+near: true

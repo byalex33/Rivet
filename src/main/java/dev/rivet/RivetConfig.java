@@ -2,6 +2,7 @@ package dev.rivet;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -19,16 +20,18 @@ final class RivetConfig {
         "chat", "homes", "warps", "graves", "breeders", "egg-capture", "tree-feller",
         "mob-heads", "holograms", "glow", "permissions", "worlds", "staff",
         "environment", "inventory", "spawn", "tpa", "kits", "afk", "join-leave",
-        "announcements", "nicknames", "statistics", "trash", "utilities", "poses");
+        "announcements", "nicknames", "statistics", "trash", "utilities", "poses",
+        "backpacks", "daily", "rtp", "near");
 
     private final RivetPlugin plugin;
     private final File settingsDirectory;
     private final File dataDirectory;
     private final Map<String, YamlConfiguration> settings = new HashMap<>();
     private final Map<String, YamlConfiguration> data = new HashMap<>();
+    private final Map<String, Boolean> activeModules = new HashMap<>();
     private YamlConfiguration modules;
 
-    RivetConfig(RivetPlugin plugin) throws IOException {
+    RivetConfig(RivetPlugin plugin) throws IOException, InvalidConfigurationException {
         this.plugin = plugin;
         settingsDirectory = new File(plugin.getDataFolder(), "settings");
         dataDirectory = new File(plugin.getDataFolder(), "data");
@@ -46,16 +49,18 @@ final class RivetConfig {
         saveResource("modules.yml");
         for (String module : MODULES) {
             saveResource("settings/" + module + ".yml");
-            settings.put(module, YamlConfiguration.loadConfiguration(settingsFile(module)));
+            settings.put(module, loadChecked(settingsFile(module)));
         }
         File modulesFile = new File(plugin.getDataFolder(), "modules.yml");
         addMissingModuleSwitches(modulesFile);
-        modules = YamlConfiguration.loadConfiguration(modulesFile);
+        modules = loadChecked(modulesFile);
+        validateModules(modules, modulesFile);
+        MODULES.forEach(module -> activeModules.put(module, modules.getBoolean(module, true)));
         migrateLegacyConfig(worldsSettingsExisted);
     }
 
     boolean enabled(String module) {
-        return modules.getBoolean(module, true);
+        return activeModules.getOrDefault(module, true);
     }
 
     YamlConfiguration settings(String module) {
@@ -79,14 +84,72 @@ final class RivetConfig {
         data(module).save(dataFile(module));
     }
 
+    ReloadResult reload() throws IOException, InvalidConfigurationException {
+        File globalFile = new File(plugin.getDataFolder(), "config.yml");
+        loadChecked(globalFile);
+        YamlConfiguration nextModules = loadChecked(new File(plugin.getDataFolder(), "modules.yml"));
+        validateModules(nextModules, new File(plugin.getDataFolder(), "modules.yml"));
+        Map<String, YamlConfiguration> nextSettings = new HashMap<>();
+        for (String module : MODULES) {
+            nextSettings.put(module, loadChecked(settingsFile(module)));
+        }
+
+        List<String> changedModules = changedModules(activeModules, nextModules);
+        plugin.reloadConfig();
+        modules.loadFromString(nextModules.saveToString());
+        for (String module : MODULES) {
+            settings.get(module).loadFromString(nextSettings.get(module).saveToString());
+        }
+        return new ReloadResult(changedModules, MODULES.size() + 2);
+    }
+
+    private static YamlConfiguration loadChecked(File file)
+        throws IOException, InvalidConfigurationException {
+        if (!file.isFile()) {
+            throw new IOException(file.getPath() + ": file does not exist");
+        }
+        YamlConfiguration configuration = new YamlConfiguration();
+        try {
+            configuration.load(file);
+        } catch (IOException | InvalidConfigurationException exception) {
+            throw new InvalidConfigurationException(file.getPath() + ": " + exception.getMessage(), exception);
+        }
+        return configuration;
+    }
+
+    private static void validateModules(YamlConfiguration configuration, File file)
+        throws InvalidConfigurationException {
+        for (String module : MODULES) {
+            if (!(configuration.get(module) instanceof Boolean)) {
+                throw new InvalidConfigurationException(file.getPath() + ": '" + module
+                    + "' must be true or false");
+            }
+        }
+    }
+
+    static List<String> changedModules(Map<String, Boolean> active, YamlConfiguration configured) {
+        return MODULES.stream().filter(module -> active.getOrDefault(module, true)
+            != configured.getBoolean(module, true)).toList();
+    }
+
+    record ReloadResult(List<String> changedModules, int fileCount) {
+    }
+
     private void saveResource(String path) {
         if (!new File(plugin.getDataFolder(), path).exists()) {
             plugin.saveResource(path, false);
         }
     }
 
-    private void addMissingModuleSwitches(File file) throws IOException {
-        YamlConfiguration current = YamlConfiguration.loadConfiguration(file);
+    private void addMissingModuleSwitches(File file)
+        throws IOException, InvalidConfigurationException {
+        YamlConfiguration current = loadChecked(file);
+        for (String module : MODULES) {
+            if (current.contains(module) && !(current.get(module) instanceof Boolean)) {
+                throw new InvalidConfigurationException(file.getPath() + ": '" + module
+                    + "' must be true or false");
+            }
+        }
         List<String> missing = MODULES.stream().filter(module -> !current.contains(module)).toList();
         if (missing.isEmpty()) {
             return;

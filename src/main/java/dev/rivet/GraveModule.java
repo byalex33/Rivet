@@ -59,7 +59,7 @@ final class GraveModule implements Listener {
     private final YamlConfiguration settings;
     private final Map<UUID, Grave> graves = new HashMap<>();
     private final Map<UUID, DeathState> deaths = new HashMap<>();
-    private final BukkitTask expiryTask;
+    private BukkitTask expiryTask;
 
     GraveModule(RivetPlugin plugin, DelayedTeleport teleports) {
         this.plugin = plugin;
@@ -69,6 +69,13 @@ final class GraveModule implements Listener {
         settings = plugin.settings("graves");
         load();
         plugin.getServer().getScheduler().runTask(plugin, this::ensureLoadedVisuals);
+        reload();
+    }
+
+    void reload() {
+        if (expiryTask != null) {
+            expiryTask.cancel();
+        }
         expiryTask = settings.getLong("expiry.seconds") > 0
             ? plugin.getServer().getScheduler().runTaskTimer(plugin, this::expire, 20, 20)
             : null;

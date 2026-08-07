@@ -3,3 +3,18 @@ format: "<gray><player>:</gray> <white><message></white>"
 private-messages:
   sent: "<gray>[you → <player>]</gray> <white><message></white>"
   received: "<gray>[<player> → you]</gray> <white><message></white>"
+
+social-spy:
+  format: "<dark_gray>[spy]</dark_gray> <gray><sender> → <recipient>:</gray> <white><message></white>"
+  messages:
+    enabled: "<green>Social spy enabled.</green>"
+    disabled: "<yellow>Social spy disabled.</yellow>"
+
+ignore:
+  messages:
+    added: "<yellow>You now ignore <white><player></white>."
+    removed: "<green>You no longer ignore <white><player></white>."
+    list: "<gold>Ignored players:</gold> <white><players></white>"
+    cleared: "<green>Your ignore list was cleared.</green>"
+    self: "<red>You cannot ignore yourself.</red>"
+    blocked: "<red>That private message could not be delivered.</red>"

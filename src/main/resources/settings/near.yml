@@ -1,0 +1,9 @@
+# /near only includes visible players in the command sender's current world.
+radius: 100
+maximum-results: 10
+exclude-spectators: true
+
+messages:
+  header: "<gold>Nearby players within <white><radius></white> blocks:</gold>"
+  entry: "<white><player></white> <gray>- <distance>m</gray>"
+  none: "<gray>No visible players are within <white><radius></white> blocks.</gray>"

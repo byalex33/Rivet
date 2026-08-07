@@ -15,6 +15,7 @@ import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Mob;
@@ -91,6 +92,12 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private TrashModule trash;
     private UtilitiesModule utilities;
     private PosesModule poses;
+    private BackpacksModule backpacks;
+    private DailyModule daily;
+    private RtpModule rtp;
+    private NearModule near;
+    private ItemTools itemTools;
+    private StaffTools staffTools;
     private RivetConfig files;
     private YamlConfiguration homes;
     private YamlConfiguration warps;
@@ -101,7 +108,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         saveDefaultConfig();
         try {
             files = new RivetConfig(this);
-        } catch (IOException exception) {
+        } catch (IOException | InvalidConfigurationException exception) {
             getLogger().severe("Could not prepare Rivet's configuration: " + exception.getMessage());
             getServer().getPluginManager().disablePlugin(this);
             return;
@@ -110,7 +117,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         warps = data("warps");
         worldData = data("worlds");
         new Metrics(this, 33219);
-        if (moduleEnabled("spawn") || moduleEnabled("tpa") || moduleEnabled("graves")) {
+        if (moduleEnabled("spawn") || moduleEnabled("tpa") || moduleEnabled("graves")
+            || moduleEnabled("rtp")) {
             delayedTeleports = new DelayedTeleport(this);
             getServer().getPluginManager().registerEvents(delayedTeleports, this);
         }
@@ -186,6 +194,26 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             poses = new PosesModule(this);
             getServer().getPluginManager().registerEvents(poses, this);
         }
+        if (moduleEnabled("backpacks")) {
+            backpacks = new BackpacksModule(this);
+            getServer().getPluginManager().registerEvents(backpacks, this);
+        }
+        if (moduleEnabled("daily")) {
+            daily = new DailyModule(this);
+        }
+        if (moduleEnabled("rtp")) {
+            rtp = new RtpModule(this, delayedTeleports);
+        }
+        if (moduleEnabled("near")) {
+            near = new NearModule(this);
+        }
+        if (moduleEnabled("inventory")) {
+            itemTools = new ItemTools(this);
+        }
+        if (moduleEnabled("staff")) {
+            staffTools = new StaffTools(this);
+            getServer().getPluginManager().registerEvents(staffTools, this);
+        }
         if (moduleEnabled("worlds") || moduleEnabled("staff") || moduleEnabled("mob-heads")) {
             getServer().getPluginManager().registerEvents(this, this);
         }
@@ -231,6 +259,15 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (poses != null) {
             poses.shutdown();
+        }
+        if (backpacks != null) {
+            backpacks.shutdown();
+        }
+        if (rtp != null) {
+            rtp.shutdown();
+        }
+        if (staffTools != null) {
+            staffTools.shutdown();
         }
         if (nicknames != null) {
             nicknames.shutdown();
@@ -294,8 +331,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         String name = command.getName();
+        if (name.equals("rivet")) {
+            return adminCommand(sender, args);
+        }
         String module = moduleForCommand(name);
-        if (module != null && !moduleEnabled(module)) {
+        if (commandDisabled(name, this::moduleEnabled)) {
             send(sender, "<yellow>The <white>" + module + "</white> module is disabled.");
             return true;
         }
@@ -347,9 +387,14 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "sun", "rain", "thunder" -> setWeather(player, name);
             case "msg" -> chat.message(player, args);
             case "r" -> chat.reply(player, args);
+            case "socialspy" -> chat.socialSpy(player, args);
+            case "ignore" -> chat.ignore(player, args);
             case "tp" -> teleportPlayer(player, args);
             case "vanish" -> toggleVanish(player);
             case "fly" -> toggleFlight(player, args);
+            case "heal" -> staffTools.heal(player, args);
+            case "feed" -> staffTools.feed(player, args);
+            case "god" -> staffTools.god(player, args);
             case "spawn", "setspawn" -> spawn.command(player, name, args);
             case "tpa", "tpahere", "tpaccept", "tpdeny" -> tpa.command(player, name, args);
             case "kit" -> kits.command(player, args);
@@ -357,11 +402,18 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "afk" -> afk.command(player, args);
             case "invsee" -> inventoryView(player, args);
             case "enderchest" -> enderChest(player, args);
+            case "repair" -> itemTools.repair(player, args);
+            case "rename" -> itemTools.rename(player, args);
+            case "lore" -> itemTools.lore(player, args);
             case "trash" -> trash.command(player, args);
             case "craft", "anvil", "smithing", "stonecutter", "grindstone" ->
                 utilities.command(player, name, args);
             case "sit", "lay", "crawl" -> poses.command(player, name, args);
             case "head" -> playerHead(player, args);
+            case "backpack" -> backpacks.command(player, args);
+            case "daily" -> daily.command(player, args);
+            case "rtp" -> rtp.command(player, args);
+            case "near" -> near.command(player, args);
             default -> false;
         };
     }
@@ -392,6 +444,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "msg", "tp" -> args.length == 1 ? getServer().getOnlinePlayers().stream()
                     .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
                     .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
+                case "ignore" -> sender instanceof Player player
+                    ? chat.ignoreCompletions(player, args) : List.of();
                 case "tpa", "tpahere", "tpaccept", "tpdeny" -> sender instanceof Player player
                     ? tpa.completions(player, command.getName(), args) : List.of();
                 case "kit" -> sender instanceof Player player ? kits.completions(player, args) : List.of();
@@ -400,6 +454,18 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "invsee", "enderchest", "head" -> args.length == 1
                     ? getServer().getOnlinePlayers().stream().map(Player::getName)
                         .sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
+                case "rtp" -> sender instanceof Player player ? rtp.completions(player, args) : List.of();
+                case "heal" -> sender instanceof Player player
+                    ? staffTools.completions(player, args, "rivet.heal.others") : List.of();
+                case "feed" -> sender instanceof Player player
+                    ? staffTools.completions(player, args, "rivet.feed.others") : List.of();
+                case "god" -> sender instanceof Player player
+                    ? staffTools.completions(player, args, "rivet.god.others") : List.of();
+                case "repair" -> args.length == 1 && sender.hasPermission("rivet.repair.all")
+                    ? List.of("all") : List.of();
+                case "rename" -> args.length == 1 ? List.of("clear") : List.of();
+                case "lore" -> args.length == 1 ? List.of("add", "set", "remove", "clear") : List.of();
+                case "rivet" -> args.length == 1 ? List.of("reload") : List.of();
                 default -> List.of();
             };
         } catch (IOException exception) {
@@ -1188,6 +1254,46 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         sender.sendMessage(MM.deserialize(message));
     }
 
+    private boolean adminCommand(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("rivet.admin")) {
+            send(sender, "<red>You do not have permission to use Rivet administration.");
+            return true;
+        }
+        if (args.length == 0) {
+            send(sender, "<gold><bold>Rivet</bold></gold> <gray>- /rivet reload reloads global and module settings.</gray>");
+            return true;
+        }
+        if (args.length != 1 || !args[0].equalsIgnoreCase("reload")) {
+            send(sender, "<red>Usage: /rivet [reload]");
+            return true;
+        }
+        try {
+            RivetConfig.ReloadResult result = files.reload();
+            if (chat != null) {
+                chat.reload();
+            }
+            if (announcements != null) {
+                announcements.reload();
+            }
+            if (graves != null) {
+                graves.reload();
+            }
+            if (permissions != null) {
+                permissions.reloadConfiguration();
+            }
+            send(sender, "<green>Rivet configuration reloaded.</green> <gray>Loaded config.yml, modules.yml, and <white>"
+                + (result.fileCount() - 2) + "</white> settings files.</gray>");
+            if (!result.changedModules().isEmpty()) {
+                send(sender, "<yellow>Module enable/disable changes require a server restart: <white>"
+                    + String.join(", ", result.changedModules()) + "</white>.</yellow>");
+            }
+        } catch (IOException | InvalidConfigurationException exception) {
+            getLogger().severe("Rivet reload failed: " + exception.getMessage());
+            send(sender, "<red>Reload failed; existing settings remain active. Check the console for the file and error.");
+        }
+        return true;
+    }
+
     boolean moduleEnabled(String module) {
         return module == null || files != null && files.enabled(module);
     }
@@ -1214,7 +1320,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     static String moduleForCommand(String command) {
         return switch (command) {
-            case "msg", "r" -> "chat";
+            case "msg", "r", "socialspy", "ignore" -> "chat";
             case "sethome", "home", "delhome" -> "homes";
             case "setwarp", "warp", "delwarp" -> "warps";
             case "hologram" -> "holograms";
@@ -1230,13 +1336,22 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "craft", "anvil", "smithing", "stonecutter", "grindstone" -> "utilities";
             case "sit", "lay", "crawl" -> "poses";
             case "head" -> "mob-heads";
+            case "backpack" -> "backpacks";
+            case "daily" -> "daily";
+            case "rtp" -> "rtp";
+            case "near" -> "near";
             case "perm", "group" -> "permissions";
             case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall" -> "worlds";
-            case "gmc", "gms", "tp", "vanish", "fly" -> "staff";
+            case "gmc", "gms", "tp", "vanish", "fly", "heal", "feed", "god" -> "staff";
             case "day", "night", "noon", "midnight", "sun", "rain", "thunder" -> "environment";
-            case "clear", "i", "invsee", "enderchest" -> "inventory";
+            case "clear", "i", "invsee", "enderchest", "repair", "rename", "lore" -> "inventory";
             default -> null;
         };
+    }
+
+    static boolean commandDisabled(String command, java.util.function.Predicate<String> enabled) {
+        String module = moduleForCommand(command);
+        return module != null && !enabled.test(module);
     }
 
     static boolean validWorldName(String name) {

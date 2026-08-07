@@ -239,6 +239,11 @@ final class PermissionModule implements Listener {
         users = YamlConfiguration.loadConfiguration(usersFile);
     }
 
+    void reloadConfiguration() {
+        groups = plugin.settings("permissions");
+        plugin.getServer().getOnlinePlayers().forEach(this::apply);
+    }
+
     private boolean saveUsers(CommandSender sender) {
         try {
             users.save(usersFile);

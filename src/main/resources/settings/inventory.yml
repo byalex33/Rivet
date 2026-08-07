@@ -1,3 +1,23 @@
 # /invsee and staff ender-chest access support online players only. Offline
 # access is intentionally omitted because loading player files behind Paper's
 # back is unsafe and can overwrite newer data.
+
+item-editing:
+  maximum-name-length: 50
+  maximum-lore-line-length: 100
+  maximum-lore-lines: 10
+  # Material enum names, for example BEDROCK or COMMAND_BLOCK.
+  blocked-materials: []
+
+messages:
+  repair-invalid: "<red>Hold a damaged repairable item.</red>"
+  repair-success: "<green>Repaired the item in your hand.</green>"
+  repair-all: "<green>Repaired <white><count></white> items.</green>"
+  empty-hand: "<red>Hold an item first.</red>"
+  blocked-item: "<red>That material cannot be edited.</red>"
+  rename-success: "<green>Item renamed.</green>"
+  rename-cleared: "<yellow>Item name cleared.</yellow>"
+  lore-success: "<green>Item lore updated.</green>"
+  lore-cleared: "<yellow>Item lore cleared.</yellow>"
+  lore-line-invalid: "<red>That lore line does not exist.</red>"
+  invalid-text: "<red>Text must be 1-<max> visible characters without control characters.</red>"

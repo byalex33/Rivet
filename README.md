@@ -9,7 +9,7 @@ Survival essentials, staff tools, custom worlds, holograms, graves, automation, 
 [![Java 21](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://adoptium.net/temurin/releases/?version=21)
 [![Paper 1.21.11](https://img.shields.io/badge/Paper-1.21.11-2C2E33?style=for-the-badge&logo=paper&logoColor=white)](https://papermc.io/)
 [![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](#build-from-source)
-[![Tests](https://img.shields.io/badge/tests-38_passing-2EA44F?style=for-the-badge)](#build-from-source)
+[![Tests](https://img.shields.io/badge/tests-48_passing-2EA44F?style=for-the-badge)](#build-from-source)
 [![bStats Servers](https://img.shields.io/bstats/servers/33219?style=for-the-badge&label=servers&color=7C3AED)](https://bstats.org/plugin/bukkit/Rivet/33219)
 [![bStats Players](https://img.shields.io/bstats/players/33219?style=for-the-badge&label=players&color=2563EB)](https://bstats.org/plugin/bukkit/Rivet/33219)
 
@@ -23,8 +23,8 @@ Rivet replaces a pile of single-purpose plugins with one focused Paper plugin. T
 
 <table>
   <tr>
-    <td align="center"><strong>55</strong><br><sub>commands</sub></td>
-    <td align="center"><strong>38</strong><br><sub>tests</sub></td>
+    <td align="center"><strong>68</strong><br><sub>commands</sub></td>
+    <td align="center"><strong>48</strong><br><sub>tests</sub></td>
     <td align="center"><strong>25</strong><br><sub>breeder species</sub></td>
     <td align="center"><strong>3%</strong><br><sub>default head chance</sub></td>
   </tr>
@@ -39,7 +39,7 @@ Rivet replaces a pile of single-purpose plugins with one focused Paper plugin. T
 | 🥚 | **Egg capture** | Capture mobs with thrown eggs, complete with a polished animation. |
 | 🐄 | **Auto breeders** | Craft persistent, species-specific breeders for 25 animal types. |
 | 💀 | **Mob & player heads** | Custom-textured mob drops plus cached player profile heads. |
-| 💬 | **Modern chat** | MiniMessage formatting, hoverable `[i]` / `[item]` links, private messages, and replies. |
+| 💬 | **Modern chat** | MiniMessage formatting, item links, private messages, persistent ignore lists, and social spy. |
 | 🏠 | **Homes & warps** | Named homes, public warps, tab completion, and safe persistence. |
 | 🌍 | **Test worlds** | Create, list, enter, and reset tracked flat or void worlds. |
 | ✨ | **Holograms** | Persistent text, item, and block displays with visibility controls and animations. |
@@ -52,6 +52,10 @@ Rivet replaces a pile of single-purpose plugins with one focused Paper plugin. T
 | 📣 | **Announcements** | Rotating MiniMessage announcements with optional sounds and empty-server skipping. |
 | 🏷️ | **Nicknames & stats** | Persistent safe-format nicknames and native Bukkit player statistics. |
 | 🧰 | **Player utilities** | Inventory inspection, ender chests, trash, portable workstations, and native poses. |
+| 🎒 | **Backpacks** | Persistent personal storage with 1-6 permission-based rows and shrink-safe overflow retention. |
+| 🎁 | **Daily rewards** | Timestamp-based claims, streaks, cycling YAML rewards, and milestone bonuses. |
+| 🧭 | **RTP & near** | Async chunk searches for safe random teleports plus visibility-aware nearby-player lists. |
+| 🛠️ | **Item & staff tools** | Heal, feed, god mode, repair, and safe item name/lore editing. |
 
 Also included: crop-trample protection, natural-spawn control for flat worlds, visual feedback, sound cues, particles, and useful tab completion throughout.
 
@@ -79,8 +83,8 @@ Rivet creates its configuration and data files under `plugins/Rivet/` on first l
 | Inventory | `/clear`, `/i <item> [amount]` | `rivet.inventory` |
 | Time | `/day`, `/night`, `/noon`, `/midnight` | `rivet.environment` |
 | Weather | `/sun`, `/rain`, `/thunder` | `rivet.environment` |
-| Messages | `/msg`, `/r` | `rivet.message` |
-| Staff | `/tp`, `/vanish`, `/fly` | `rivet.teleport`, `rivet.vanish`, `rivet.fly` |
+| Messages | `/msg`, `/r`, `/ignore`, `/socialspy` (`/ss`) | `rivet.message`, `rivet.ignore`, `rivet.socialspy` |
+| Staff | `/tp`, `/vanish`, `/fly`, `/heal`, `/feed`, `/god` | `rivet.teleport`, `rivet.vanish`, `rivet.fly`, `rivet.heal[.others]`, `rivet.feed[.others]`, `rivet.god[.others]` |
 | Permissions | `/perm`, `/group` | `rivet.permissions.manage` |
 | Holograms | `/hologram` (`/holo`) | `rivet.holograms` |
 | Glow regions | `/glow` | `rivet.glow` |
@@ -96,6 +100,12 @@ Rivet creates its configuration and data files under `plugins/Rivet/` on first l
 | Portable utilities | `/craft`, `/anvil`, `/smithing`, `/stonecutter`, `/grindstone` | `rivet.utility.<command>` |
 | Poses | `/sit`, `/lay`, `/crawl` | `rivet.pose.<command>` |
 | Player heads | `/head <player>` | `rivet.head` |
+| Backpacks | `/backpack` (`/bp`) | `rivet.backpack`, `rivet.backpack.rows.1` through `.6` |
+| Daily rewards | `/daily` | `rivet.daily` |
+| Random teleport | `/rtp [world]` | `rivet.rtp`, `rivet.rtp.world`, `rivet.rtp.cooldown.bypass` |
+| Nearby players | `/near` | `rivet.near` |
+| Item editing | `/repair [all]`, `/rename`, `/lore` | `rivet.repair[.all]`, `rivet.rename[.format]`, `rivet.lore[.format]` |
+| Administration | `/rivet`, `/rivet reload` | `rivet.admin` |
 
 </details>
 
@@ -133,16 +143,26 @@ plugins/Rivet/
 │   ├── statistics.yml
 │   ├── trash.yml
 │   ├── utilities.yml
-│   └── poses.yml
+│   ├── poses.yml
+│   ├── backpacks.yml
+│   ├── daily.yml
+│   ├── rtp.yml
+│   └── near.yml
 └── data/
 ```
 
 - `modules.yml` contains only feature switches. Disabled modules do not register their listeners or start their tasks, and their declared commands return a clean disabled message. Restart after changing a switch.
 - `settings/` contains options owned by one module. For example, chat MiniMessage formats live in `settings/chat.yml`, permission groups in `settings/permissions.yml`, and the mob-head drop chance in `settings/mob-heads.yml`.
 - `config.yml` contains only Rivet-wide visual feedback settings used by multiple modules.
-- `data/` contains generated persistent state such as homes, warps, graves/death locations, spawn, kit cooldowns, nicknames, breeders, glow regions, holograms, permission users, and tracked test worlds. Do not hand-edit these files while the server is running.
+- `data/` contains generated persistent state such as homes, warps, graves/death locations, spawn, kit cooldowns, nicknames, backpacks, daily claims, RTP cooldowns, ignore/social-spy preferences, staff state, breeders, glow regions, holograms, permission users, and tracked test worlds. Do not hand-edit these files while the server is running.
 
-The `worlds` module owns test worlds, world spawn, mob cleanup, crop-trample protection, and the flat-world spawn rule. `staff` owns gamemode, teleport, vanish, and flight; `environment` owns time and weather; `inventory` owns clear and item commands.
+The new standalone switches are `backpacks`, `daily`, `rtp`, and `near`. Social spy and ignore follow `chat`; heal, feed, and god follow `staff`; repair, rename, and lore follow `inventory`. `/rivet` remains available as core administration.
+
+The `worlds` module owns test worlds, world spawn, mob cleanup, crop-trample protection, and the flat-world spawn rule. `staff` owns gamemode, teleport, vanish, flight, heal, feed, and god mode; `environment` owns time and weather; `inventory` owns inventory administration, repair, rename, and lore editing. Social spy and ignore extend `chat` instead of creating competing message handlers.
+
+`/rivet reload` validates and reloads `config.yml`, `modules.yml`, and every file under `settings/` without reading or rewriting runtime files under `data/`. Invalid YAML leaves the active configuration untouched and reports the source file. Settings apply immediately where safe; module switch changes are listed and require a restart so listeners and tasks are never half-loaded.
+
+Daily reward items use the same YAML item schema as kits. Rewards can also contain `experience` points and console `commands`; `<player>` is replaced with the claimant's exact name. Backpacks retain all 54 serialized slots internally, so reducing a player's visible row permission never deletes overflow items. RTP generates chunks asynchronously, then validates solid footing, two-block clearance, liquids, dangerous blocks, configured biomes, and Nether ceiling bounds on the server thread.
 
 Kits are defined directly in `settings/kits.yml` with material, amount, display name, lore, enchantments, armour, offhand, and cooldown fields. Offline inventory editing is deliberately excluded: Rivet only opens live Paper inventories, avoiding unsafe direct player-data file writes. Poses use Paper's native fixed-pose API, so they do not create invisible seat entities.
 
@@ -158,7 +178,7 @@ cd Rivet
 mvn clean package
 ```
 
-The finished plugin is written to `target/rivet-1.0-SNAPSHOT.jar`. `mvn test` runs the 38-test unit suite.
+The finished plugin is written to `target/rivet-1.0-SNAPSHOT.jar`. `mvn test` runs the 48-test unit suite.
 
 ## Privacy-friendly metrics
 

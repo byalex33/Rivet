@@ -1,0 +1,35 @@
+# Only listed worlds may be used. Add Nether worlds explicitly if desired.
+allowed-worlds:
+  - world
+
+minimum-radius: 500
+maximum-radius: 5000
+maximum-attempts: 24
+cooldown-seconds: 300
+warmup-seconds: 3
+cancel-on-movement: true
+
+# Nether searches stay below the bedrock ceiling.
+nether-maximum-y: 120
+
+# Use biome keys such as plains or minecraft:plains. An empty allowlist permits all.
+biomes:
+  allowlist: []
+  denylist:
+    - deep_frozen_ocean
+    - frozen_ocean
+
+# Optional per-world radius overrides.
+worlds:
+  world:
+    minimum-radius: 500
+    maximum-radius: 5000
+
+messages:
+  searching: "<gray>Searching for a safe location...</gray>"
+  warmup: "<gray>Teleporting in <white><seconds></white> seconds. Do not move.</gray>"
+  cancelled: "<red>Random teleport cancelled because you moved.</red>"
+  cooldown: "<yellow>You can use RTP again in <white><seconds>s</white>."
+  success: "<green>Teleported to a safe random location.</green>"
+  failed: "<red>Could not find a safe location. Try again later.</red>"
+  world-disabled: "<red>Random teleport is unavailable in that world.</red>"

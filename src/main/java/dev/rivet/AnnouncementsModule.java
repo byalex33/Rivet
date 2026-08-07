@@ -12,13 +12,18 @@ final class AnnouncementsModule {
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
-    private final List<String> announcements;
-    private final BukkitTask task;
+    private List<String> announcements = List.of();
+    private BukkitTask task;
     private int index;
 
     AnnouncementsModule(RivetPlugin plugin) {
         this.plugin = plugin;
         settings = plugin.settings("announcements");
+        reload();
+    }
+
+    void reload() {
+        shutdown();
         ConfigurationSection section = settings.getConfigurationSection("announcements");
         announcements = section == null ? List.of() : section.getKeys(false).stream()
             .filter(key -> section.getBoolean(key + ".enabled", true))
@@ -26,11 +31,13 @@ final class AnnouncementsModule {
         long interval = Math.max(1, settings.getLong("interval-seconds", 300)) * 20L;
         task = announcements.isEmpty() ? null
             : plugin.getServer().getScheduler().runTaskTimer(plugin, this::announce, interval, interval);
+        index = 0;
     }
 
     void shutdown() {
         if (task != null) {
             task.cancel();
+            task = null;
         }
     }
 

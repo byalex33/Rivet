@@ -64,13 +64,14 @@ final class KitsModule {
         }
 
         List<ItemStack> items = new ArrayList<>();
-        kit.getMapList("items").stream().map(this::item).filter(java.util.Objects::nonNull)
+        kit.getMapList("items").stream().map(values -> item(plugin, values))
+            .filter(java.util.Objects::nonNull)
             .forEach(items::add);
-        ItemStack helmet = item(kit.getConfigurationSection("armor.helmet"));
-        ItemStack chestplate = item(kit.getConfigurationSection("armor.chestplate"));
-        ItemStack leggings = item(kit.getConfigurationSection("armor.leggings"));
-        ItemStack boots = item(kit.getConfigurationSection("armor.boots"));
-        ItemStack offhand = item(kit.getConfigurationSection("offhand"));
+        ItemStack helmet = item(plugin, kit.getConfigurationSection("armor.helmet"));
+        ItemStack chestplate = item(plugin, kit.getConfigurationSection("armor.chestplate"));
+        ItemStack leggings = item(plugin, kit.getConfigurationSection("armor.leggings"));
+        ItemStack boots = item(plugin, kit.getConfigurationSection("armor.boots"));
+        ItemStack offhand = item(plugin, kit.getConfigurationSection("offhand"));
 
         if (kit.getLong("cooldown-seconds") > 0) {
             data.set(path(player, name), now);
@@ -108,13 +109,13 @@ final class KitsModule {
             .filter(name -> hasPermission(player, name)).sorted().toList();
     }
 
-    private ItemStack item(Map<?, ?> values) {
+    static ItemStack item(RivetPlugin plugin, Map<?, ?> values) {
         YamlConfiguration yaml = new YamlConfiguration();
         values.forEach((key, value) -> yaml.set(key.toString(), value));
-        return item(yaml);
+        return item(plugin, yaml);
     }
 
-    private ItemStack item(ConfigurationSection section) {
+    static ItemStack item(RivetPlugin plugin, ConfigurationSection section) {
         if (section == null) {
             return null;
         }

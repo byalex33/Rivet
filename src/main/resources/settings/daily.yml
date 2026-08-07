@@ -1,0 +1,46 @@
+# Server timestamps are used; changing a player's local clock cannot advance claims.
+claim-period-hours: 24
+streak-reset-hours: 48
+
+# After the last configured reward, start the schedule again while retaining the
+# player's real streak for milestone rewards.
+cycle-rewards: true
+
+rewards:
+  1:
+    items:
+      - material: DIAMOND
+        amount: 1
+  2:
+    experience: 100
+  3:
+    items:
+      - material: GOLDEN_APPLE
+        amount: 2
+  4:
+    experience: 200
+  5:
+    items:
+      - material: EMERALD
+        amount: 4
+  6:
+    experience: 300
+  7:
+    commands:
+      - "give <player> diamond 5"
+
+# Milestones are granted in addition to the scheduled reward.
+milestones:
+  14:
+    items:
+      - material: NETHERITE_SCRAP
+        amount: 1
+  30:
+    commands:
+      - "give <player> diamond_block 1"
+
+messages:
+  claimed: "<green>Daily reward claimed! <gray>Streak: <white><streak></white>"
+  wait: "<yellow>Your next daily reward is available in <white><time></white>."
+  unconfigured: "<red>No reward is configured for streak day <streak>.</red>"
+  save-error: "<red>Your reward could not be saved safely. Try again.</red>"
