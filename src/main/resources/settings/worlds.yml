@@ -1,0 +1,4 @@
+# Flat test worlds normally block natural mob spawning. Spawner, structure,
+# command, and other non-natural spawn reasons are unaffected.
+flat-worlds:
+  allow-natural-mob-spawning: false

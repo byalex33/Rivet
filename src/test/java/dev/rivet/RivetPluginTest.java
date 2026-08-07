@@ -13,13 +13,16 @@ import org.junit.Test;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Arrays;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public final class RivetPluginTest {
@@ -78,6 +81,62 @@ public final class RivetPluginTest {
         assertEquals(true, RivetPlugin.dropsMobHead(EntityType.ZOMBIE, .0299));
         assertEquals(false, RivetPlugin.dropsMobHead(EntityType.ZOMBIE, .03));
         assertEquals(true, RivetPlugin.dropsMobHead(EntityType.COW, 0));
+        assertEquals(true, RivetPlugin.dropsMobHead(EntityType.COW, .49, .5));
+        assertEquals(false, RivetPlugin.dropsMobHead(EntityType.COW, .5, .5));
+    }
+
+    @Test
+    public void packagesEveryModularDefault() {
+        var modulesResource = getClass().getResourceAsStream("/modules.yml");
+        assertNotNull(modulesResource);
+        YamlConfiguration modules = YamlConfiguration.loadConfiguration(
+            new InputStreamReader(modulesResource, StandardCharsets.UTF_8));
+        assertEquals(Set.copyOf(RivetConfig.MODULES), modules.getKeys(false));
+        assertEquals(true, modules.getValues(false).values().stream()
+            .allMatch(Boolean.class::isInstance));
+        RivetConfig.MODULES.forEach(module ->
+            assertNotNull(module, getClass().getResource("/settings/" + module + ".yml")));
+
+        var globalResource = getClass().getResourceAsStream("/config.yml");
+        assertNotNull(globalResource);
+        YamlConfiguration global = YamlConfiguration.loadConfiguration(
+            new InputStreamReader(globalResource, StandardCharsets.UTF_8));
+        assertEquals(Set.of("effects"), global.getKeys(false));
+    }
+
+    @Test
+    public void routesEveryDeclaredCommandToItsModule() {
+        var pluginResource = getClass().getResourceAsStream("/plugin.yml");
+        assertNotNull(pluginResource);
+        YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
+            new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
+        plugin.getConfigurationSection("commands").getKeys(false)
+            .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
+        assertEquals("chat", RivetPlugin.moduleForCommand("msg"));
+        assertEquals("homes", RivetPlugin.moduleForCommand("home"));
+        assertEquals("warps", RivetPlugin.moduleForCommand("warp"));
+        assertEquals("worlds", RivetPlugin.moduleForCommand("flatworld"));
+        assertEquals("staff", RivetPlugin.moduleForCommand("fly"));
+        assertEquals("environment", RivetPlugin.moduleForCommand("thunder"));
+        assertEquals("inventory", RivetPlugin.moduleForCommand("i"));
+        assertEquals("permissions", RivetPlugin.moduleForCommand("perm"));
+        assertEquals("holograms", RivetPlugin.moduleForCommand("hologram"));
+        assertEquals("glow", RivetPlugin.moduleForCommand("glow"));
+        assertNull(RivetPlugin.moduleForCommand("unknown"));
+    }
+
+    @Test
+    public void migratesLegacySectionsWithoutOverwritingNewData() {
+        YamlConfiguration legacy = new YamlConfiguration();
+        legacy.set("homes.player.world", "old-world");
+        legacy.set("homes.player.x", 12);
+        YamlConfiguration current = new YamlConfiguration();
+        current.set("homes.player.world", "new-world");
+
+        RivetConfig.copyMissing(legacy.getConfigurationSection("homes"), current, "homes");
+
+        assertEquals("new-world", current.getString("homes.player.world"));
+        assertEquals(12, current.getInt("homes.player.x"));
     }
 
     @Test

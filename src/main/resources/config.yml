@@ -1,6 +1,9 @@
+# Settings shared across Rivet modules. Feature switches live in modules.yml;
+# module options live in settings/; saved runtime data lives in data/.
 effects:
+  # Show title feedback for supported commands.
   titles: true
+  # Play feedback sounds across modules.
   sounds: true
+  # Show feedback particles across modules.
   particles: true
-flat-worlds:
-  allow-natural-mob-spawning: false

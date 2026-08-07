@@ -1,0 +1,17 @@
+# Rivet feature switches. This file contains enable/disable flags only.
+# Restart the server after changing a module.
+chat: true
+homes: true
+warps: true
+graves: true
+breeders: true
+egg-capture: true
+tree-feller: true
+mob-heads: true
+holograms: true
+glow: true
+permissions: true
+worlds: true
+staff: true
+environment: true
+inventory: true

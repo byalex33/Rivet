@@ -36,11 +36,8 @@ final class PermissionModule implements Listener {
 
     PermissionModule(RivetPlugin plugin) {
         this.plugin = plugin;
-        groupsFile = new File(plugin.getDataFolder(), "permissions/groups.yml");
-        usersFile = new File(plugin.getDataFolder(), "permissions/users.yml");
-        if (!groupsFile.exists()) {
-            plugin.saveResource("permissions/groups.yml", false);
-        }
+        groupsFile = plugin.settingsFile("permissions");
+        usersFile = plugin.dataFile("permissions");
         reload();
     }
 
@@ -247,7 +244,7 @@ final class PermissionModule implements Listener {
             users.save(usersFile);
             return true;
         } catch (IOException exception) {
-            plugin.getLogger().severe("Could not save permissions/users.yml: " + exception.getMessage());
+            plugin.getLogger().severe("Could not save data/permissions.yml: " + exception.getMessage());
             send(sender, "<red>Permission changed for this session, but could not be saved. Check the console.");
             return false;
         }

@@ -13,7 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -31,11 +30,7 @@ final class ChatModule implements Listener {
 
     ChatModule(RivetPlugin plugin) {
         this.plugin = plugin;
-        File file = new File(plugin.getDataFolder(), "chat.yml");
-        if (!file.exists()) {
-            plugin.saveResource("chat.yml", false);
-        }
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration config = plugin.settings("chat");
         chatFormat = config.getString("format", "<gray><player>:</gray> <white><message></white>");
         sentFormat = config.getString("private-messages.sent", "<gray>[you → <player>]</gray> <white><message></white>");
         receivedFormat = config.getString("private-messages.received", "<gray>[<player> → you]</gray> <white><message></white>");

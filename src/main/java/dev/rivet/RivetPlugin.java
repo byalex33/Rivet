@@ -13,6 +13,7 @@ import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
@@ -35,7 +36,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bstats.bukkit.Metrics;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -58,8 +58,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class RivetPlugin extends JavaPlugin implements Listener {
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final String MARKER = ".rivet-test-world";
-    private static final double MOB_HEAD_CHANCE = .03;
+    private static final String LEGACY_WORLD_MARKER = ".rivet-test-world";
+    private static final double DEFAULT_MOB_HEAD_CHANCE = .03;
     private static final Map<EntityType, String> MOB_HEAD_TEXTURES = loadMobHeadTextures();
     private static final ChunkGenerator VOID_GENERATOR = new ChunkGenerator() {
         @Override
@@ -77,30 +77,69 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private HologramModule holograms;
     private PermissionModule permissions;
     private TreeFeller treeFeller;
+    private RivetConfig files;
+    private YamlConfiguration homes;
+    private YamlConfiguration warps;
+    private YamlConfiguration worldData;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        try {
+            files = new RivetConfig(this);
+        } catch (IOException exception) {
+            getLogger().severe("Could not prepare Rivet's configuration: " + exception.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        homes = data("homes");
+        warps = data("warps");
+        worldData = data("worlds");
         new Metrics(this, 33219);
-        autoBreeder = new AutoBreeder(this);
-        eggCapture = new EggCapture(this);
-        permissions = new PermissionModule(this);
-        chat = new ChatModule(this);
-        glows = new GlowModule(this);
-        graves = new GraveModule(this);
-        holograms = new HologramModule(this);
-        treeFeller = new TreeFeller(this);
-        getServer().getPluginManager().registerEvents(this, this);
-        getServer().getPluginManager().registerEvents(autoBreeder, this);
-        getServer().getPluginManager().registerEvents(eggCapture, this);
-        getServer().getPluginManager().registerEvents(chat, this);
-        getServer().getPluginManager().registerEvents(glows, this);
-        getServer().getPluginManager().registerEvents(graves, this);
-        getServer().getPluginManager().registerEvents(holograms, this);
-        getServer().getPluginManager().registerEvents(permissions, this);
-        getServer().getPluginManager().registerEvents(treeFeller, this);
-        getServer().getOnlinePlayers().forEach(permissions::apply);
-        getServer().getScheduler().runTaskTimer(this, this::spawnFlightClouds, 1, 4);
+        if (moduleEnabled("breeders")) {
+            autoBreeder = new AutoBreeder(this);
+            getServer().getPluginManager().registerEvents(autoBreeder, this);
+        }
+        if (moduleEnabled("egg-capture")) {
+            eggCapture = new EggCapture(this);
+            getServer().getPluginManager().registerEvents(eggCapture, this);
+        }
+        if (moduleEnabled("permissions")) {
+            permissions = new PermissionModule(this);
+            getServer().getPluginManager().registerEvents(permissions, this);
+        }
+        if (moduleEnabled("chat")) {
+            chat = new ChatModule(this);
+            getServer().getPluginManager().registerEvents(chat, this);
+        }
+        if (moduleEnabled("glow")) {
+            glows = new GlowModule(this);
+            getServer().getPluginManager().registerEvents(glows, this);
+        }
+        if (moduleEnabled("graves")) {
+            graves = new GraveModule(this);
+            getServer().getPluginManager().registerEvents(graves, this);
+        }
+        if (moduleEnabled("holograms")) {
+            holograms = new HologramModule(this);
+            getServer().getPluginManager().registerEvents(holograms, this);
+        }
+        if (moduleEnabled("tree-feller")) {
+            treeFeller = new TreeFeller(this);
+            getServer().getPluginManager().registerEvents(treeFeller, this);
+        }
+        if (moduleEnabled("worlds") || moduleEnabled("staff") || moduleEnabled("mob-heads")) {
+            getServer().getPluginManager().registerEvents(this, this);
+        }
+        if (permissions != null) {
+            getServer().getOnlinePlayers().forEach(permissions::apply);
+        }
+        if (moduleEnabled("worlds")) {
+            migrateLegacyWorldMarkers();
+        }
+        if (moduleEnabled("staff")) {
+            getServer().getScheduler().runTaskTimer(this, this::spawnFlightClouds, 1, 4);
+        }
     }
 
     @Override
@@ -121,16 +160,18 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if (blocksSpawn(event.getLocation().getWorld().getWorldType(), event.getSpawnReason(),
-            getConfig().getBoolean("flat-worlds.allow-natural-mob-spawning"))) {
+        if (moduleEnabled("worlds") && blocksSpawn(event.getLocation().getWorld().getWorldType(),
+            event.getSpawnReason(), settings("worlds")
+                .getBoolean("flat-worlds.allow-natural-mob-spawning"))) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
-        if (event.getEntity().getKiller() == null
-            || !dropsMobHead(event.getEntityType(), ThreadLocalRandom.current().nextDouble())) {
+        if (!moduleEnabled("mob-heads") || event.getEntity().getKiller() == null
+            || !dropsMobHead(event.getEntityType(), ThreadLocalRandom.current().nextDouble(),
+                mobHeadChance())) {
             return;
         }
         ItemStack head = createMobHead(event.getEntityType());
@@ -143,7 +184,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (isCropTrample(event.getAction(),
+        if (moduleEnabled("worlds") && isCropTrample(event.getAction(),
             event.getClickedBlock() == null ? null : event.getClickedBlock().getType())) {
             event.setCancelled(true);
         }
@@ -151,11 +192,16 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        refreshVanishVisibility(event.getPlayer());
+        if (moduleEnabled("staff")) {
+            refreshVanishVisibility(event.getPlayer());
+        }
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        if (!moduleEnabled("staff")) {
+            return;
+        }
         vanished.remove(event.getPlayer().getUniqueId());
         if (flightEnabled.contains(event.getPlayer().getUniqueId())) {
             disableFlight(event.getPlayer());
@@ -166,6 +212,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         String name = command.getName();
+        String module = moduleForCommand(name);
+        if (module != null && !moduleEnabled(module)) {
+            send(sender, "<yellow>The <white>" + module + "</white> module is disabled.");
+            return true;
+        }
         if (name.equals("perm") || name.equals("group")) {
             return permissions.command(sender, name, args);
         }
@@ -218,6 +269,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                       @NotNull String alias, @NotNull String[] args) {
+        if (!moduleEnabled(moduleForCommand(command.getName()))) {
+            return List.of();
+        }
         List<String> choices;
         try {
             choices = switch (command.getName()) {
@@ -288,7 +342,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
 
         try {
-            Files.writeString(path.resolve(MARKER), type);
+            trackWorld(name, type);
             send(player, "<green>Created " + type + " world <white>" + name + "</white>.");
             effect(player, "<green>World created</green>", "<gray>" + name + "</gray>",
                 Sound.BLOCK_BEACON_ACTIVATE, Particle.END_ROD);
@@ -358,12 +412,12 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return true;
         }
         try {
-            Files.writeString(worldPath(name).resolve(MARKER), "flat");
+            trackWorld(name, "flat");
             send(player, "<green>Reset flat world <white>" + name + "</white>.");
             effect(player, "<gold>World reset</gold>", "<gray>" + name + "</gray>",
                 Sound.BLOCK_BEACON_ACTIVATE, Particle.POOF);
         } catch (IOException exception) {
-            getLogger().severe("Regenerated world " + name + " but could not restore its marker: " + exception.getMessage());
+            getLogger().severe("Regenerated world " + name + " but could not save its data: " + exception.getMessage());
             send(player, "<red>World regenerated, but Rivet could not track it. Check the console.");
         }
         return true;
@@ -442,7 +496,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             send(player, "<red>Usage: /sethome [name]");
             return true;
         }
-        if (saveLocation(homePath(player, name), player.getLocation(), player)) {
+        if (saveLocation(homes, "homes", homePath(player, name), player.getLocation(), player)) {
             send(player, "<green>Home <white>" + name + "</white> set.");
         }
         return true;
@@ -455,11 +509,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return true;
         }
         String path = homePath(player, name);
-        if (name.equals("home") && !getConfig().isConfigurationSection(path)
-            && getConfig().contains("homes." + player.getUniqueId() + ".world")) {
+        if (name.equals("home") && !homes.isConfigurationSection(path)
+            && homes.contains("homes." + player.getUniqueId() + ".world")) {
             path = "homes." + player.getUniqueId();
         }
-        return teleportSaved(player, path, name);
+        return teleportSaved(player, homes, path, name);
     }
 
     private boolean deleteHome(Player player, String[] args) {
@@ -470,21 +524,21 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         String path = homePath(player, name);
         String legacy = "homes." + player.getUniqueId();
-        if (!getConfig().isConfigurationSection(path)
-            && (!name.equals("home") || !getConfig().contains(legacy + ".world"))) {
+        if (!homes.isConfigurationSection(path)
+            && (!name.equals("home") || !homes.contains(legacy + ".world"))) {
             send(player, "<red>No " + name + " is set.");
             return true;
         }
-        getConfig().set(path, null);
+        homes.set(path, null);
         if (name.equals("home")) {
-            getConfig().set(legacy + ".world", null);
-            getConfig().set(legacy + ".x", null);
-            getConfig().set(legacy + ".y", null);
-            getConfig().set(legacy + ".z", null);
-            getConfig().set(legacy + ".yaw", null);
-            getConfig().set(legacy + ".pitch", null);
+            homes.set(legacy + ".world", null);
+            homes.set(legacy + ".x", null);
+            homes.set(legacy + ".y", null);
+            homes.set(legacy + ".z", null);
+            homes.set(legacy + ".yaw", null);
+            homes.set(legacy + ".pitch", null);
         }
-        if (saveConfig(player)) {
+        if (saveData("homes", player)) {
             send(player, "<green>Home <white>" + name + "</white> deleted.");
         }
         return true;
@@ -496,7 +550,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return true;
         }
         String name = args[0].toLowerCase(Locale.ROOT);
-        if (saveLocation("warps." + name, player.getLocation(), player)) {
+        if (saveLocation(warps, "warps", "warps." + name, player.getLocation(), player)) {
             send(player, "<green>Warp <white>" + name + "</white> set.");
         }
         return true;
@@ -508,7 +562,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return true;
         }
         String name = args[0].toLowerCase(Locale.ROOT);
-        return teleportSaved(player, "warps." + name, name);
+        return teleportSaved(player, warps, "warps." + name, name);
     }
 
     private boolean deleteWarp(Player player, String[] args) {
@@ -518,23 +572,23 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         String name = args[0].toLowerCase(Locale.ROOT);
         String path = "warps." + name;
-        if (!getConfig().isConfigurationSection(path)) {
+        if (!warps.isConfigurationSection(path)) {
             send(player, "<red>No " + name + " is set.");
             return true;
         }
-        getConfig().set(path, null);
-        if (saveConfig(player)) {
+        warps.set(path, null);
+        if (saveData("warps", player)) {
             send(player, "<green>Warp <white>" + name + "</white> deleted.");
         }
         return true;
     }
 
-    private boolean teleportSaved(Player player, String path, String name) {
-        if (!getConfig().isConfigurationSection(path)) {
+    private boolean teleportSaved(Player player, YamlConfiguration data, String path, String name) {
+        if (!data.isConfigurationSection(path)) {
             send(player, "<red>No " + name + " is set.");
             return true;
         }
-        Location location = savedLocation(path);
+        Location location = savedLocation(data, path);
         if (location == null) {
             send(player, "<red>The world for <white>" + name + "</white> is unavailable.");
             return true;
@@ -549,29 +603,30 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         return true;
     }
 
-    private boolean saveLocation(String path, Location location, Player player) {
-        getConfig().set(path + ".world", location.getWorld().getName());
-        getConfig().set(path + ".x", location.getX());
-        getConfig().set(path + ".y", location.getY());
-        getConfig().set(path + ".z", location.getZ());
-        getConfig().set(path + ".yaw", location.getYaw());
-        getConfig().set(path + ".pitch", location.getPitch());
-        return saveConfig(player);
+    private boolean saveLocation(YamlConfiguration data, String file, String path,
+                                 Location location, Player player) {
+        data.set(path + ".world", location.getWorld().getName());
+        data.set(path + ".x", location.getX());
+        data.set(path + ".y", location.getY());
+        data.set(path + ".z", location.getZ());
+        data.set(path + ".yaw", location.getYaw());
+        data.set(path + ".pitch", location.getPitch());
+        return saveData(file, player);
     }
 
-    private boolean saveConfig(Player player) {
+    private boolean saveData(String file, Player player) {
         try {
-            getConfig().save(new File(getDataFolder(), "config.yml"));
+            files.saveData(file);
             return true;
         } catch (IOException exception) {
-            getLogger().severe("Could not save config.yml: " + exception.getMessage());
+            getLogger().severe("Could not save data/" + file + ".yml: " + exception.getMessage());
             send(player, "<red>Could not save the change. Check the console.");
             return false;
         }
     }
 
-    private Location savedLocation(String path) {
-        String worldName = getConfig().getString(path + ".world");
+    private Location savedLocation(YamlConfiguration data, String path) {
+        String worldName = data.getString(path + ".world");
         World world = worldName == null ? null : getServer().getWorld(worldName);
         if (world == null && worldName != null) {
             String type = worldType(worldName);
@@ -579,28 +634,28 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 world = loadWorld(worldName, type);
             }
         }
-        double x = getConfig().getDouble(path + ".x");
-        double y = getConfig().getDouble(path + ".y");
-        double z = getConfig().getDouble(path + ".z");
-        float yaw = (float) getConfig().getDouble(path + ".yaw");
-        float pitch = (float) getConfig().getDouble(path + ".pitch");
+        double x = data.getDouble(path + ".x");
+        double y = data.getDouble(path + ".y");
+        double z = data.getDouble(path + ".z");
+        float yaw = (float) data.getDouble(path + ".yaw");
+        float pitch = (float) data.getDouble(path + ".pitch");
         return world == null || !validCoordinates(x, y, z, yaw, pitch)
             ? null : new Location(world, x, y, z, yaw, pitch);
     }
 
     private List<String> warpNames() {
-        var warps = getConfig().getConfigurationSection("warps");
-        return warps == null ? List.of() : warps.getKeys(false).stream()
+        var saved = warps.getConfigurationSection("warps");
+        return saved == null ? List.of() : saved.getKeys(false).stream()
             .sorted(String.CASE_INSENSITIVE_ORDER).toList();
     }
 
     private List<String> homeNames(Player player) {
         Set<String> names = new HashSet<>();
-        var homes = getConfig().getConfigurationSection("homes." + player.getUniqueId() + ".locations");
-        if (homes != null) {
-            names.addAll(homes.getKeys(false));
+        var saved = homes.getConfigurationSection("homes." + player.getUniqueId() + ".locations");
+        if (saved != null) {
+            names.addAll(saved.getKeys(false));
         }
-        if (getConfig().contains("homes." + player.getUniqueId() + ".world")) {
+        if (homes.contains("homes." + player.getUniqueId() + ".world")) {
             names.add("home");
         }
         return names.stream().sorted(String.CASE_INSENSITIVE_ORDER).toList();
@@ -740,6 +795,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0, 2);
     }
 
+    private double mobHeadChance() {
+        double chance = settings("mob-heads").getDouble("drop-chance", DEFAULT_MOB_HEAD_CHANCE);
+        return Double.isFinite(chance) ? Math.max(0, Math.min(1, chance)) : DEFAULT_MOB_HEAD_CHANCE;
+    }
+
     private ItemStack createMobHead(EntityType type) {
         Material material = mobHeadFor(type);
         if (material != null) {
@@ -781,16 +841,22 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     }
 
     void permissionsChanged(Player player) {
-        if (vanished.contains(player.getUniqueId()) && !player.hasPermission("rivet.vanish")) {
+        if (moduleEnabled("staff") && vanished.contains(player.getUniqueId())
+            && !player.hasPermission("rivet.vanish")) {
             setVanished(player, false);
             send(player, "<yellow>Vanish disabled because your permission changed.");
         }
-        if (flightEnabled.contains(player.getUniqueId()) && !player.hasPermission("rivet.fly")) {
+        if (moduleEnabled("staff") && flightEnabled.contains(player.getUniqueId())
+            && !player.hasPermission("rivet.fly")) {
             disableFlight(player);
             send(player, "<yellow>Flight disabled because your permission changed.");
         }
-        refreshVanishVisibility(player);
-        holograms.refresh(player);
+        if (moduleEnabled("staff")) {
+            refreshVanishVisibility(player);
+        }
+        if (holograms != null) {
+            holograms.refresh(player);
+        }
     }
 
     private void refreshVanishVisibility(Player viewer) {
@@ -874,11 +940,45 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (!validWorldName(name)) {
             return null;
         }
+        String tracked = worldData.getString("worlds." + name + ".type");
+        if (tracked != null && (tracked.equals("flat") || tracked.equals("void"))) {
+            return tracked;
+        }
+        String type;
         try {
-            String type = Files.readString(worldPath(name).resolve(MARKER)).trim();
-            return type.equals("flat") || type.equals("void") ? type : null;
+            type = Files.readString(worldPath(name).resolve(LEGACY_WORLD_MARKER)).trim();
         } catch (IOException exception) {
             return null;
+        }
+        if (!type.equals("flat") && !type.equals("void")) {
+            return null;
+        }
+        try {
+            trackWorld(name, type);
+            getLogger().info("Migrated test world " + name + " to data/worlds.yml.");
+        } catch (IOException exception) {
+            getLogger().warning("Could not migrate test world " + name + ": " + exception.getMessage());
+        }
+        return type;
+    }
+
+    private void trackWorld(String name, String type) throws IOException {
+        String path = "worlds." + name + ".type";
+        Object previous = worldData.get(path);
+        worldData.set(path, type);
+        try {
+            files.saveData("worlds");
+        } catch (IOException exception) {
+            worldData.set(path, previous);
+            throw exception;
+        }
+    }
+
+    private void migrateLegacyWorldMarkers() {
+        try {
+            testWorlds(null);
+        } catch (IOException exception) {
+            getLogger().warning("Could not scan for legacy test worlds: " + exception.getMessage());
         }
     }
 
@@ -896,6 +996,46 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     private static void send(CommandSender sender, String message) {
         sender.sendMessage(MM.deserialize(message));
+    }
+
+    boolean moduleEnabled(String module) {
+        return module == null || files != null && files.enabled(module);
+    }
+
+    YamlConfiguration settings(String module) {
+        return files.settings(module);
+    }
+
+    YamlConfiguration data(String module) {
+        return files.data(module);
+    }
+
+    java.io.File settingsFile(String module) {
+        return files.settingsFile(module);
+    }
+
+    java.io.File dataFile(String module) {
+        return files.dataFile(module);
+    }
+
+    void saveData(String module) throws IOException {
+        files.saveData(module);
+    }
+
+    static String moduleForCommand(String command) {
+        return switch (command) {
+            case "msg", "r" -> "chat";
+            case "sethome", "home", "delhome" -> "homes";
+            case "setwarp", "warp", "delwarp" -> "warps";
+            case "hologram" -> "holograms";
+            case "glow" -> "glow";
+            case "perm", "group" -> "permissions";
+            case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall" -> "worlds";
+            case "gmc", "gms", "tp", "vanish", "fly" -> "staff";
+            case "day", "night", "noon", "midnight", "sun", "rain", "thunder" -> "environment";
+            case "clear", "i" -> "inventory";
+            default -> null;
+        };
     }
 
     static boolean validWorldName(String name) {
@@ -923,7 +1063,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     }
 
     static boolean dropsMobHead(EntityType type, double roll) {
-        return supportsMobHead(type) && roll >= 0 && roll < MOB_HEAD_CHANCE;
+        return dropsMobHead(type, roll, DEFAULT_MOB_HEAD_CHANCE);
+    }
+
+    static boolean dropsMobHead(EntityType type, double roll, double chance) {
+        return supportsMobHead(type) && roll >= 0 && roll < chance;
     }
 
     static boolean supportsMobHead(EntityType type) {

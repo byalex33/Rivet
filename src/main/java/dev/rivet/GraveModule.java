@@ -54,7 +54,7 @@ final class GraveModule implements Listener {
     GraveModule(RivetPlugin plugin) {
         this.plugin = plugin;
         graveKey = new NamespacedKey(plugin, "grave");
-        file = new File(plugin.getDataFolder(), "graves.yml");
+        file = plugin.dataFile("graves");
         load();
         plugin.getServer().getScheduler().runTask(plugin, this::ensureLoadedVisuals);
     }
@@ -297,7 +297,7 @@ final class GraveModule implements Listener {
                 }
             }
         } catch (IOException | InvalidConfigurationException exception) {
-            plugin.getLogger().severe("Could not load graves.yml: " + exception.getMessage());
+            plugin.getLogger().severe("Could not load data/graves.yml: " + exception.getMessage());
         }
     }
 

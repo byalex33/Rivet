@@ -13,6 +13,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
@@ -44,6 +45,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -92,6 +94,7 @@ final class AutoBreeder implements Listener {
     private final Set<NamespacedKey> recipeKeys = new HashSet<>();
     private final Set<String> breeders = new HashSet<>();
     private final Map<String, Inventory> inventories = new HashMap<>();
+    private final YamlConfiguration data;
     private final BukkitTask task;
 
     AutoBreeder(RivetPlugin plugin) {
@@ -99,7 +102,8 @@ final class AutoBreeder implements Listener {
         itemKey = new NamespacedKey(plugin, "auto_breeder");
         animalKey = new NamespacedKey(plugin, "auto_breeder_animal");
         hologramKey = new NamespacedKey(plugin, "auto_breeder_hologram");
-        ConfigurationSection saved = plugin.getConfig().getConfigurationSection(CONFIG_PATH);
+        data = plugin.data("breeders");
+        ConfigurationSection saved = data.getConfigurationSection(CONFIG_PATH);
         if (saved != null) {
             breeders.addAll(saved.getKeys(false));
             boolean migrated = false;
@@ -125,7 +129,7 @@ final class AutoBreeder implements Listener {
                 }
             }
             if (migrated) {
-                plugin.saveConfig();
+                save();
             }
         }
         registerRecipes();
@@ -147,10 +151,10 @@ final class AutoBreeder implements Listener {
         }
         String key = key(event.getBlockPlaced());
         breeders.add(key);
-        plugin.getConfig().set(path(key) + ".animal", animal.name());
-        plugin.getConfig().set(path(key) + ".food", 0);
-        plugin.getConfig().set(path(key) + ".animals-bred", 0);
-        plugin.saveConfig();
+        data.set(path(key) + ".animal", animal.name());
+        data.set(path(key) + ".food", 0);
+        data.set(path(key) + ".animals-bred", 0);
+        save();
         ensureHologram(key);
     }
 
@@ -320,7 +324,7 @@ final class AutoBreeder implements Listener {
     }
 
     private EntityType animal(String key) {
-        EntityType animal = supportedAnimal(plugin.getConfig().getString(path(key) + ".animal"));
+        EntityType animal = supportedAnimal(data.getString(path(key) + ".animal"));
         return animal == null ? EntityType.COW : animal;
     }
 
@@ -358,7 +362,7 @@ final class AutoBreeder implements Listener {
                 Component.text(displayName(animal(key)) + " Auto Breeder"));
             holder.inventory = inventory;
             Material food = food(key);
-            int amount = plugin.getConfig().getInt(path(key) + ".food");
+            int amount = data.getInt(path(key) + ".food");
             while (amount > 0) {
                 int stack = Math.min(amount, food.getMaxStackSize());
                 inventory.addItem(new ItemStack(food, stack));
@@ -407,7 +411,7 @@ final class AutoBreeder implements Listener {
             pair[0].setLoveModeTicks(600);
             pair[1].setLoveModeTicks(600);
             activate(location, pair);
-            plugin.getConfig().set(path(key) + ".animals-bred", animalsBred(key) + pair.length);
+            data.set(path(key) + ".animals-bred", animalsBred(key) + pair.length);
             persist(key, inventory);
         }
     }
@@ -475,9 +479,9 @@ final class AutoBreeder implements Listener {
         EntityType animal = animal(key);
         Material food = ANIMALS.get(animal);
         int amount = inventory == null
-            ? plugin.getConfig().getInt(path(key) + ".food") : food(inventory, food);
+            ? data.getInt(path(key) + ".food") : food(inventory, food);
         breeders.remove(key);
-        plugin.getConfig().set(path(key), null);
+        data.set(path(key), null);
         removeHologram(key, location);
         if (inventory != null) {
             List.copyOf(inventory.getViewers()).forEach(HumanEntity::closeInventory);
@@ -490,15 +494,15 @@ final class AutoBreeder implements Listener {
         if (dropBlock) {
             location.getWorld().dropItemNaturally(location, item(animal));
         }
-        plugin.saveConfig();
+        save();
     }
 
     private void persist(String key, Inventory inventory) {
         if (!breeders.contains(key)) {
             return;
         }
-        plugin.getConfig().set(path(key) + ".food", food(inventory, food(key)));
-        plugin.saveConfig();
+        data.set(path(key) + ".food", food(inventory, food(key)));
+        save();
         ensureHologram(key);
     }
 
@@ -550,7 +554,15 @@ final class AutoBreeder implements Listener {
     }
 
     private int animalsBred(String key) {
-        return plugin.getConfig().getInt(path(key) + ".animals-bred");
+        return data.getInt(path(key) + ".animals-bred");
+    }
+
+    private void save() {
+        try {
+            plugin.saveData("breeders");
+        } catch (IOException exception) {
+            plugin.getLogger().severe("Could not save data/breeders.yml: " + exception.getMessage());
+        }
     }
 
     static Component hologram(EntityType animal, int food, int animalsBred) {

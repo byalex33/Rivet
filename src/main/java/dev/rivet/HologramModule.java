@@ -60,7 +60,7 @@ final class HologramModule implements Listener {
     HologramModule(RivetPlugin plugin) {
         this.plugin = plugin;
         hologramKey = new NamespacedKey(plugin, "hologram");
-        file = new File(plugin.getDataFolder(), "holograms.yml");
+        file = plugin.dataFile("holograms");
         load();
         plugin.getServer().getScheduler().runTask(plugin, this::ensureLoaded);
         plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickAnimations, 1, 2);
@@ -743,7 +743,7 @@ final class HologramModule implements Listener {
                 }
             }
         } catch (IOException | InvalidConfigurationException exception) {
-            plugin.getLogger().severe("Could not load holograms.yml: " + exception.getMessage());
+            plugin.getLogger().severe("Could not load data/holograms.yml: " + exception.getMessage());
         }
     }
 
@@ -797,7 +797,7 @@ final class HologramModule implements Listener {
             }
             return true;
         } catch (IOException exception) {
-            plugin.getLogger().severe("Could not save holograms.yml: " + exception.getMessage());
+            plugin.getLogger().severe("Could not save data/holograms.yml: " + exception.getMessage());
             send(sender, "<red>The hologram change could not be saved.");
             return false;
         }

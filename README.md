@@ -9,7 +9,7 @@ Survival essentials, staff tools, custom worlds, holograms, graves, automation, 
 [![Java 21](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://adoptium.net/temurin/releases/?version=21)
 [![Paper 1.21.11](https://img.shields.io/badge/Paper-1.21.11-2C2E33?style=for-the-badge&logo=paper&logoColor=white)](https://papermc.io/)
 [![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](#build-from-source)
-[![Tests](https://img.shields.io/badge/tests-29_passing-2EA44F?style=for-the-badge)](#build-from-source)
+[![Tests](https://img.shields.io/badge/tests-32_passing-2EA44F?style=for-the-badge)](#build-from-source)
 [![bStats Servers](https://img.shields.io/bstats/servers/33219?style=for-the-badge&label=servers&color=7C3AED)](https://bstats.org/plugin/bukkit/Rivet/33219)
 [![bStats Players](https://img.shields.io/bstats/players/33219?style=for-the-badge&label=players&color=2563EB)](https://bstats.org/plugin/bukkit/Rivet/33219)
 
@@ -24,9 +24,9 @@ Rivet replaces a pile of single-purpose plugins with one focused Paper plugin. T
 <table>
   <tr>
     <td align="center"><strong>32</strong><br><sub>commands</sub></td>
-    <td align="center"><strong>29</strong><br><sub>tests</sub></td>
+    <td align="center"><strong>32</strong><br><sub>tests</sub></td>
     <td align="center"><strong>25</strong><br><sub>breeder species</sub></td>
-    <td align="center"><strong>3%</strong><br><sub>mob-head chance</sub></td>
+    <td align="center"><strong>3%</strong><br><sub>default head chance</sub></td>
   </tr>
 </table>
 
@@ -81,21 +81,43 @@ Rivet creates its configuration and data files under `plugins/Rivet/` on first l
 
 </details>
 
-## Configuration
+## Configuration and data
 
-The defaults are deliberately small:
+Rivet creates a complete modular layout on first launch:
 
-```yaml
-effects:
-  titles: true
-  sounds: true
-  particles: true
-
-flat-worlds:
-  allow-natural-mob-spawning: false
+```text
+plugins/Rivet/
+├── config.yml
+├── modules.yml
+├── settings/
+│   ├── chat.yml
+│   ├── homes.yml
+│   ├── warps.yml
+│   ├── graves.yml
+│   ├── breeders.yml
+│   ├── egg-capture.yml
+│   ├── tree-feller.yml
+│   ├── mob-heads.yml
+│   ├── holograms.yml
+│   ├── glow.yml
+│   ├── permissions.yml
+│   ├── worlds.yml
+│   ├── staff.yml
+│   ├── environment.yml
+│   └── inventory.yml
+└── data/
 ```
 
-Chat formatting lives in `chat.yml` and uses [MiniMessage](https://docs.advntr.dev/minimessage/format.html). Permission groups live in `permissions/groups.yml`.
+- `modules.yml` contains only feature switches. Disabled modules do not register their listeners or start their tasks, and their declared commands return a clean disabled message. Restart after changing a switch.
+- `settings/` contains options owned by one module. For example, chat MiniMessage formats live in `settings/chat.yml`, permission groups in `settings/permissions.yml`, and the mob-head drop chance in `settings/mob-heads.yml`.
+- `config.yml` contains only Rivet-wide visual feedback settings used by multiple modules.
+- `data/` contains generated persistent state such as homes, warps, graves, breeders, glow regions, holograms, permission users, and tracked test worlds. Do not hand-edit these files while the server is running.
+
+The `worlds` module owns test worlds, world spawn, mob cleanup, crop-trample protection, and the flat-world spawn rule. `staff` owns gamemode, teleport, vanish, and flight; `environment` owns time and weather; `inventory` owns clear and item commands.
+
+### Upgrading an existing installation
+
+Migration runs before modules start. Rivet moves the old root `chat.yml`, grave, glow, hologram, and permission files into the new layout. It also moves `homes`, `warps`, and `auto-breeders` out of `config.yml` without overwriting values already present in the new data files. Legacy test-world markers are imported into `data/worlds.yml` and retained as a compatibility fallback. If both an old standalone file and its new destination already exist, Rivet keeps both untouched and uses the new destination.
 
 ## Build from source
 
@@ -105,7 +127,7 @@ cd Rivet
 mvn clean package
 ```
 
-The finished plugin is written to `target/rivet-1.0-SNAPSHOT.jar`. `mvn test` runs the 29-test unit suite.
+The finished plugin is written to `target/rivet-1.0-SNAPSHOT.jar`. `mvn test` runs the 32-test unit suite.
 
 ## Privacy-friendly metrics
 

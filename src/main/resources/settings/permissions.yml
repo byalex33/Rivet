@@ -1,3 +1,5 @@
+# Rivet permission groups. Player assignments and direct grants are saved in
+# ../data/permissions.yml.
 groups:
   default:
     permissions:

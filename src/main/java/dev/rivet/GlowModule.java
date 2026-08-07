@@ -53,7 +53,7 @@ final class GlowModule implements Listener {
         this.plugin = plugin;
         wandKey = new NamespacedKey(plugin, "glow_wand");
         outlineKey = new NamespacedKey(plugin, "glow_outline");
-        file = new File(plugin.getDataFolder(), "glows.yml");
+        file = plugin.dataFile("glow");
         load();
         plugin.getServer().getScheduler().runTask(plugin, this::refreshLoaded);
     }
@@ -320,7 +320,7 @@ final class GlowModule implements Listener {
                 regions.put(key(name), region);
             }
         } catch (IOException | InvalidConfigurationException | IllegalArgumentException exception) {
-            plugin.getLogger().severe("Could not load glows.yml: " + exception.getMessage());
+            plugin.getLogger().severe("Could not load data/glow.yml: " + exception.getMessage());
         }
     }
 
@@ -349,7 +349,7 @@ final class GlowModule implements Listener {
             }
             return true;
         } catch (IOException exception) {
-            plugin.getLogger().severe("Could not save glows.yml: " + exception.getMessage());
+            plugin.getLogger().severe("Could not save data/glow.yml: " + exception.getMessage());
             send(sender, "<red>The glow change could not be saved.");
             return false;
         }

@@ -1,3 +1,4 @@
+# MiniMessage formats. <player> and <message> are safe component placeholders.
 format: "<gray><player>:</gray> <white><message></white>"
 private-messages:
   sent: "<gray>[you → <player>]</gray> <white><message></white>"
