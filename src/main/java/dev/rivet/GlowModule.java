@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -42,14 +42,14 @@ final class GlowModule implements Listener {
     private static final List<String> COLORS = List.of(
         "aqua", "blue", "green", "yellow", "gold", "red", "light_purple", "white", "gray");
 
-    private final CorePlugin plugin;
+    private final RivetPlugin plugin;
     private final NamespacedKey wandKey;
     private final NamespacedKey outlineKey;
     private final File file;
     private final Map<UUID, Selection> selections = new HashMap<>();
     private final Map<String, Region> regions = new HashMap<>();
 
-    GlowModule(CorePlugin plugin) {
+    GlowModule(RivetPlugin plugin) {
         this.plugin = plugin;
         wandKey = new NamespacedKey(plugin, "glow_wand");
         outlineKey = new NamespacedKey(plugin, "glow_outline");
@@ -141,7 +141,7 @@ final class GlowModule implements Listener {
             send(sender, "<red>This command is only available to players.");
             return true;
         }
-        if (!CorePlugin.validWorldName(name) || regions.containsKey(key(name))) {
+        if (!RivetPlugin.validWorldName(name) || regions.containsKey(key(name))) {
             send(sender, "<red>Use a unique name containing only letters, numbers, _ or -.");
             return true;
         }

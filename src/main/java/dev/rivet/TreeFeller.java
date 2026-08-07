@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -39,11 +39,11 @@ final class TreeFeller implements Listener {
     private static final int MIN_LEAVES = 10;
     private static final int MAX_HORIZONTAL_LOG_RUN = 6;
 
-    private final CorePlugin plugin;
+    private final RivetPlugin plugin;
     private final Set<Block> activeBlocks = new HashSet<>();
     private boolean checkingProtection;
 
-    TreeFeller(CorePlugin plugin) {
+    TreeFeller(RivetPlugin plugin) {
         this.plugin = plugin;
     }
 

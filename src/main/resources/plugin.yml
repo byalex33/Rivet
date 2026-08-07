@@ -1,158 +1,158 @@
-name: Core
+name: Rivet
 version: '1.0-SNAPSHOT'
-main: dev.core.CorePlugin
+main: dev.rivet.RivetPlugin
 api-version: '1.21.11'
-description: Small testing utilities
+description: Everything your Paper server needs, held together
 commands:
   gmc:
     description: Switch to creative mode
-    permission: core.gamemode
+    permission: rivet.gamemode
   gms:
     description: Switch to survival mode
-    permission: core.gamemode
+    permission: rivet.gamemode
   flat:
     description: Create or teleport to the flat test world
-    permission: core.flat
+    permission: rivet.flat
   flatworld:
     description: Manage flat testing worlds
     usage: /flatworld <create|tp|reset|list> [name]
-    permission: core.world
+    permission: rivet.world
   voidworld:
     description: Create void testing worlds
     usage: /voidworld create <name>
-    permission: core.world
+    permission: rivet.world
   worldspawn:
     description: Teleport to the current world's spawn
-    permission: core.world
+    permission: rivet.world
   setworldspawn:
     description: Set the current world's spawn
-    permission: core.world
+    permission: rivet.world
   sethome:
     description: Set your home
     usage: /sethome [name]
-    permission: core.home
+    permission: rivet.home
   home:
     description: Teleport home
     usage: /home [name]
-    permission: core.home
+    permission: rivet.home
   delhome:
     description: Delete a home
     usage: /delhome [name]
-    permission: core.home
+    permission: rivet.home
   setwarp:
     description: Set a public warp
     usage: /setwarp <name>
-    permission: core.warp.set
+    permission: rivet.warp.set
   warp:
     description: Teleport to a public warp
     usage: /warp <name>
-    permission: core.warp
+    permission: rivet.warp
   delwarp:
     description: Delete a public warp
     usage: /delwarp <name>
-    permission: core.warp.set
+    permission: rivet.warp.set
   clear:
     description: Clear your inventory
-    permission: core.inventory
+    permission: rivet.inventory
   i:
     description: Give yourself an item
     usage: /i <item> [amount]
-    permission: core.inventory
+    permission: rivet.inventory
   killall:
     description: Remove all mobs from the current world
-    permission: core.world
+    permission: rivet.world
   day:
     description: Set the current world to day
-    permission: core.environment
+    permission: rivet.environment
   night:
     description: Set the current world to night
-    permission: core.environment
+    permission: rivet.environment
   noon:
     description: Set the current world to noon
-    permission: core.environment
+    permission: rivet.environment
   midnight:
     description: Set the current world to midnight
-    permission: core.environment
+    permission: rivet.environment
   sun:
     description: Clear the current world's weather
-    permission: core.environment
+    permission: rivet.environment
   rain:
     description: Start rain in the current world
-    permission: core.environment
+    permission: rivet.environment
   thunder:
     description: Start a thunderstorm in the current world
-    permission: core.environment
+    permission: rivet.environment
   msg:
     description: Privately message a player
     usage: /msg <player> <message>
-    permission: core.message
+    permission: rivet.message
   r:
     description: Reply to your last private message
     usage: /r <message>
-    permission: core.message
+    permission: rivet.message
   tp:
     description: Teleport to a player
     usage: /tp <player>
-    permission: core.teleport
+    permission: rivet.teleport
   vanish:
     aliases: [v]
     description: Toggle staff vanish
-    permission: core.vanish
+    permission: rivet.vanish
   fly:
     description: Toggle flight
     usage: /fly
-    permission: core.fly
+    permission: rivet.fly
   perm:
     description: Manage user permissions
     usage: /perm <add|remove|list|check|reload>
-    permission: core.permissions.manage
+    permission: rivet.permissions.manage
   group:
     description: Manage permission groups
     usage: /group <set|list|info>
-    permission: core.permissions.manage
+    permission: rivet.permissions.manage
   hologram:
     aliases: [holo]
     description: Manage holograms
     usage: /hologram help
-    permission: fancyholograms.admin
+    permission: rivet.holograms
   glow:
     description: Create glowing cuboid outlines
     usage: /glow wand
-    permission: core.glow
+    permission: rivet.glow
 permissions:
-  core.gamemode:
+  rivet.gamemode:
     default: op
-  core.flat:
+  rivet.flat:
     default: op
-  core.world:
+  rivet.world:
     default: op
-  core.home:
+  rivet.home:
     default: true
-  core.warp:
+  rivet.warp:
     default: true
-  core.warp.set:
+  rivet.warp.set:
     default: op
-  core.environment:
+  rivet.environment:
     default: op
-  core.inventory:
+  rivet.inventory:
     default: op
-  core.message:
+  rivet.message:
     default: true
-  core.teleport:
+  rivet.teleport:
     default: op
-  core.vanish:
+  rivet.vanish:
     default: op
-  core.vanish.see:
+  rivet.vanish.see:
     default: op
-  core.fly:
+  rivet.fly:
     default: op
-  core.permissions.manage:
+  rivet.permissions.manage:
     default: op
-  fancyholograms.admin:
+  rivet.holograms:
     default: op
-  fancyholograms.viewhologram.*:
+  rivet.holograms.view.*:
     default: false
-  core.glow:
+  rivet.glow:
     default: op
-  core.eggcapture:
+  rivet.eggcapture:
     default: true

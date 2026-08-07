@@ -1,13 +1,13 @@
 groups:
   default:
     permissions:
-      - core.message
+      - rivet.message
   staff:
     parent: default
     permissions:
-      - core.teleport
-      - core.vanish
-      - core.vanish.see
+      - rivet.teleport
+      - rivet.vanish
+      - rivet.vanish.see
   admin:
     parent: staff
     permissions:

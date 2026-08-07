@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -46,12 +46,12 @@ import java.util.UUID;
 final class GraveModule implements Listener {
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
 
-    private final CorePlugin plugin;
+    private final RivetPlugin plugin;
     private final NamespacedKey graveKey;
     private final File file;
     private final Map<UUID, Grave> graves = new HashMap<>();
 
-    GraveModule(CorePlugin plugin) {
+    GraveModule(RivetPlugin plugin) {
         this.plugin = plugin;
         graveKey = new NamespacedKey(plugin, "grave");
         file = new File(plugin.getDataFolder(), "graves.yml");

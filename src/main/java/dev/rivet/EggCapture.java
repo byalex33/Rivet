@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -33,10 +33,10 @@ final class EggCapture implements Listener {
     private static final Particle.DustTransition VORTEX_DUST = new Particle.DustTransition(
         Color.fromRGB(85, 255, 255), Color.fromRGB(190, 85, 255), 1.25f);
 
-    private final CorePlugin plugin;
+    private final RivetPlugin plugin;
     private final Map<UUID, Capture> captures = new HashMap<>();
 
-    EggCapture(CorePlugin plugin) {
+    EggCapture(RivetPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -45,7 +45,7 @@ final class EggCapture implements Listener {
         if (!(event.getEntity() instanceof Egg egg)
             || !(egg.getShooter() instanceof Player player)
             || !(event.getHitEntity() instanceof Mob mob)
-            || !player.hasPermission("core.eggcapture")
+            || !player.hasPermission("rivet.eggcapture")
             || captures.containsKey(mob.getUniqueId())) {
             return;
         }
