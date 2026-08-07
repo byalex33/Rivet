@@ -2,3 +2,8 @@
 # command, and other non-natural spawn reasons are unaffected.
 flat-worlds:
   allow-natural-mob-spawning: false
+
+find-biome:
+  radius: 6400
+  horizontal-step: 32
+  vertical-step: 64

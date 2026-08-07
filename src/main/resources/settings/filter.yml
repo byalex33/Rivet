@@ -1,0 +1,16 @@
+# Filters match item materials only; names, lore, enchantments, and other data
+# do not create separate entries.
+maximum-size: 50
+blocked-worlds: []
+
+feedback:
+  action-bar: true
+  # Optional sound key, for example minecraft:block.note_block.bass. Empty disables it.
+  sound: ""
+
+gui:
+  title: "<dark_green>Item Filter"
+
+messages:
+  blocked-pickup: "<yellow>Pickup blocked: <white><item></white>"
+  list: "<gold>Filtered items:</gold> <white><items></white>"

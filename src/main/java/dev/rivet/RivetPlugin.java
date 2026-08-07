@@ -7,12 +7,15 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
+import org.bukkit.Registry;
+import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -36,6 +39,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.profile.PlayerProfile;
 import org.bukkit.profile.PlayerTextures;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.BiomeSearchResult;
 import org.bstats.bukkit.Metrics;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,6 +76,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     };
     private final Set<UUID> vanished = new HashSet<>();
     private final Set<UUID> flightEnabled = new HashSet<>();
+    private final Set<UUID> biomeSearches = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private ChatModule chat;
     private AutoBreeder autoBreeder;
     private EggCapture eggCapture;
@@ -98,6 +103,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private NearModule near;
     private ItemTools itemTools;
     private StaffTools staffTools;
+    private FilterModule filter;
     private RivetConfig files;
     private YamlConfiguration homes;
     private YamlConfiguration warps;
@@ -210,6 +216,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("inventory")) {
             itemTools = new ItemTools(this);
         }
+        if (moduleEnabled("filter")) {
+            filter = new FilterModule(this);
+            getServer().getPluginManager().registerEvents(filter, this);
+        }
         if (moduleEnabled("staff")) {
             staffTools = new StaffTools(this);
             getServer().getPluginManager().registerEvents(staffTools, this);
@@ -269,6 +279,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (staffTools != null) {
             staffTools.shutdown();
         }
+        if (filter != null) {
+            filter.shutdown();
+        }
+        biomeSearches.clear();
         if (nicknames != null) {
             nicknames.shutdown();
         }
@@ -380,8 +394,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "setwarp" -> setWarp(player, args);
             case "warp" -> warp(player, args);
             case "delwarp" -> deleteWarp(player, args);
-            case "clear" -> clearInventory(player);
+            case "clear" -> itemTools.clear(player, args);
             case "i" -> giveItem(player, args);
+            case "condense" -> itemTools.condense(player, args);
+            case "donate" -> itemTools.donate(player, args);
+            case "giveall" -> itemTools.giveAll(player, args);
             case "killall" -> killAll(player);
             case "day", "night", "noon", "midnight" -> setTime(player, name);
             case "sun", "rain", "thunder" -> setWeather(player, name);
@@ -389,17 +406,21 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "r" -> chat.reply(player, args);
             case "socialspy" -> chat.socialSpy(player, args);
             case "ignore" -> chat.ignore(player, args);
+            case "chatcolor" -> chat.chatColor(player, args);
             case "tp" -> teleportPlayer(player, args);
             case "vanish" -> toggleVanish(player);
             case "fly" -> toggleFlight(player, args);
             case "heal" -> staffTools.heal(player, args);
             case "feed" -> staffTools.feed(player, args);
             case "god" -> staffTools.god(player, args);
+            case "flyspeed" -> staffTools.flySpeed(player, args);
+            case "bossbarmsg" -> staffTools.bossBar(player, args);
             case "spawn", "setspawn" -> spawn.command(player, name, args);
             case "tpa", "tpahere", "tpaccept", "tpdeny" -> tpa.command(player, name, args);
             case "kit" -> kits.command(player, args);
             case "back" -> graves.back(player, args);
             case "afk" -> afk.command(player, args);
+            case "afkcheck" -> afk.check(player, args);
             case "invsee" -> inventoryView(player, args);
             case "enderchest" -> enderChest(player, args);
             case "repair" -> itemTools.repair(player, args);
@@ -414,6 +435,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "daily" -> daily.command(player, args);
             case "rtp" -> rtp.command(player, args);
             case "near" -> near.command(player, args);
+            case "findbiome" -> findBiome(player, args);
+            case "filter" -> filter.command(player, args);
             default -> false;
         };
     }
@@ -446,6 +469,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
                 case "ignore" -> sender instanceof Player player
                     ? chat.ignoreCompletions(player, args) : List.of();
+                case "chatcolor" -> sender instanceof Player player
+                    ? chat.chatColorCompletions(player, args) : List.of();
                 case "tpa", "tpahere", "tpaccept", "tpdeny" -> sender instanceof Player player
                     ? tpa.completions(player, command.getName(), args) : List.of();
                 case "kit" -> sender instanceof Player player ? kits.completions(player, args) : List.of();
@@ -459,8 +484,18 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     ? staffTools.completions(player, args, "rivet.heal.others") : List.of();
                 case "feed" -> sender instanceof Player player
                     ? staffTools.completions(player, args, "rivet.feed.others") : List.of();
-                case "god" -> sender instanceof Player player
-                    ? staffTools.completions(player, args, "rivet.god.others") : List.of();
+                case "god" -> sender instanceof Player player ? staffTools.godCompletions(player, args) : List.of();
+                case "flyspeed" -> sender instanceof Player player
+                    ? staffTools.flySpeedCompletions(player, args) : List.of();
+                case "bossbarmsg" -> sender instanceof Player player
+                    ? staffTools.bossBarCompletions(player, args) : List.of();
+                case "afk", "afkcheck" -> sender instanceof Player player
+                    ? afk.completions(player, command.getName(), args) : List.of();
+                case "clear", "condense", "donate", "giveall" -> sender instanceof Player player
+                    ? itemTools.completions(player, command.getName(), args) : List.of();
+                case "findbiome" -> args.length == 1 ? Registry.BIOME.keyStream()
+                    .map(NamespacedKey::getKey).sorted().toList() : List.of();
+                case "filter" -> filter.completions(args);
                 case "repair" -> args.length == 1 && sender.hasPermission("rivet.repair.all")
                     ? List.of("all") : List.of();
                 case "rename" -> args.length == 1 ? List.of("clear") : List.of();
@@ -839,9 +874,78 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         return "homes." + player.getUniqueId() + ".locations." + name;
     }
 
-    private boolean clearInventory(Player player) {
-        player.getInventory().clear();
-        send(player, "<green>Inventory cleared.");
+    private boolean findBiome(Player player, String[] args) {
+        if (args.length != 1) {
+            send(player, "<red>Usage: /findbiome <biome>");
+            return true;
+        }
+        String value = args[0].toLowerCase(Locale.ROOT).replace(' ', '_');
+        NamespacedKey key = NamespacedKey.fromString(value.contains(":") ? value : "minecraft:" + value);
+        Biome biome = key == null ? null : Registry.BIOME.get(key);
+        if (biome == null) {
+            send(player, "<red>That biome does not exist.");
+            return true;
+        }
+        if (!biomeSearches.add(player.getUniqueId())) {
+            send(player, "<yellow>A biome search is already running.");
+            return true;
+        }
+        int radius = Math.max(64, Math.min(30_000,
+            settings("worlds").getInt("find-biome.radius", 6_400)));
+        int horizontalStep = Math.max(1,
+            settings("worlds").getInt("find-biome.horizontal-step", 32));
+        int verticalStep = Math.max(1,
+            settings("worlds").getInt("find-biome.vertical-step", 64));
+        Location origin = player.getLocation().clone();
+        send(player, "<gray>Searching for the nearest <white>" + key.getKey().replace('_', ' ') + "</white>...</gray>");
+        getServer().getScheduler().runTaskAsynchronously(this, () -> {
+            BiomeSearchResult result = null;
+            Throwable failure = null;
+            try {
+                result = origin.getWorld().locateNearestBiome(origin, radius, horizontalStep,
+                    verticalStep, biome);
+            } catch (Throwable throwable) {
+                failure = throwable;
+            }
+            BiomeSearchResult found = result;
+            Throwable error = failure;
+            if (!isEnabled()) {
+                return;
+            }
+            try {
+                getServer().getScheduler().runTask(this, () -> {
+                    biomeSearches.remove(player.getUniqueId());
+                    if (!player.isOnline()) {
+                        return;
+                    }
+                    if (error != null) {
+                        getLogger().warning("Biome search failed: " + error.getMessage());
+                        send(player, "<red>Biome search failed. Check the console.");
+                        return;
+                    }
+                    if (found == null) {
+                        send(player, "<yellow>No matching biome was found within <white>" + radius + "</white> blocks.");
+                        return;
+                    }
+                    Location location = found.getLocation();
+                    int distance = (int) Math.round(Math.hypot(location.getX() - origin.getX(),
+                        location.getZ() - origin.getZ()));
+                    int x = location.getBlockX();
+                    int y = location.getBlockY();
+                    int z = location.getBlockZ();
+                    player.sendMessage(MM.deserialize("<green>Nearest <white><biome></white>: "
+                            + "<click:suggest_command:'/tp " + x + " " + y + " " + z
+                            + "'><aqua><x>, <y>, <z></aqua></click> <gray>(<distance> blocks)</gray>",
+                        Placeholder.unparsed("biome", key.getKey().replace('_', ' ')),
+                        Placeholder.unparsed("x", Integer.toString(x)),
+                        Placeholder.unparsed("y", Integer.toString(y)),
+                        Placeholder.unparsed("z", Integer.toString(z)),
+                        Placeholder.unparsed("distance", Integer.toString(distance))));
+                });
+            } catch (IllegalStateException ignored) {
+                // Plugin shutdown raced the async search completion.
+            }
+        });
         return true;
     }
 
@@ -1320,7 +1424,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     static String moduleForCommand(String command) {
         return switch (command) {
-            case "msg", "r", "socialspy", "ignore" -> "chat";
+            case "msg", "r", "socialspy", "ignore", "chatcolor" -> "chat";
             case "sethome", "home", "delhome" -> "homes";
             case "setwarp", "warp", "delwarp" -> "warps";
             case "hologram" -> "holograms";
@@ -1329,7 +1433,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "tpa", "tpahere", "tpaccept", "tpdeny" -> "tpa";
             case "kit" -> "kits";
             case "back" -> "graves";
-            case "afk" -> "afk";
+            case "afk", "afkcheck" -> "afk";
             case "nick" -> "nicknames";
             case "stats" -> "statistics";
             case "trash" -> "trash";
@@ -1341,10 +1445,12 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "rtp" -> "rtp";
             case "near" -> "near";
             case "perm", "group" -> "permissions";
-            case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall" -> "worlds";
-            case "gmc", "gms", "tp", "vanish", "fly", "heal", "feed", "god" -> "staff";
+            case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall", "findbiome" -> "worlds";
+            case "gmc", "gms", "tp", "vanish", "fly", "heal", "feed", "god", "flyspeed", "bossbarmsg" -> "staff";
             case "day", "night", "noon", "midnight", "sun", "rain", "thunder" -> "environment";
-            case "clear", "i", "invsee", "enderchest", "repair", "rename", "lore" -> "inventory";
+            case "clear", "i", "invsee", "enderchest", "repair", "rename", "lore",
+                 "condense", "donate", "giveall" -> "inventory";
+            case "filter" -> "filter";
             default -> null;
         };
     }

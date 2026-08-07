@@ -21,7 +21,7 @@ final class RivetConfig {
         "mob-heads", "holograms", "glow", "permissions", "worlds", "staff",
         "environment", "inventory", "spawn", "tpa", "kits", "afk", "join-leave",
         "announcements", "nicknames", "statistics", "trash", "utilities", "poses",
-        "backpacks", "daily", "rtp", "near");
+        "backpacks", "daily", "rtp", "near", "filter");
 
     private final RivetPlugin plugin;
     private final File settingsDirectory;

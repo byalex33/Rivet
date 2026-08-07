@@ -3,8 +3,11 @@ package dev.rivet;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -24,10 +27,13 @@ import java.util.regex.Pattern;
 
 final class ChatModule implements Listener {
     private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage CHAT_COLORS = MiniMessage.builder().tags(TagResolver.resolver(
+        StandardTags.color(), StandardTags.gradient(), StandardTags.rainbow())).build();
     private static final Pattern ITEM_TOKEN = Pattern.compile("\\[(?:i|item)]",
         Pattern.CASE_INSENSITIVE);
     private final RivetPlugin plugin;
     private final Map<UUID, UUID> replies = new HashMap<>();
+    private final Map<UUID, String> colors = new java.util.concurrent.ConcurrentHashMap<>();
     private final YamlConfiguration socialData;
     private final YamlConfiguration ignoreData;
     private String chatFormat;
@@ -38,6 +44,19 @@ final class ChatModule implements Listener {
         this.plugin = plugin;
         socialData = plugin.data("chat");
         ignoreData = plugin.data("ignore");
+        var savedColors = socialData.getConfigurationSection("chat-color");
+        if (savedColors != null) {
+            savedColors.getKeys(false).forEach(value -> {
+                try {
+                    String color = savedColors.getString(value);
+                    if (color != null && validChatColor(color, true)) {
+                        colors.put(UUID.fromString(value), color);
+                    }
+                } catch (IllegalArgumentException exception) {
+                    plugin.getLogger().warning("Skipped invalid chat color owner UUID: " + value);
+                }
+            });
+        }
         reload();
     }
 
@@ -52,7 +71,8 @@ final class ChatModule implements Listener {
     public void onChat(AsyncChatEvent event) {
         ItemStack held = event.getPlayer().getInventory().getItemInMainHand().clone();
         event.message(itemTokens(event.message(), itemLink(held)));
-        event.renderer((source, displayName, message, viewer) -> format(chatFormat, displayName, message));
+        event.renderer((source, displayName, message, viewer) -> format(chatFormat, displayName,
+            formatMessage(colors.get(source.getUniqueId()), message)));
     }
 
     @EventHandler
@@ -204,6 +224,67 @@ final class ChatModule implements Listener {
         return true;
     }
 
+    boolean chatColor(Player actor, String[] args) {
+        Player target = actor;
+        String value;
+        if (args.length == 1) {
+            value = args[0];
+        } else if (args.length == 2 && actor.hasPermission("rivet.chatcolor.others")) {
+            target = plugin.getServer().getPlayerExact(args[0]);
+            if (target == null || !actor.canSee(target)) {
+                send(actor, "<red>That player is not online.");
+                return true;
+            }
+            value = args[1];
+        } else {
+            send(actor, "<red>Usage: /chatcolor [player] <color|reset>");
+            return true;
+        }
+        String path = "chat-color." + target.getUniqueId();
+        String previous = colors.get(target.getUniqueId());
+        if (value.equalsIgnoreCase("reset")) {
+            socialData.set(path, null);
+            colors.remove(target.getUniqueId());
+        } else {
+            boolean advanced = actor.hasPermission("rivet.chatcolor.advanced");
+            if (!validChatColor(value, advanced) || !enabledChatColor(value)) {
+                send(actor, "<red>Use one allowed color tag, such as <white>&lt;red&gt;</white>"
+                    + (advanced ? ", <white>&lt;gradient:red:gold&gt;</white>, or <white>&lt;rainbow&gt;</white>." : "."));
+                return true;
+            }
+            String normalized = value.toLowerCase(java.util.Locale.ROOT);
+            socialData.set(path, normalized);
+            colors.put(target.getUniqueId(), normalized);
+        }
+        if (!save("chat", actor)) {
+            socialData.set(path, previous);
+            if (previous == null) {
+                colors.remove(target.getUniqueId());
+            } else {
+                colors.put(target.getUniqueId(), previous);
+            }
+            return true;
+        }
+        actor.sendMessage(MM.deserialize(value.equalsIgnoreCase("reset")
+                ? "<yellow>Chat color reset for <white><player></white>."
+                : "<green>Chat color set for <white><player></white>.",
+            Placeholder.unparsed("player", target.getName())));
+        return true;
+    }
+
+    List<String> chatColorCompletions(Player player, String[] args) {
+        List<String> formats = new ArrayList<>(List.of("reset", "<red>", "<gold>", "<green>", "<aqua>"));
+        if (player.hasPermission("rivet.chatcolor.advanced")) {
+            formats.add("<gradient:red:gold>");
+            formats.add("<rainbow>");
+        }
+        if (args.length == 1 && player.hasPermission("rivet.chatcolor.others")) {
+            plugin.getServer().getOnlinePlayers().stream().filter(player::canSee)
+                .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).forEach(formats::add);
+        }
+        return args.length == 1 || args.length == 2 ? formats : List.of();
+    }
+
     List<String> ignoreCompletions(Player player, String[] args) {
         if (args.length != 1) {
             return List.of();
@@ -232,6 +313,46 @@ final class ChatModule implements Listener {
     static boolean shouldReceiveSpy(UUID spy, UUID sender, UUID recipient,
                                     boolean enabled, boolean permitted) {
         return enabled && permitted && !spy.equals(sender) && !spy.equals(recipient);
+    }
+
+    static boolean validChatColor(String input, boolean advanced) {
+        if (input == null || input.length() < 3 || input.charAt(0) != '<'
+            || input.charAt(input.length() - 1) != '>') {
+            return false;
+        }
+        String tag = input.substring(1, input.length() - 1).toLowerCase(java.util.Locale.ROOT);
+        if (color(tag)) {
+            return true;
+        }
+        if (!advanced) {
+            return false;
+        }
+        if (tag.equals("rainbow")) {
+            return true;
+        }
+        String[] gradient = tag.split(":", -1);
+        return gradient.length >= 3 && gradient.length <= 10 && gradient[0].equals("gradient")
+            && java.util.Arrays.stream(gradient, 1, gradient.length).allMatch(ChatModule::color);
+    }
+
+    static Component formatMessage(String color, Component message) {
+        return color == null || color.isBlank() ? message
+            : CHAT_COLORS.deserialize(color + "<message>", Placeholder.component("message", message));
+    }
+
+    private boolean enabledChatColor(String input) {
+        String tag = input.toLowerCase(java.util.Locale.ROOT);
+        return (!tag.startsWith("<gradient:")
+                || plugin.settings("chat").getBoolean("chat-colors.allow-gradients", true))
+            && (!tag.equals("<rainbow>")
+                || plugin.settings("chat").getBoolean("chat-colors.allow-rainbow", true))
+            && (!tag.startsWith("<#")
+                || plugin.settings("chat").getBoolean("chat-colors.allow-hex", true));
+    }
+
+    private static boolean color(String value) {
+        return NamedTextColor.NAMES.value(value) != null
+            || value.matches("#[0-9a-f]{6}") && TextColor.fromHexString(value) != null;
     }
 
     static Component format(String format, Component player, Component message) {

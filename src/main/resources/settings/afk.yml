@@ -8,4 +8,5 @@ indicator:
 
 messages:
   afk: "<yellow><player> is now AFK.</yellow>"
+  afk-with-reason: "<yellow><player> is now AFK: <white><reason></white></yellow>"
   return: "<green><player> is no longer AFK.</green>"

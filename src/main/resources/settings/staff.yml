@@ -3,6 +3,12 @@ god:
   # When false, god mode is cleared on logout and plugin shutdown.
   persist-across-reconnects: false
 
+boss-bar:
+  default-duration-seconds: 10
+  default-color: purple
+  # solid, segmented_6, segmented_10, segmented_12, or segmented_20
+  default-style: solid
+
 messages:
   heal: "<green>Healed <white><target></white>.</green>"
   heal-target: "<green>You were healed by <white><player></white>.</green>"

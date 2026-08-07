@@ -13,18 +13,219 @@ import org.bukkit.inventory.meta.Damageable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 final class ItemTools {
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final MiniMessage FORMATTED = MiniMessage.builder().tags(TagResolver.resolver(
         StandardTags.color(), StandardTags.decorations())).build();
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
+    private static final Map<Material, Compression> COMPRESSIONS = Map.ofEntries(
+        Map.entry(Material.IRON_INGOT, new Compression(Material.IRON_BLOCK, 9)),
+        Map.entry(Material.GOLD_INGOT, new Compression(Material.GOLD_BLOCK, 9)),
+        Map.entry(Material.COPPER_INGOT, new Compression(Material.COPPER_BLOCK, 9)),
+        Map.entry(Material.DIAMOND, new Compression(Material.DIAMOND_BLOCK, 9)),
+        Map.entry(Material.EMERALD, new Compression(Material.EMERALD_BLOCK, 9)),
+        Map.entry(Material.COAL, new Compression(Material.COAL_BLOCK, 9)),
+        Map.entry(Material.REDSTONE, new Compression(Material.REDSTONE_BLOCK, 9)),
+        Map.entry(Material.LAPIS_LAZULI, new Compression(Material.LAPIS_BLOCK, 9)),
+        Map.entry(Material.RAW_IRON, new Compression(Material.RAW_IRON_BLOCK, 9)),
+        Map.entry(Material.RAW_GOLD, new Compression(Material.RAW_GOLD_BLOCK, 9)),
+        Map.entry(Material.RAW_COPPER, new Compression(Material.RAW_COPPER_BLOCK, 9)),
+        Map.entry(Material.WHEAT, new Compression(Material.HAY_BLOCK, 9)),
+        Map.entry(Material.DRIED_KELP, new Compression(Material.DRIED_KELP_BLOCK, 9)),
+        Map.entry(Material.SLIME_BALL, new Compression(Material.SLIME_BLOCK, 9)),
+        Map.entry(Material.BONE_MEAL, new Compression(Material.BONE_BLOCK, 9)));
+    private final RivetPlugin plugin;
     private final YamlConfiguration settings;
 
     ItemTools(RivetPlugin plugin) {
+        this.plugin = plugin;
         settings = plugin.settings("inventory");
+    }
+
+    boolean clear(Player actor, String[] args) {
+        List<String> values = Arrays.stream(args).filter(value -> !value.equalsIgnoreCase("-s")).toList();
+        boolean silent = values.size() != args.length;
+        if (values.size() > 2) {
+            actor.sendMessage(MM.deserialize("<red>Usage: /clear [player] [item[:amount][;plain]] [-s]"));
+            return true;
+        }
+        Player target = actor;
+        String item = null;
+        if (values.size() == 1) {
+            Player possible = plugin.getServer().getPlayerExact(values.get(0));
+            if (possible != null && actor.canSee(possible)) {
+                if (!actor.hasPermission("rivet.inventory.clear.others")) {
+                    actor.sendMessage(MM.deserialize("<red>You cannot clear another player's inventory."));
+                    return true;
+                }
+                target = possible;
+            } else {
+                item = values.get(0);
+            }
+        } else if (values.size() == 2) {
+            if (!actor.hasPermission("rivet.inventory.clear.others")) {
+                actor.sendMessage(MM.deserialize("<red>You cannot clear another player's inventory."));
+                return true;
+            }
+            target = plugin.getServer().getPlayerExact(values.get(0));
+            if (target == null || !actor.canSee(target)) {
+                actor.sendMessage(MM.deserialize("<red>That player is not online.</red>"));
+                return true;
+            }
+            item = values.get(1);
+        }
+        int removed;
+        ClearItem parsed = null;
+        if (item == null) {
+            removed = Arrays.stream(target.getInventory().getContents())
+                .filter(java.util.Objects::nonNull).mapToInt(ItemStack::getAmount).sum();
+            target.getInventory().clear();
+        } else {
+            parsed = parseClearItem(item);
+            if (parsed == null) {
+                actor.sendMessage(MM.deserialize("<red>Use a valid item, optional positive amount, and optional <white>;plain</white>."));
+                return true;
+            }
+            removed = remove(target, parsed);
+        }
+        if (!silent) {
+            String material = parsed == null ? "items" : parsed.material().name().toLowerCase(Locale.ROOT);
+            actor.sendMessage(MM.deserialize("<green>Removed <white><count> <item></white> from <white><player></white>.",
+                net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("count", Integer.toString(removed)),
+                net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", material),
+                net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", target.getName())));
+        }
+        return true;
+    }
+
+    boolean condense(Player player, String[] args) {
+        if (args.length != 0) {
+            player.sendMessage(MM.deserialize("<red>Usage: /condense"));
+            return true;
+        }
+        ItemStack[] contents = Arrays.stream(player.getInventory().getStorageContents())
+            .map(item -> item == null ? null : item.clone()).toArray(ItemStack[]::new);
+        Map<Material, Integer> made = new LinkedHashMap<>();
+        COMPRESSIONS.forEach((input, compression) -> {
+            int available = Arrays.stream(contents).filter(java.util.Objects::nonNull)
+                .filter(item -> item.getType() == input && plain(item)).mapToInt(ItemStack::getAmount).sum();
+            int conversions = condensedAmount(available, compression.ratio());
+            for (int count = conversions; count > 0; count--) {
+                ItemStack[] candidate = Arrays.stream(contents)
+                    .map(item -> item == null ? null : item.clone()).toArray(ItemStack[]::new);
+                consume(candidate, input, count * compression.ratio());
+                if (add(candidate, new ItemStack(compression.output(), count))) {
+                    System.arraycopy(candidate, 0, contents, 0, contents.length);
+                    made.put(compression.output(), count);
+                    break;
+                }
+            }
+        });
+        if (made.isEmpty()) {
+            player.sendMessage(MM.deserialize("<gray>Nothing in your inventory can be condensed."));
+            return true;
+        }
+        player.getInventory().setStorageContents(contents);
+        String summary = String.join(", ", made.entrySet().stream()
+            .map(entry -> entry.getValue() + " " + entry.getKey().name().toLowerCase(Locale.ROOT).replace('_', ' '))
+            .toList());
+        player.sendMessage(MM.deserialize("<green>Condensed: <white><items></white>.",
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("items", summary)));
+        return true;
+    }
+
+    boolean donate(Player sender, String[] args) {
+        if (args.length < 1 || args.length > 2) {
+            sender.sendMessage(MM.deserialize("<red>Usage: /donate <player> [amount]"));
+            return true;
+        }
+        Player receiver = plugin.getServer().getPlayerExact(args[0]);
+        if (receiver == null || !sender.canSee(receiver)) {
+            sender.sendMessage(MM.deserialize("<red>That player is not online.</red>"));
+            return true;
+        }
+        if (receiver.equals(sender)) {
+            sender.sendMessage(MM.deserialize("<red>You cannot donate to yourself.</red>"));
+            return true;
+        }
+        ItemStack held = sender.getInventory().getItemInMainHand();
+        if (held.getType().isAir()) {
+            sender.sendMessage(MM.deserialize("<red>Hold the item you want to donate.</red>"));
+            return true;
+        }
+        int amount = args.length == 1 ? held.getAmount() : RivetPlugin.itemAmount(args[1]);
+        if (!validDonateAmount(amount, held.getAmount())) {
+            sender.sendMessage(MM.deserialize("<red>Amount must be between 1 and the held stack size.</red>"));
+            return true;
+        }
+        ItemStack donated = held.clone();
+        donated.setAmount(amount);
+        receiver.getInventory().addItem(donated).values()
+            .forEach(leftover -> receiver.getWorld().dropItemNaturally(receiver.getLocation(), leftover));
+        if (amount == held.getAmount()) {
+            sender.getInventory().setItemInMainHand(null);
+        } else {
+            held.setAmount(held.getAmount() - amount);
+        }
+        sender.sendMessage(MM.deserialize("<green>Donated <white><amount> <item></white> to <white><player></white>.",
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("amount", Integer.toString(amount)),
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", held.getType().name().toLowerCase(Locale.ROOT)),
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", receiver.getName())));
+        receiver.sendMessage(MM.deserialize("<green>Received <white><amount> <item></white> from <white><player></white>.",
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("amount", Integer.toString(amount)),
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", donated.getType().name().toLowerCase(Locale.ROOT)),
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", sender.getName())));
+        return true;
+    }
+
+    boolean giveAll(Player actor, String[] args) {
+        if (args.length < 1 || args.length > 2) {
+            actor.sendMessage(MM.deserialize("<red>Usage: /giveall <item> [amount]"));
+            return true;
+        }
+        Material material = Material.matchMaterial(args[0]);
+        int amount = args.length == 1 ? 1 : RivetPlugin.itemAmount(args[1]);
+        if (material == null || material.isAir() || !material.isItem() || amount < 1) {
+            actor.sendMessage(MM.deserialize("<red>Use a valid item and positive whole-number amount.</red>"));
+            return true;
+        }
+        plugin.getServer().getOnlinePlayers().forEach(player ->
+            player.getInventory().addItem(new ItemStack(material, amount)).values()
+                .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover)));
+        actor.sendMessage(MM.deserialize("<green>Gave <white><amount> <item></white> to <white><count></white> player(s).",
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("amount", Integer.toString(amount)),
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", material.name().toLowerCase(Locale.ROOT)),
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("count",
+                Integer.toString(plugin.getServer().getOnlinePlayers().size()))));
+        return true;
+    }
+
+    List<String> completions(Player player, String command, String[] args) {
+        if (command.equals("donate")) {
+            return args.length == 1 ? visiblePlayers(player) : args.length == 2
+                ? List.of("1", Integer.toString(Math.max(1,
+                    player.getInventory().getItemInMainHand().getAmount()))) : List.of();
+        }
+        if (command.equals("clear")) {
+            if (args.length == 1) {
+                List<String> choices = new ArrayList<>(materials());
+                if (player.hasPermission("rivet.inventory.clear.others")) {
+                    choices.addAll(visiblePlayers(player));
+                }
+                choices.add("-s");
+                return choices;
+            }
+            return args.length == 2 ? materials() : args.length == 3 ? List.of("-s") : List.of();
+        }
+        if (command.equals("giveall")) {
+            return args.length == 1 ? materials() : args.length == 2 ? List.of("1", "16", "64") : List.of();
+        }
+        return List.of();
     }
 
     boolean repair(Player player, String[] args) {
@@ -190,6 +391,119 @@ final class ItemTools {
 
     private void message(Player player, String key, String fallback) {
         player.sendMessage(MM.deserialize(settings.getString("messages." + key, fallback)));
+    }
+
+    static ClearItem parseClearItem(String input) {
+        String[] data = input.split(";", -1);
+        if (data.length > 2 || data.length == 2 && !data[1].equalsIgnoreCase("plain")) {
+            return null;
+        }
+        String materialPart = data[0];
+        int amount = Integer.MAX_VALUE;
+        Material material = Material.matchMaterial(materialPart);
+        if (material == null) {
+            int separator = materialPart.lastIndexOf(':');
+            if (separator < 1) {
+                return null;
+            }
+            material = Material.matchMaterial(materialPart.substring(0, separator));
+            amount = RivetPlugin.itemAmount(materialPart.substring(separator + 1));
+        }
+        return material == null || material == Material.AIR || material == Material.CAVE_AIR
+            || material == Material.VOID_AIR || amount < 1
+            ? null : new ClearItem(material, amount, data.length == 2);
+    }
+
+    static int condensedAmount(int itemCount, int ratio) {
+        return itemCount < 0 || ratio < 1 ? 0 : itemCount / ratio;
+    }
+
+    static boolean validDonateAmount(int requested, int available) {
+        return requested > 0 && requested <= available;
+    }
+
+    private static int remove(Player player, ClearItem request) {
+        int remaining = request.amount();
+        int removed = 0;
+        ItemStack[] contents = player.getInventory().getContents();
+        for (int slot = 0; slot < contents.length && remaining > 0; slot++) {
+            ItemStack item = contents[slot];
+            if (item == null || item.getType() != request.material()
+                || request.plainOnly() && !plain(item)) {
+                continue;
+            }
+            int count = Math.min(remaining, item.getAmount());
+            removed += count;
+            remaining -= count;
+            if (count == item.getAmount()) {
+                player.getInventory().setItem(slot, null);
+            } else {
+                item.setAmount(item.getAmount() - count);
+                player.getInventory().setItem(slot, item);
+            }
+        }
+        return removed;
+    }
+
+    private static boolean plain(ItemStack item) {
+        return condensable(item.hasItemMeta());
+    }
+
+    static boolean condensable(boolean hasItemMeta) {
+        return !hasItemMeta;
+    }
+
+    private static void consume(ItemStack[] contents, Material material, int amount) {
+        for (int slot = 0; slot < contents.length && amount > 0; slot++) {
+            ItemStack item = contents[slot];
+            if (item == null || item.getType() != material || !plain(item)) {
+                continue;
+            }
+            int count = Math.min(amount, item.getAmount());
+            amount -= count;
+            if (count == item.getAmount()) {
+                contents[slot] = null;
+            } else {
+                item.setAmount(item.getAmount() - count);
+            }
+        }
+    }
+
+    private static boolean add(ItemStack[] contents, ItemStack added) {
+        int remaining = added.getAmount();
+        for (ItemStack item : contents) {
+            if (item != null && item.isSimilar(added) && item.getAmount() < item.getMaxStackSize()) {
+                int count = Math.min(remaining, item.getMaxStackSize() - item.getAmount());
+                item.setAmount(item.getAmount() + count);
+                remaining -= count;
+            }
+        }
+        for (int slot = 0; slot < contents.length && remaining > 0; slot++) {
+            if (contents[slot] == null) {
+                ItemStack stack = added.clone();
+                stack.setAmount(Math.min(remaining, stack.getMaxStackSize()));
+                contents[slot] = stack;
+                remaining -= stack.getAmount();
+            }
+        }
+        return remaining == 0;
+    }
+
+    private List<String> visiblePlayers(Player viewer) {
+        return plugin.getServer().getOnlinePlayers().stream()
+            .filter(player -> player != viewer && viewer.canSee(player)).map(Player::getName)
+            .sorted(String.CASE_INSENSITIVE_ORDER).toList();
+    }
+
+    private static List<String> materials() {
+        return Arrays.stream(Material.values()).filter(material -> material.isItem() && !material.isAir())
+            .map(material -> material.name().toLowerCase(Locale.ROOT)).sorted().toList();
+    }
+
+    record ClearItem(Material material, int amount, boolean plainOnly) {
+    }
+
+    private record Compression(Material output, int ratio) {
     }
 
     static boolean repairEligible(boolean damageable, int damage) {

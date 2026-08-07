@@ -9,7 +9,7 @@ Survival essentials, staff tools, custom worlds, holograms, graves, automation, 
 [![Java 21](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://adoptium.net/temurin/releases/?version=21)
 [![Paper 1.21.11](https://img.shields.io/badge/Paper-1.21.11-2C2E33?style=for-the-badge&logo=paper&logoColor=white)](https://papermc.io/)
 [![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](#build-from-source)
-[![Tests](https://img.shields.io/badge/tests-48_passing-2EA44F?style=for-the-badge)](#build-from-source)
+[![Tests](https://img.shields.io/badge/tests-57_passing-2EA44F?style=for-the-badge)](#build-from-source)
 [![bStats Servers](https://img.shields.io/bstats/servers/33219?style=for-the-badge&label=servers&color=7C3AED)](https://bstats.org/plugin/bukkit/Rivet/33219)
 [![bStats Players](https://img.shields.io/bstats/players/33219?style=for-the-badge&label=players&color=2563EB)](https://bstats.org/plugin/bukkit/Rivet/33219)
 
@@ -23,8 +23,8 @@ Rivet replaces a pile of single-purpose plugins with one focused Paper plugin. T
 
 <table>
   <tr>
-    <td align="center"><strong>68</strong><br><sub>commands</sub></td>
-    <td align="center"><strong>48</strong><br><sub>tests</sub></td>
+    <td align="center"><strong>77</strong><br><sub>commands</sub></td>
+    <td align="center"><strong>57</strong><br><sub>tests</sub></td>
     <td align="center"><strong>25</strong><br><sub>breeder species</sub></td>
     <td align="center"><strong>3%</strong><br><sub>default head chance</sub></td>
   </tr>
@@ -80,11 +80,11 @@ Rivet creates its configuration and data files under `plugins/Rivet/` on first l
 | World tools | `/worldspawn`, `/setworldspawn`, `/killall` | `rivet.world` |
 | Homes | `/sethome [name]`, `/home [name]`, `/delhome [name]` | `rivet.home` |
 | Warps | `/setwarp`, `/warp`, `/delwarp` | `rivet.warp`, `rivet.warp.set` |
-| Inventory | `/clear`, `/i <item> [amount]` | `rivet.inventory` |
+| Inventory | `/clear [player] [item[:amount][;plain]] [-s]`, `/i`, `/condense`, `/donate`, `/giveall` | `rivet.inventory`, `rivet.condense`, `rivet.donate`, `rivet.giveall` |
 | Time | `/day`, `/night`, `/noon`, `/midnight` | `rivet.environment` |
 | Weather | `/sun`, `/rain`, `/thunder` | `rivet.environment` |
-| Messages | `/msg`, `/r`, `/ignore`, `/socialspy` (`/ss`) | `rivet.message`, `rivet.ignore`, `rivet.socialspy` |
-| Staff | `/tp`, `/vanish`, `/fly`, `/heal`, `/feed`, `/god` | `rivet.teleport`, `rivet.vanish`, `rivet.fly`, `rivet.heal[.others]`, `rivet.feed[.others]`, `rivet.god[.others]` |
+| Messages | `/msg`, `/r`, `/ignore`, `/socialspy` (`/ss`), `/chatcolor [player] <color|reset>` | `rivet.message`, `rivet.ignore`, `rivet.socialspy`, `rivet.chatcolor[.others|.advanced]` |
+| Staff | `/tp`, `/vanish`, `/fly`, `/flyspeed [player] <amount>`, `/heal`, `/feed`, `/god [player] [true|false] [-s]`, `/bossbarmsg` | `rivet.teleport`, `rivet.vanish`, `rivet.fly`, `rivet.flyspeed[.others]`, `rivet.heal[.others]`, `rivet.feed[.others]`, `rivet.god[.others]`, `rivet.bossbarmsg` |
 | Permissions | `/perm`, `/group` | `rivet.permissions.manage` |
 | Holograms | `/hologram` (`/holo`) | `rivet.holograms` |
 | Glow regions | `/glow` | `rivet.glow` |
@@ -92,7 +92,7 @@ Rivet creates its configuration and data files under `plugins/Rivet/` on first l
 | Teleport requests | `/tpa`, `/tpahere`, `/tpaccept`, `/tpdeny` | `rivet.tpa` |
 | Kits | `/kit [name]` | `rivet.kit`, `rivet.kit.<name>` |
 | Death return | `/back` | `rivet.back` |
-| AFK | `/afk` | `rivet.afk` |
+| AFK | `/afk [reason] [-p:player] [-s]`, `/afkcheck [player|all]` | `rivet.afk[.others|.silent]`, `rivet.afkcheck[.others]` |
 | Inventory admin | `/invsee`, `/enderchest [player]` | `rivet.inventory.invsee`, `rivet.inventory.enderchest[.others]` |
 | Nicknames | `/nick <nickname|off>`, `/nick <player> <nickname|off>` | `rivet.nick`, `rivet.nick.format`, `rivet.nick.others` |
 | Statistics | `/stats [player]` | `rivet.stats`, `rivet.stats.others` |
@@ -104,10 +104,27 @@ Rivet creates its configuration and data files under `plugins/Rivet/` on first l
 | Daily rewards | `/daily` | `rivet.daily` |
 | Random teleport | `/rtp [world]` | `rivet.rtp`, `rivet.rtp.world`, `rivet.rtp.cooldown.bypass` |
 | Nearby players | `/near` | `rivet.near` |
+| Item filter | `/filter`, `/filter add [item]`, `/filter remove`, `/filter list`, `/filter clear`, `/filter toggle` | `rivet.filter`, `rivet.filter.admin` |
+| Biome search | `/findbiome <biome>` | `rivet.findbiome` |
 | Item editing | `/repair [all]`, `/rename`, `/lore` | `rivet.repair[.all]`, `rivet.rename[.format]`, `rivet.lore[.format]` |
 | Administration | `/rivet`, `/rivet reload` | `rivet.admin` |
 
 </details>
+
+### New feature examples
+
+```text
+/filter add diamond
+/filter remove
+/chatcolor <gradient:red:gold>
+/chatcolor Alex <rainbow>
+/bossbarmsg all -d:10 -c:red -s:segmented_10 <red><bold>Server restarting soon
+/clear Alex diamond:32;plain -s
+```
+
+Chat colors accept one safe color tag. Gradients and rainbow formatting require `rivet.chatcolor.advanced`; command, click, hover, insertion, and other MiniMessage tags are rejected. The optional `;plain` clear selector matches only items without custom metadata and replaces obsolete legacy item-data matching.
+
+Staff-scoped permissions are `rivet.inventory.clear.others`, `rivet.afk.others`, `rivet.afk.silent`, `rivet.afkcheck.others`, `rivet.chatcolor.others`, `rivet.flyspeed.others`, `rivet.bossbarmsg`, and `rivet.giveall`. Player defaults are controlled by `rivet.filter`, `rivet.chatcolor`, `rivet.condense`, `rivet.donate`, and `rivet.findbiome`; `rivet.filter.admin` bypasses the configured filter-size limit.
 
 ## Configuration and data
 
@@ -147,18 +164,19 @@ plugins/Rivet/
 │   ├── backpacks.yml
 │   ├── daily.yml
 │   ├── rtp.yml
-│   └── near.yml
+│   ├── near.yml
+│   └── filter.yml
 └── data/
 ```
 
 - `modules.yml` contains only feature switches. Disabled modules do not register their listeners or start their tasks, and their declared commands return a clean disabled message. Restart after changing a switch.
 - `settings/` contains options owned by one module. For example, chat MiniMessage formats live in `settings/chat.yml`, permission groups in `settings/permissions.yml`, and the mob-head drop chance in `settings/mob-heads.yml`.
 - `config.yml` contains only Rivet-wide visual feedback settings used by multiple modules.
-- `data/` contains generated persistent state such as homes, warps, graves/death locations, spawn, kit cooldowns, nicknames, backpacks, daily claims, RTP cooldowns, ignore/social-spy preferences, staff state, breeders, glow regions, holograms, permission users, and tracked test worlds. Do not hand-edit these files while the server is running.
+- `data/` contains generated persistent state such as `filters.yml`, chat colors, homes, warps, graves/death locations, spawn, kit cooldowns, nicknames, backpacks, daily claims, RTP cooldowns, ignore/social-spy preferences, staff state, breeders, glow regions, holograms, permission users, and tracked test worlds. Do not hand-edit these files while the server is running.
 
-The new standalone switches are `backpacks`, `daily`, `rtp`, and `near`. Social spy and ignore follow `chat`; heal, feed, and god follow `staff`; repair, rename, and lore follow `inventory`. `/rivet` remains available as core administration.
+The standalone filter switch is `filter`; its settings are in `settings/filter.yml` and UUID-keyed state is generated in `data/filters.yml`. Social spy, ignore, and chat colors follow `chat`; boss bars, fly speed, heal, feed, and god follow `staff`; clear, condense, donate, give-all, repair, rename, and lore follow `inventory`. `/rivet` remains available as core administration.
 
-The `worlds` module owns test worlds, world spawn, mob cleanup, crop-trample protection, and the flat-world spawn rule. `staff` owns gamemode, teleport, vanish, flight, heal, feed, and god mode; `environment` owns time and weather; `inventory` owns inventory administration, repair, rename, and lore editing. Social spy and ignore extend `chat` instead of creating competing message handlers.
+The `worlds` module owns test worlds, biome search, world spawn, mob cleanup, crop-trample protection, and the flat-world spawn rule. `staff` owns gamemode, teleport, vanish, flight speed, boss bars, heal, feed, and god mode; `environment` owns time and weather; `inventory` owns inventory administration, condensing, donation, give-all, repair, rename, and lore editing. Social spy, ignore, and persisted chat colors extend `chat` instead of creating competing message handlers.
 
 `/rivet reload` validates and reloads `config.yml`, `modules.yml`, and every file under `settings/` without reading or rewriting runtime files under `data/`. Invalid YAML leaves the active configuration untouched and reports the source file. Settings apply immediately where safe; module switch changes are listed and require a restart so listeners and tasks are never half-loaded.
 
@@ -178,7 +196,7 @@ cd Rivet
 mvn clean package
 ```
 
-The finished plugin is written to `target/rivet-1.0-SNAPSHOT.jar`. `mvn test` runs the 48-test unit suite.
+The finished plugin is written to `target/rivet-1.0-SNAPSHOT.jar`. `mvn test` runs the 57-test unit suite.
 
 ## Privacy-friendly metrics
 

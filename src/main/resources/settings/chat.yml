@@ -4,6 +4,11 @@ private-messages:
   sent: "<gray>[you → <player>]</gray> <white><message></white>"
   received: "<gray>[<player> → you]</gray> <white><message></white>"
 
+chat-colors:
+  allow-hex: true
+  allow-gradients: true
+  allow-rainbow: true
+
 social-spy:
   format: "<dark_gray>[spy]</dark_gray> <gray><sender> → <recipient>:</gray> <white><message></white>"
   messages:

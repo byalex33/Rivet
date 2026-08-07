@@ -52,12 +52,24 @@ commands:
     usage: /delwarp <name>
     permission: rivet.warp.set
   clear:
-    description: Clear your inventory
+    description: Clear all or selected items from an inventory
+    usage: /clear [player] [item[:amount][;plain]] [-s]
     permission: rivet.inventory
   i:
     description: Give yourself an item
     usage: /i <item> [amount]
     permission: rivet.inventory
+  condense:
+    description: Condense plain materials into storage blocks
+    permission: rivet.condense
+  donate:
+    description: Donate held items to an online player
+    usage: /donate <player> [amount]
+    permission: rivet.donate
+  giveall:
+    description: Give an item to every online player
+    usage: /giveall <item> [amount]
+    permission: rivet.giveall
   killall:
     description: Remove all mobs from the current world
     permission: rivet.world
@@ -98,6 +110,10 @@ commands:
     description: Manage ignored private-message senders
     usage: /ignore <player|list|clear>
     permission: rivet.ignore
+  chatcolor:
+    description: Set a persistent chat color or gradient
+    usage: /chatcolor [player] <color|reset>
+    permission: rivet.chatcolor
   tp:
     description: Teleport to a player
     usage: /tp <player>
@@ -110,6 +126,10 @@ commands:
     description: Toggle flight
     usage: /fly
     permission: rivet.fly
+  flyspeed:
+    description: Set your or another player's flight speed
+    usage: /flyspeed [player] <amount>
+    permission: rivet.flyspeed
   heal:
     description: Restore health for yourself or another player
     usage: /heal [player]
@@ -120,8 +140,12 @@ commands:
     permission: rivet.feed
   god:
     description: Toggle invulnerability for yourself or another player
-    usage: /god [player]
+    usage: /god [player] [true|false] [-s]
     permission: rivet.god
+  bossbarmsg:
+    description: Show a timed MiniMessage boss bar
+    usage: /bossbarmsg <player|all> [flags] <message>
+    permission: rivet.bossbarmsg
   perm:
     description: Manage user permissions
     usage: /perm <add|remove|list|check|reload>
@@ -169,8 +193,13 @@ commands:
     description: Return to your latest death location
     permission: rivet.back
   afk:
-    description: Toggle AFK status
+    description: Toggle AFK status with an optional reason
+    usage: /afk [reason] [-p:player] [-s]
     permission: rivet.afk
+  afkcheck:
+    description: Inspect online AFK status and duration
+    usage: /afkcheck [player|all]
+    permission: rivet.afkcheck
   invsee:
     description: Open an online player's inventory
     usage: /invsee <player>
@@ -245,6 +274,14 @@ commands:
   near:
     description: List nearby visible players
     permission: rivet.near
+  findbiome:
+    description: Find the nearest matching biome
+    usage: /findbiome <biome>
+    permission: rivet.findbiome
+  filter:
+    description: Manage your persistent item pickup filter
+    usage: /filter [add|remove|list|clear|toggle|help]
+    permission: rivet.filter
   rivet:
     description: Show Rivet information or reload configuration
     usage: /rivet [reload]
@@ -266,6 +303,14 @@ permissions:
     default: op
   rivet.inventory:
     default: op
+  rivet.inventory.clear.others:
+    default: op
+  rivet.condense:
+    default: true
+  rivet.donate:
+    default: true
+  rivet.giveall:
+    default: op
   rivet.message:
     default: true
   rivet.socialspy:
@@ -274,6 +319,12 @@ permissions:
     default: true
   rivet.ignore.bypass:
     default: op
+  rivet.chatcolor:
+    default: true
+  rivet.chatcolor.others:
+    default: op
+  rivet.chatcolor.advanced:
+    default: op
   rivet.teleport:
     default: op
   rivet.vanish:
@@ -281,6 +332,10 @@ permissions:
   rivet.vanish.see:
     default: op
   rivet.fly:
+    default: op
+  rivet.flyspeed:
+    default: op
+  rivet.flyspeed.others:
     default: op
   rivet.heal:
     default: op
@@ -293,6 +348,8 @@ permissions:
   rivet.god:
     default: op
   rivet.god.others:
+    default: op
+  rivet.bossbarmsg:
     default: op
   rivet.permissions.manage:
     default: op
@@ -320,6 +377,14 @@ permissions:
     default: true
   rivet.afk:
     default: true
+  rivet.afk.others:
+    default: op
+  rivet.afk.silent:
+    default: op
+  rivet.afkcheck:
+    default: true
+  rivet.afkcheck.others:
+    default: op
   rivet.inventory.invsee:
     default: op
   rivet.inventory.enderchest:
@@ -401,5 +466,11 @@ permissions:
     default: op
   rivet.near:
     default: true
+  rivet.findbiome:
+    default: true
+  rivet.filter:
+    default: true
+  rivet.filter.admin:
+    default: op
   rivet.admin:
     default: op

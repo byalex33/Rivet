@@ -17,6 +17,7 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -112,7 +113,7 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
-        assertEquals(68, plugin.getConfigurationSection("commands").getKeys(false).size());
+        assertEquals(77, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
             .stream().filter(command -> !command.equals("rivet"))
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
@@ -136,6 +137,11 @@ public final class RivetPluginTest {
         assertEquals("daily", RivetPlugin.moduleForCommand("daily"));
         assertEquals("rtp", RivetPlugin.moduleForCommand("rtp"));
         assertEquals("near", RivetPlugin.moduleForCommand("near"));
+        assertEquals("filter", RivetPlugin.moduleForCommand("filter"));
+        assertEquals("chat", RivetPlugin.moduleForCommand("chatcolor"));
+        assertEquals("staff", RivetPlugin.moduleForCommand("bossbarmsg"));
+        assertEquals("inventory", RivetPlugin.moduleForCommand("condense"));
+        assertEquals("worlds", RivetPlugin.moduleForCommand("findbiome"));
         assertNull(RivetPlugin.moduleForCommand("rivet"));
         assertNull(RivetPlugin.moduleForCommand("unknown"));
     }
@@ -234,6 +240,111 @@ public final class RivetPluginTest {
         assertEquals(true, RivetPlugin.commandDisabled("backpack", module -> false));
         assertEquals(false, RivetPlugin.commandDisabled("backpack", module -> true));
         assertEquals(false, RivetPlugin.commandDisabled("rivet", module -> false));
+        assertEquals(true, RivetPlugin.commandDisabled("filter", module -> false));
+    }
+
+    @Test
+    public void managesMaterialFiltersAndHonorsLimitsAndToggles() {
+        Set<Material> items = EnumSet.noneOf(Material.class);
+        assertEquals(true, FilterModule.add(items, Material.DIAMOND, 1, false));
+        assertEquals(false, FilterModule.add(items, Material.EMERALD, 1, false));
+        assertEquals(true, FilterModule.add(items, Material.EMERALD, 1, true));
+        assertEquals(true, FilterModule.remove(items, Material.DIAMOND));
+        FilterModule.FilterState state = new FilterModule.FilterState(items, true);
+        assertEquals(false, FilterModule.toggle(state));
+        assertEquals(true, FilterModule.toggle(state));
+        assertEquals(true, FilterModule.blocksPickup(true, false, items, Material.EMERALD));
+        assertEquals(false, FilterModule.blocksPickup(false, false, items, Material.EMERALD));
+        assertEquals(false, FilterModule.blocksPickup(true, true, items, Material.EMERALD));
+    }
+
+    @Test
+    public void reloadsPersistedFilterMaterialsAndEnabledState() {
+        YamlConfiguration data = new YamlConfiguration();
+        data.set("player.enabled", false);
+        data.set("player.materials", List.of("DIAMOND", "EMERALD"));
+        FilterModule.FilterState state = FilterModule.readState(
+            data.getConfigurationSection("player"));
+        assertEquals(false, state.enabled());
+        assertEquals(Set.of(Material.DIAMOND, Material.EMERALD), state.items());
+    }
+
+    @Test
+    public void parsesAfkReasonsTargetsAndSilentFlags() {
+        assertEquals(new AfkModule.AfkArguments(null, "Lunch break", false, true),
+            AfkModule.parseArguments(new String[]{"Lunch", "break"}));
+        assertEquals(new AfkModule.AfkArguments("Alex", "Moderating", true, true),
+            AfkModule.parseArguments(new String[]{"-s", "-p:Alex", "Moderating"}));
+        assertEquals(false, AfkModule.parseArguments(new String[]{"-p:"}).valid());
+        assertEquals("1h 1m", AfkModule.duration(3_660_000));
+    }
+
+    @Test
+    public void parsesBossBarFlagsAndRejectsBadValues() {
+        StaffTools.BossBarArguments parsed = StaffTools.parseBossBarArguments(
+            new String[]{"-d:10", "-c:red", "-s:segmented_6", "<red>Hello"},
+            5, "purple", "solid");
+        assertEquals(true, parsed.valid());
+        assertEquals(10, parsed.duration(), .0001);
+        assertEquals("RED", parsed.color().name());
+        assertEquals("NOTCHED_6", parsed.overlay().name());
+        assertEquals(false, StaffTools.parseBossBarArguments(
+            new String[]{"-d:nope", "hello"}, 5, "purple", "solid").valid());
+    }
+
+    @Test
+    public void validatesRestrictedChatColorTags() {
+        assertEquals(true, ChatModule.validChatColor("<red>", false));
+        assertEquals(true, ChatModule.validChatColor("<#12abEF>", false));
+        assertEquals(false, ChatModule.validChatColor("<gradient:red:gold>", false));
+        assertEquals(true, ChatModule.validChatColor("<gradient:red:gold>", true));
+        assertEquals(true, ChatModule.validChatColor("<rainbow>", true));
+        assertEquals(false, ChatModule.validChatColor("<click:run_command:'/op me'>", true));
+    }
+
+    @Test
+    public void appliesChatColorsWithoutDroppingItemHoverEvents() {
+        Component message = Component.text("Diamond")
+            .hoverEvent(Component.text("A very shiny item"));
+        Component colored = ChatModule.formatMessage("<gradient:red:gold>", message);
+        assertEquals("Diamond", PlainTextComponentSerializer.plainText().serialize(colored));
+        assertEquals(true, hasHover(colored));
+        assertEquals(true, hasColor(colored));
+    }
+
+    @Test
+    public void parsesModernSelectiveClearItems() {
+        assertEquals(new ItemTools.ClearItem(Material.DIAMOND, Integer.MAX_VALUE, false),
+            ItemTools.parseClearItem("diamond"));
+        assertEquals(new ItemTools.ClearItem(Material.STONE, 12, false),
+            ItemTools.parseClearItem("minecraft:stone:12"));
+        assertEquals(new ItemTools.ClearItem(Material.DIAMOND_SWORD, 1, true),
+            ItemTools.parseClearItem("diamond_sword:1;plain"));
+        assertNull(ItemTools.parseClearItem("diamond:0"));
+        assertNull(ItemTools.parseClearItem("diamond;legacy-data"));
+    }
+
+    @Test
+    public void calculatesCondenseRecipesAndDonateAmounts() {
+        assertEquals(7, ItemTools.condensedAmount(71, 9));
+        assertEquals(0, ItemTools.condensedAmount(8, 9));
+        assertEquals(true, ItemTools.condensable(false));
+        assertEquals(false, ItemTools.condensable(true));
+        assertEquals(true, ItemTools.validDonateAmount(3, 3));
+        assertEquals(false, ItemTools.validDonateAmount(4, 3));
+        assertEquals(false, ItemTools.validDonateAmount(0, 3));
+    }
+
+    @Test
+    public void validatesNativeFlySpeedAndExplicitGodState() {
+        assertEquals(Float.valueOf(.5f), StaffTools.parseFlySpeed("0.5"));
+        assertNull(StaffTools.parseFlySpeed("1.1"));
+        assertNull(StaffTools.parseFlySpeed("NaN"));
+        assertEquals(new StaffTools.GodArguments(null, true, true, true),
+            StaffTools.parseGodArguments(new String[]{"true", "-s"}));
+        assertEquals(new StaffTools.GodArguments("Alex", false, false, true),
+            StaffTools.parseGodArguments(new String[]{"Alex", "false"}));
+        assertEquals(false, StaffTools.parseGodArguments(new String[]{"Alex", "maybe"}).valid());
     }
 
     @Test
@@ -474,5 +585,9 @@ public final class RivetPluginTest {
 
     private static boolean hasHover(Component component) {
         return component.hoverEvent() != null || component.children().stream().anyMatch(RivetPluginTest::hasHover);
+    }
+
+    private static boolean hasColor(Component component) {
+        return component.color() != null || component.children().stream().anyMatch(RivetPluginTest::hasColor);
     }
 }
