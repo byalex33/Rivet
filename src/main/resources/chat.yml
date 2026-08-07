@@ -1,0 +1,4 @@
+format: "<gray><player>:</gray> <white><message></white>"
+private-messages:
+  sent: "<gray>[you → <player>]</gray> <white><message></white>"
+  received: "<gray>[<player> → you]</gray> <white><message></white>"

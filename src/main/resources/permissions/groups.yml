@@ -1,0 +1,14 @@
+groups:
+  default:
+    permissions:
+      - core.message
+  staff:
+    parent: default
+    permissions:
+      - core.teleport
+      - core.vanish
+      - core.vanish.see
+  admin:
+    parent: staff
+    permissions:
+      - "*"

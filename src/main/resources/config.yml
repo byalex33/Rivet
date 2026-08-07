@@ -1,0 +1,6 @@
+effects:
+  titles: true
+  sounds: true
+  particles: true
+flat-worlds:
+  allow-natural-mob-spawning: false
