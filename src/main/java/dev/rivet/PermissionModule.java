@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.OfflinePlayer;
@@ -27,14 +27,14 @@ import java.util.UUID;
 
 final class PermissionModule implements Listener {
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private final CorePlugin plugin;
+    private final RivetPlugin plugin;
     private final File groupsFile;
     private final File usersFile;
     private final Map<UUID, PermissionAttachment> attachments = new HashMap<>();
     private YamlConfiguration groups;
     private YamlConfiguration users;
 
-    PermissionModule(CorePlugin plugin) {
+    PermissionModule(RivetPlugin plugin) {
         this.plugin = plugin;
         groupsFile = new File(plugin.getDataFolder(), "permissions/groups.yml");
         usersFile = new File(plugin.getDataFolder(), "permissions/users.yml");

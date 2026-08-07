@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -51,13 +51,13 @@ final class HologramModule implements Listener {
         "addline", "removeline", "insertbefore", "insertafter", "background", "textshadow",
         "brightness", "textalignment", "item", "block", "animation");
 
-    private final CorePlugin plugin;
+    private final RivetPlugin plugin;
     private final NamespacedKey hologramKey;
     private final File file;
     private final Map<String, Hologram> holograms = new HashMap<>();
     private long animationTick;
 
-    HologramModule(CorePlugin plugin) {
+    HologramModule(RivetPlugin plugin) {
         this.plugin = plugin;
         hologramKey = new NamespacedKey(plugin, "hologram");
         file = new File(plugin.getDataFolder(), "holograms.yml");
@@ -67,7 +67,7 @@ final class HologramModule implements Listener {
     }
 
     boolean command(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("fancyholograms.admin")) {
+        if (!sender.hasPermission("rivet.holograms")) {
             send(sender, "<red>You do not have permission to manage holograms.");
             return true;
         }
@@ -342,7 +342,7 @@ final class HologramModule implements Listener {
                 Double yaw = args.length >= 7 ? number(args[6]) : (double) hologram.yaw;
                 Double pitch = args.length == 8 ? number(args[7]) : (double) hologram.pitch;
                 if (x == null || y == null || z == null || yaw == null || pitch == null
-                    || !CorePlugin.validCoordinates(x, y, z, yaw.floatValue(), pitch.floatValue())) {
+                    || !RivetPlugin.validCoordinates(x, y, z, yaw.floatValue(), pitch.floatValue())) {
                     yield "Coordinates and rotation must be finite numbers.";
                 }
                 hologram.x = x;
@@ -595,7 +595,7 @@ final class HologramModule implements Listener {
         boolean visible = hologram.visibility == Visibility.ALL
             || hologram.visibility == Visibility.MANUAL
             || hologram.visibility == Visibility.PERMISSION_NEEDED
-            && player.hasPermission("fancyholograms.viewhologram." + key(hologram.name));
+            && player.hasPermission("rivet.holograms.view." + key(hologram.name));
         if (visible) {
             player.showEntity(plugin, display);
         } else {
@@ -863,7 +863,7 @@ final class HologramModule implements Listener {
     }
 
     static boolean validName(String name) {
-        return name != null && CorePlugin.validWorldName(name);
+        return name != null && RivetPlugin.validWorldName(name);
     }
 
     private static String key(String name) {

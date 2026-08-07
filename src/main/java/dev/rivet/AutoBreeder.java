@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -85,7 +85,7 @@ final class AutoBreeder implements Listener {
         Map.entry(EntityType.WOLF, Material.BEEF)
     );
 
-    private final CorePlugin plugin;
+    private final RivetPlugin plugin;
     private final NamespacedKey itemKey;
     private final NamespacedKey animalKey;
     private final NamespacedKey hologramKey;
@@ -94,7 +94,7 @@ final class AutoBreeder implements Listener {
     private final Map<String, Inventory> inventories = new HashMap<>();
     private final BukkitTask task;
 
-    AutoBreeder(CorePlugin plugin) {
+    AutoBreeder(RivetPlugin plugin) {
         this.plugin = plugin;
         itemKey = new NamespacedKey(plugin, "auto_breeder");
         animalKey = new NamespacedKey(plugin, "auto_breeder_animal");

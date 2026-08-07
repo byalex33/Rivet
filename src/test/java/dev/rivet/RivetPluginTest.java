@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -22,20 +22,20 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public final class CorePluginTest {
+public final class RivetPluginTest {
     @Test
     public void mapsGamemodeCommands() {
-        assertEquals(GameMode.CREATIVE, CorePlugin.gameModeFor("gmc"));
-        assertEquals(GameMode.SURVIVAL, CorePlugin.gameModeFor("gms"));
-        assertNull(CorePlugin.gameModeFor("flat"));
+        assertEquals(GameMode.CREATIVE, RivetPlugin.gameModeFor("gmc"));
+        assertEquals(GameMode.SURVIVAL, RivetPlugin.gameModeFor("gms"));
+        assertNull(RivetPlugin.gameModeFor("flat"));
     }
 
     @Test
     public void onlyCreativeAndSpectatorKeepNaturalFlight() {
-        assertEquals(true, CorePlugin.hasNaturalFlight(GameMode.CREATIVE));
-        assertEquals(true, CorePlugin.hasNaturalFlight(GameMode.SPECTATOR));
-        assertEquals(false, CorePlugin.hasNaturalFlight(GameMode.SURVIVAL));
-        assertEquals(false, CorePlugin.hasNaturalFlight(GameMode.ADVENTURE));
+        assertEquals(true, RivetPlugin.hasNaturalFlight(GameMode.CREATIVE));
+        assertEquals(true, RivetPlugin.hasNaturalFlight(GameMode.SPECTATOR));
+        assertEquals(false, RivetPlugin.hasNaturalFlight(GameMode.SURVIVAL));
+        assertEquals(false, RivetPlugin.hasNaturalFlight(GameMode.ADVENTURE));
     }
 
     @Test
@@ -72,12 +72,12 @@ public final class CorePluginTest {
 
     @Test
     public void dropsNativeMobHeadsAtThreePercent() {
-        assertEquals(Material.CREEPER_HEAD, CorePlugin.mobHeadFor(EntityType.CREEPER));
+        assertEquals(Material.CREEPER_HEAD, RivetPlugin.mobHeadFor(EntityType.CREEPER));
         assertEquals(Material.WITHER_SKELETON_SKULL,
-            CorePlugin.mobHeadFor(EntityType.WITHER_SKELETON));
-        assertEquals(true, CorePlugin.dropsMobHead(EntityType.ZOMBIE, .0299));
-        assertEquals(false, CorePlugin.dropsMobHead(EntityType.ZOMBIE, .03));
-        assertEquals(true, CorePlugin.dropsMobHead(EntityType.COW, 0));
+            RivetPlugin.mobHeadFor(EntityType.WITHER_SKELETON));
+        assertEquals(true, RivetPlugin.dropsMobHead(EntityType.ZOMBIE, .0299));
+        assertEquals(false, RivetPlugin.dropsMobHead(EntityType.ZOMBIE, .03));
+        assertEquals(true, RivetPlugin.dropsMobHead(EntityType.COW, 0));
     }
 
     @Test
@@ -86,29 +86,29 @@ public final class CorePluginTest {
             .filter(type -> type.getEntityClass() != null
                 && (Mob.class.isAssignableFrom(type.getEntityClass())
                 || type == EntityType.ENDER_DRAGON))
-            .forEach(type -> assertEquals(type.name(), true, CorePlugin.supportsMobHead(type)));
+            .forEach(type -> assertEquals(type.name(), true, RivetPlugin.supportsMobHead(type)));
     }
 
     @Test
     public void validatesSafeWorldNames() {
-        assertEquals(true, CorePlugin.validWorldName("test_world-1"));
-        assertEquals(false, CorePlugin.validWorldName("../world"));
-        assertEquals(false, CorePlugin.validWorldName("world name"));
-        assertEquals(false, CorePlugin.validWorldName("a".repeat(33)));
+        assertEquals(true, RivetPlugin.validWorldName("test_world-1"));
+        assertEquals(false, RivetPlugin.validWorldName("../world"));
+        assertEquals(false, RivetPlugin.validWorldName("world name"));
+        assertEquals(false, RivetPlugin.validWorldName("a".repeat(33)));
     }
 
     @Test
     public void onlyBlocksNaturalSpawnsInFlatWorldsWhenDisabled() {
-        assertEquals(true, CorePlugin.blocksSpawn(WorldType.FLAT, CreatureSpawnEvent.SpawnReason.NATURAL, false));
-        assertEquals(false, CorePlugin.blocksSpawn(WorldType.FLAT, CreatureSpawnEvent.SpawnReason.SPAWNER, false));
-        assertEquals(false, CorePlugin.blocksSpawn(WorldType.NORMAL, CreatureSpawnEvent.SpawnReason.NATURAL, false));
-        assertEquals(false, CorePlugin.blocksSpawn(WorldType.FLAT, CreatureSpawnEvent.SpawnReason.NATURAL, true));
+        assertEquals(true, RivetPlugin.blocksSpawn(WorldType.FLAT, CreatureSpawnEvent.SpawnReason.NATURAL, false));
+        assertEquals(false, RivetPlugin.blocksSpawn(WorldType.FLAT, CreatureSpawnEvent.SpawnReason.SPAWNER, false));
+        assertEquals(false, RivetPlugin.blocksSpawn(WorldType.NORMAL, CreatureSpawnEvent.SpawnReason.NATURAL, false));
+        assertEquals(false, RivetPlugin.blocksSpawn(WorldType.FLAT, CreatureSpawnEvent.SpawnReason.NATURAL, true));
     }
 
     @Test
     public void parsesItemAmounts() {
-        assertEquals(12, CorePlugin.itemAmount("12"));
-        assertEquals(-1, CorePlugin.itemAmount("lots"));
+        assertEquals(12, RivetPlugin.itemAmount("12"));
+        assertEquals(-1, RivetPlugin.itemAmount("lots"));
     }
 
     @Test
@@ -145,9 +145,9 @@ public final class CorePluginTest {
 
     @Test
     public void onlyCancelsPhysicalFarmlandInteractions() {
-        assertEquals(true, CorePlugin.isCropTrample(Action.PHYSICAL, org.bukkit.Material.FARMLAND));
-        assertEquals(false, CorePlugin.isCropTrample(Action.RIGHT_CLICK_BLOCK, org.bukkit.Material.FARMLAND));
-        assertEquals(false, CorePlugin.isCropTrample(Action.PHYSICAL, org.bukkit.Material.DIRT));
+        assertEquals(true, RivetPlugin.isCropTrample(Action.PHYSICAL, org.bukkit.Material.FARMLAND));
+        assertEquals(false, RivetPlugin.isCropTrample(Action.RIGHT_CLICK_BLOCK, org.bukkit.Material.FARMLAND));
+        assertEquals(false, RivetPlugin.isCropTrample(Action.PHYSICAL, org.bukkit.Material.DIRT));
     }
 
     @Test
@@ -207,22 +207,22 @@ public final class CorePluginTest {
 
     @Test
     public void rejectsInvalidSavedCoordinates() {
-        assertEquals(true, CorePlugin.validCoordinates(1, 2, 3, 90, 0));
-        assertEquals(false, CorePlugin.validCoordinates(Double.NaN, 2, 3, 90, 0));
-        assertEquals(false, CorePlugin.validCoordinates(1, 2, 3, Float.POSITIVE_INFINITY, 0));
+        assertEquals(true, RivetPlugin.validCoordinates(1, 2, 3, 90, 0));
+        assertEquals(false, RivetPlugin.validCoordinates(Double.NaN, 2, 3, 90, 0));
+        assertEquals(false, RivetPlugin.validCoordinates(1, 2, 3, Float.POSITIVE_INFINITY, 0));
     }
 
     @Test
     public void normalizesOptionalHomeNames() {
-        assertEquals("home", CorePlugin.homeName(new String[0]));
-        assertEquals("mine", CorePlugin.homeName(new String[] {"Mine"}));
-        assertNull(CorePlugin.homeName(new String[] {"bad name"}));
-        assertNull(CorePlugin.homeName(new String[] {"one", "two"}));
+        assertEquals("home", RivetPlugin.homeName(new String[0]));
+        assertEquals("mine", RivetPlugin.homeName(new String[] {"Mine"}));
+        assertNull(RivetPlugin.homeName(new String[] {"bad name"}));
+        assertNull(RivetPlugin.homeName(new String[] {"one", "two"}));
     }
 
     @Test
     public void filtersTabCompletionsIgnoringCase() {
-        assertEquals(List.of("create"), CorePlugin.completions(List.of("create", "list"), "CR"));
+        assertEquals(List.of("create"), RivetPlugin.completions(List.of("create", "list"), "CR"));
     }
 
     @Test
@@ -244,16 +244,16 @@ public final class CorePluginTest {
     @Test
     public void resolvesPermissionHierarchyAndWildcards() {
         YamlConfiguration groups = new YamlConfiguration();
-        groups.set("groups.default.permissions", List.of("core.message"));
+        groups.set("groups.default.permissions", List.of("rivet.message"));
         groups.set("groups.staff.parent", "default");
-        groups.set("groups.staff.permissions", List.of("core.vanish", "core.world.*"));
+        groups.set("groups.staff.permissions", List.of("rivet.vanish", "rivet.world.*"));
         Set<String> permissions = PermissionModule.groupPermissions(groups, "staff");
-        assertEquals(true, permissions.contains("core.message"));
-        assertEquals(true, PermissionModule.grants(permissions, "core.world.reset"));
+        assertEquals(true, permissions.contains("rivet.message"));
+        assertEquals(true, PermissionModule.grants(permissions, "rivet.world.reset"));
         assertEquals(false, PermissionModule.grants(permissions, "other.permission"));
     }
 
     private static boolean hasHover(Component component) {
-        return component.hoverEvent() != null || component.children().stream().anyMatch(CorePluginTest::hasHover);
+        return component.hoverEvent() != null || component.children().stream().anyMatch(RivetPluginTest::hasHover);
     }
 }

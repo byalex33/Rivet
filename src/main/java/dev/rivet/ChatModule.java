@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
@@ -23,13 +23,13 @@ final class ChatModule implements Listener {
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final Pattern ITEM_TOKEN = Pattern.compile("\\[(?:i|item)]",
         Pattern.CASE_INSENSITIVE);
-    private final CorePlugin plugin;
+    private final RivetPlugin plugin;
     private final Map<UUID, UUID> replies = new HashMap<>();
     private final String chatFormat;
     private final String sentFormat;
     private final String receivedFormat;
 
-    ChatModule(CorePlugin plugin) {
+    ChatModule(RivetPlugin plugin) {
         this.plugin = plugin;
         File file = new File(plugin.getDataFolder(), "chat.yml");
         if (!file.exists()) {

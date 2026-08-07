@@ -1,4 +1,4 @@
-package dev.core;
+package dev.rivet;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -32,6 +32,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.profile.PlayerProfile;
 import org.bukkit.profile.PlayerTextures;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bstats.bukkit.Metrics;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -55,9 +56,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-public final class CorePlugin extends JavaPlugin implements Listener {
+public final class RivetPlugin extends JavaPlugin implements Listener {
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final String MARKER = ".core-test-world";
+    private static final String MARKER = ".rivet-test-world";
     private static final double MOB_HEAD_CHANCE = .03;
     private static final Map<EntityType, String> MOB_HEAD_TEXTURES = loadMobHeadTextures();
     private static final ChunkGenerator VOID_GENERATOR = new ChunkGenerator() {
@@ -80,6 +81,7 @@ public final class CorePlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        new Metrics(this, 33219);
         autoBreeder = new AutoBreeder(this);
         eggCapture = new EggCapture(this);
         permissions = new PermissionModule(this);
@@ -292,7 +294,7 @@ public final class CorePlugin extends JavaPlugin implements Listener {
                 Sound.BLOCK_BEACON_ACTIVATE, Particle.END_ROD);
         } catch (IOException exception) {
             getLogger().severe("Created world " + name + " but could not mark it as a test world: " + exception.getMessage());
-            send(player, "<red>World created, but Core could not track it. Check the console.");
+            send(player, "<red>World created, but Rivet could not track it. Check the console.");
         }
         return true;
     }
@@ -362,7 +364,7 @@ public final class CorePlugin extends JavaPlugin implements Listener {
                 Sound.BLOCK_BEACON_ACTIVATE, Particle.POOF);
         } catch (IOException exception) {
             getLogger().severe("Regenerated world " + name + " but could not restore its marker: " + exception.getMessage());
-            send(player, "<red>World regenerated, but Core could not track it. Check the console.");
+            send(player, "<red>World regenerated, but Rivet could not track it. Check the console.");
         }
         return true;
     }
@@ -768,7 +770,7 @@ public final class CorePlugin extends JavaPlugin implements Listener {
             vanished.remove(player.getUniqueId());
         }
         getServer().getOnlinePlayers().stream()
-            .filter(viewer -> !viewer.equals(player) && !viewer.hasPermission("core.vanish.see"))
+            .filter(viewer -> !viewer.equals(player) && !viewer.hasPermission("rivet.vanish.see"))
             .forEach(viewer -> {
                 if (enable) {
                     viewer.hidePlayer(this, player);
@@ -779,11 +781,11 @@ public final class CorePlugin extends JavaPlugin implements Listener {
     }
 
     void permissionsChanged(Player player) {
-        if (vanished.contains(player.getUniqueId()) && !player.hasPermission("core.vanish")) {
+        if (vanished.contains(player.getUniqueId()) && !player.hasPermission("rivet.vanish")) {
             setVanished(player, false);
             send(player, "<yellow>Vanish disabled because your permission changed.");
         }
-        if (flightEnabled.contains(player.getUniqueId()) && !player.hasPermission("core.fly")) {
+        if (flightEnabled.contains(player.getUniqueId()) && !player.hasPermission("rivet.fly")) {
             disableFlight(player);
             send(player, "<yellow>Flight disabled because your permission changed.");
         }
@@ -794,7 +796,7 @@ public final class CorePlugin extends JavaPlugin implements Listener {
     private void refreshVanishVisibility(Player viewer) {
         vanished.stream().map(getServer()::getPlayer).filter(java.util.Objects::nonNull)
             .forEach(player -> {
-                if (viewer.hasPermission("core.vanish.see")) {
+                if (viewer.hasPermission("rivet.vanish.see")) {
                     viewer.showPlayer(this, player);
                 } else {
                     viewer.hidePlayer(this, player);
@@ -942,7 +944,7 @@ public final class CorePlugin extends JavaPlugin implements Listener {
 
     private static Map<EntityType, String> loadMobHeadTextures() {
         Properties properties = new Properties();
-        try (InputStream input = CorePlugin.class.getResourceAsStream("/mob-heads.properties")) {
+        try (InputStream input = RivetPlugin.class.getResourceAsStream("/mob-heads.properties")) {
             if (input == null) {
                 throw new IOException("missing mob-heads.properties");
             }
