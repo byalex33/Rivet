@@ -5,3 +5,17 @@ interfaces:
   smithing: true
   stonecutter: true
   grindstone: true
+
+jump:
+  maximum-range: 50
+
+ride:
+  maximum-range: 10
+  allow-players: false
+
+list:
+  # The count includes only players visible to the viewer.
+  format: "<gold>Online (<count>/<maximum>):</gold> <white><players></white>"
+
+ping:
+  format: "<gold><player>'s ping:</gold> <white><ping> ms</white> <gray>(<quality>)</gray>"

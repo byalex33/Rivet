@@ -20,4 +20,5 @@ messages:
   lore-success: "<green>Item lore updated.</green>"
   lore-cleared: "<yellow>Item lore cleared.</yellow>"
   lore-line-invalid: "<red>That lore line does not exist.</red>"
+  hat-success: "<green>Equipped the item as your hat.</green>"
   invalid-text: "<red>Text must be 1-<max> visible characters without control characters.</red>"

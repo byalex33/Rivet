@@ -113,7 +113,7 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
-        assertEquals(77, plugin.getConfigurationSection("commands").getKeys(false).size());
+        assertEquals(90, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
             .stream().filter(command -> !command.equals("rivet"))
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
@@ -142,6 +142,7 @@ public final class RivetPluginTest {
         assertEquals("staff", RivetPlugin.moduleForCommand("bossbarmsg"));
         assertEquals("inventory", RivetPlugin.moduleForCommand("condense"));
         assertEquals("worlds", RivetPlugin.moduleForCommand("findbiome"));
+        assertEquals("help", RivetPlugin.moduleForCommand("help"));
         assertNull(RivetPlugin.moduleForCommand("rivet"));
         assertNull(RivetPlugin.moduleForCommand("unknown"));
     }
@@ -241,6 +242,31 @@ public final class RivetPluginTest {
         assertEquals(false, RivetPlugin.commandDisabled("backpack", module -> true));
         assertEquals(false, RivetPlugin.commandDisabled("rivet", module -> false));
         assertEquals(true, RivetPlugin.commandDisabled("filter", module -> false));
+        assertEquals(true, RivetPlugin.commandDisabled("help", module -> false));
+    }
+
+    @Test
+    public void helpHidesDisabledAndUnpermittedCommands() {
+        List<HelpModule.CommandEntry> commands = List.of(
+            new HelpModule.CommandEntry("home", "/home", "Go home", "homes", "rivet.home"),
+            new HelpModule.CommandEntry("spawn", "/spawn", "Go to spawn", "spawn", "rivet.spawn"),
+            new HelpModule.CommandEntry("rivet", "/rivet", "Admin", null, "rivet.admin"));
+
+        assertEquals(List.of("home"), HelpModule.visible(commands,
+            module -> !module.equals("spawn"), permission -> permission.equals("rivet.home"))
+            .stream().map(HelpModule.CommandEntry::name).toList());
+    }
+
+    @Test
+    public void helpCalculatesAndClampsTextPages() {
+        assertEquals(1, HelpModule.pageCount(0, 6));
+        assertEquals(3, HelpModule.pageCount(13, 6));
+        assertEquals(1, HelpModule.clampPage(-2, 3));
+        assertEquals(3, HelpModule.clampPage(99, 3));
+        Component navigation = HelpModule.navigation(2, 4);
+        assertEquals(true, hasRunCommand(navigation, "/rivethelp 1"));
+        assertEquals(true, hasRunCommand(navigation, "/rivethelp 3"));
+        assertEquals(true, hasRunCommand(navigation, "/rivethelp 4"));
     }
 
     @Test
@@ -290,6 +316,130 @@ public final class RivetPluginTest {
         assertEquals("NOTCHED_6", parsed.overlay().name());
         assertEquals(false, StaffTools.parseBossBarArguments(
             new String[]{"-d:nope", "hello"}, 5, "purple", "solid").valid());
+    }
+
+    @Test
+    public void parsesNoteActionsAndMaintainsSimpleIds() throws Exception {
+        assertEquals(new StaffTools.NoteArguments("Alex", "add", "Repeated griefing", -1, false, true),
+            StaffTools.parseNoteArguments(new String[]{"Alex", "add", "Repeated", "griefing"}));
+        assertEquals(new StaffTools.NoteArguments("Alex", "remove", null, 12, false, true),
+            StaffTools.parseNoteArguments(new String[]{"Alex", "remove", "12"}));
+        assertEquals(false, StaffTools.parseNoteArguments(new String[]{"Alex", "remove", "zero"}).valid());
+        assertEquals(false, StaffTools.parseNoteArguments(new String[]{"Alex", "clear", "now"}).valid());
+        assertEquals(true, StaffTools.validNoteText("Readable note", 20));
+        assertEquals(false, StaffTools.validNoteText("bad\nnote", 20));
+        assertEquals(false, StaffTools.validNoteText("too long", 3));
+
+        YamlConfiguration notes = new YamlConfiguration();
+        notes.set("players.test.next-id", 2);
+        notes.set("players.test.notes.2.text", "existing");
+        assertEquals(3, StaffTools.nextNoteId(notes, "players.test"));
+        assertEquals(true, StaffTools.removeNote(notes, "players.test", 2));
+        assertEquals(false, StaffTools.removeNote(notes, "players.test", 2));
+
+        notes.set("players.test.notes.3.text", "persists");
+        YamlConfiguration restarted = new YamlConfiguration();
+        restarted.loadFromString(notes.saveToString());
+        assertEquals("persists", restarted.getString("players.test.notes.3.text"));
+    }
+
+    @Test
+    public void formatsPlaytimeFromNativeStatisticTicks() {
+        assertEquals("12d 4h 32m", StatisticsModule.duration((12L * 24 * 60 + 4 * 60 + 32) * 60_000));
+        assertEquals("4h 32m", StatisticsModule.duration((4L * 60 + 32) * 60_000));
+        assertEquals("32m", StatisticsModule.duration(32 * 60_000L));
+    }
+
+    @Test
+    public void parsesToastFlagsAndRejectsUnsafeValues() {
+        StaffTools.ToastArguments toast = StaffTools.parseToastArguments(
+            new String[]{"-t:challenge", "-icon:diamond", "<gold>Event!"}, "task", "paper");
+        assertEquals(true, toast.valid());
+        assertEquals("challenge", toast.type());
+        assertEquals(Material.DIAMOND, toast.icon());
+        assertEquals(false, StaffTools.parseToastArguments(
+            new String[]{"-t:unknown", "hello"}, "task", "paper").valid());
+        assertEquals(false, StaffTools.parseToastArguments(
+            new String[]{"-icon:lava", "hello"}, "task", "paper").valid());
+    }
+
+    @Test
+    public void validatesTreeTypesAndConservativeTreeBases() {
+        assertEquals(org.bukkit.TreeType.CHERRY, RivetPlugin.treeType("cherry"));
+        assertEquals(org.bukkit.TreeType.TALL_REDWOOD, RivetPlugin.treeType("tall-redwood"));
+        assertNull(RivetPlugin.treeType("custom_tree"));
+        assertEquals(true, SafeLocations.suitableTreeBase(Material.GRASS_BLOCK));
+        assertEquals(false, SafeLocations.suitableTreeBase(Material.CHEST));
+    }
+
+    @Test
+    public void topSafetyRejectsLeavesHazardsAndMissingHeadroom() {
+        assertEquals(true, SafeLocations.safeStanding(Material.STONE, true, Material.AIR, true,
+            Material.AIR, true, true));
+        assertEquals(false, SafeLocations.safeStanding(Material.OAK_LEAVES, true, Material.AIR, true,
+            Material.AIR, true, true));
+        assertEquals(false, SafeLocations.safeStanding(Material.LAVA, false, Material.AIR, true,
+            Material.AIR, true, true));
+        assertEquals(false, SafeLocations.safeStanding(Material.STONE, true, Material.FIRE, true,
+            Material.AIR, true, false));
+        assertEquals(false, SafeLocations.safeStanding(Material.STONE, true, Material.AIR, true,
+            Material.STONE, false, false));
+    }
+
+    @Test
+    public void validatesRideTargetsWithoutAllowingUnsafeMounts() {
+        assertEquals(true, UtilitiesModule.validRideTarget(false, false, false, true, false));
+        assertEquals(false, UtilitiesModule.validRideTarget(true, false, false, true, false));
+        assertEquals(false, UtilitiesModule.validRideTarget(false, true, false, true, false));
+        assertEquals(true, UtilitiesModule.validRideTarget(false, true, true, true, false));
+        assertEquals(false, UtilitiesModule.validRideTarget(false, false, false, true, true));
+    }
+
+    @Test
+    public void filtersSameIpMatchesWithoutReturningHiddenOrTargetPlayers() {
+        UUID target = UUID.randomUUID();
+        UUID visible = UUID.randomUUID();
+        UUID hidden = UUID.randomUUID();
+        List<StaffTools.IpEntry> entries = List.of(
+            new StaffTools.IpEntry(target, "Target", "session-a"),
+            new StaffTools.IpEntry(visible, "Visible", "session-a"),
+            new StaffTools.IpEntry(hidden, "Hidden", "session-a"),
+            new StaffTools.IpEntry(UUID.randomUUID(), "Different", "session-b"));
+        assertEquals(List.of("Visible"), StaffTools.sameIpMatches(entries, target, "session-a",
+            uuid -> !uuid.equals(hidden)));
+    }
+
+    @Test
+    public void keepsSameIpStaffOnlyAndRawAddressesOutOfDefaultOutput() {
+        YamlConfiguration plugin = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/plugin.yml"), StandardCharsets.UTF_8));
+        YamlConfiguration staff = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/settings/staff.yml"), StandardCharsets.UTF_8));
+        assertEquals("op", plugin.getString("permissions.rivet.sameip.default"));
+        assertEquals(false, staff.getString("same-ip.format", "").contains("<address>"));
+        assertEquals(false, staff.getString("same-ip.format", "").contains("<ip>"));
+    }
+
+    @Test
+    public void meFormattingNeverCreatesInteractiveEvents() {
+        Component plain = ChatModule.formatMeMessage("<red>waves", false);
+        Component formatted = ChatModule.formatMeMessage(
+            "<red>waves <click:run_command:'/op me'>now", true);
+        assertEquals("<red>waves", PlainTextComponentSerializer.plainText().serialize(plain));
+        assertEquals("waves <click:run_command:'/op me'>now",
+            PlainTextComponentSerializer.plainText().serialize(formatted));
+        assertEquals(false, hasRunCommand(formatted, "/op me"));
+    }
+
+    @Test
+    public void parsesPingAndPlaytimeTargetsOnlyWithPermission() {
+        assertEquals(new UtilitiesModule.TargetArgument(null, true),
+            UtilitiesModule.parseOptionalTarget(new String[0], false));
+        assertEquals(new UtilitiesModule.TargetArgument("Alex", true),
+            UtilitiesModule.parseOptionalTarget(new String[]{"Alex"}, true));
+        assertEquals(false, UtilitiesModule.parseOptionalTarget(new String[]{"Alex"}, false).valid());
+        assertEquals(false,
+            UtilitiesModule.parseOptionalTarget(new String[]{"Alex", "extra"}, true).valid());
     }
 
     @Test
@@ -502,14 +652,19 @@ public final class RivetPluginTest {
     }
 
     @Test
-    public void parsesNamedAndHexGlowColors() {
-        assertEquals(0xFF5555, GlowModule.parseColor("red").asRGB());
-        assertEquals(0x123ABC, GlowModule.parseColor("#123ABC").asRGB());
+    public void smoothlyInterpolatesRainbowGlowColors() {
+        assertEquals(0xFF0000, GlowModule.rainbowColor(0, 120).asRGB());
+        assertEquals(0xFFFF00, GlowModule.rainbowColor(20, 120).asRGB());
+        assertEquals(0x00FF00, GlowModule.rainbowColor(40, 120).asRGB());
+        assertEquals(0x00FFFF, GlowModule.rainbowColor(60, 120).asRGB());
+        assertEquals(0x0000FF, GlowModule.rainbowColor(80, 120).asRGB());
+        assertEquals(0xFF00FF, GlowModule.rainbowColor(100, 120).asRGB());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void rejectsInvalidGlowColors() {
-        GlowModule.parseColor("definitely-not-a-color");
+    @Test
+    public void rainbowGlowLoopsWithoutAColorJump() {
+        assertEquals(GlowModule.rainbowColor(0, 120), GlowModule.rainbowColor(120, 120));
+        assertEquals(GlowModule.rainbowColor(119, 120), GlowModule.rainbowColor(-1, 120));
     }
 
     @Test
@@ -589,5 +744,12 @@ public final class RivetPluginTest {
 
     private static boolean hasColor(Component component) {
         return component.color() != null || component.children().stream().anyMatch(RivetPluginTest::hasColor);
+    }
+
+    private static boolean hasRunCommand(Component component, String command) {
+        return component.clickEvent() != null
+            && component.clickEvent().action() == net.kyori.adventure.text.event.ClickEvent.Action.RUN_COMMAND
+            && component.clickEvent().value().equals(command)
+            || component.children().stream().anyMatch(child -> hasRunCommand(child, command));
     }
 }

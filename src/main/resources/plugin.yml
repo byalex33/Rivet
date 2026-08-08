@@ -160,8 +160,8 @@ commands:
     usage: /hologram help
     permission: rivet.holograms
   glow:
-    description: Create glowing cuboid outlines
-    usage: /glow wand
+    description: Add persistent colored glows to players
+    usage: /glow add <player> <color> [-s]
     permission: rivet.glow
   spawn:
     description: Teleport to the server spawn
@@ -282,6 +282,55 @@ commands:
     description: Manage your persistent item pickup filter
     usage: /filter [add|remove|list|clear|toggle|help]
     permission: rivet.filter
+  hat:
+    description: Wear the item in your main hand
+    permission: rivet.hat
+  jump:
+    description: Teleport safely to the block you are looking at
+    permission: rivet.jump
+  list:
+    description: List visible online players
+    permission: rivet.list
+  me:
+    description: Broadcast an action message
+    usage: /me <message>
+    permission: rivet.me
+  note:
+    description: Manage UUID-keyed staff notes
+    usage: /note <player> <add|remove|clear|list>
+    permission: rivet.notes
+  ping:
+    description: Show network latency
+    usage: /ping [player]
+    permission: rivet.ping
+  playtime:
+    description: Show native player playtime
+    usage: /playtime [player]
+    permission: rivet.playtime
+  ride:
+    description: Ride the entity you are looking at
+    permission: rivet.ride
+  sameip:
+    description: Find visible online players sharing a session address
+    usage: /sameip [player]
+    permission: rivet.sameip
+  toast:
+    description: Show a temporary advancement toast
+    usage: /toast <player|all> [-t:type] [-icon:material] <message>
+    permission: rivet.toast
+  top:
+    description: Teleport to the highest safe location
+    usage: /top [player]
+    permission: rivet.top
+  tree:
+    description: Generate a vanilla tree at the targeted block
+    usage: /tree <treeType>
+    permission: rivet.tree
+  help:
+    aliases: [rivethelp, rhelp]
+    description: Browse the commands available to you
+    usage: /help [page]
+    permission: rivet.help
   rivet:
     description: Show Rivet information or reload configuration
     usage: /rivet [reload]
@@ -472,5 +521,39 @@ permissions:
     default: true
   rivet.filter.admin:
     default: op
+  rivet.hat:
+    default: true
+  rivet.jump:
+    default: op
+  rivet.list:
+    default: true
+  rivet.me:
+    default: true
+  rivet.me.format:
+    default: op
+  rivet.notes:
+    default: op
+  rivet.ping:
+    default: true
+  rivet.ping.others:
+    default: op
+  rivet.playtime:
+    default: true
+  rivet.playtime.others:
+    default: op
+  rivet.ride:
+    default: op
+  rivet.sameip:
+    default: op
+  rivet.toast:
+    default: op
+  rivet.top:
+    default: op
+  rivet.top.others:
+    default: op
+  rivet.tree:
+    default: op
+  rivet.help:
+    default: true
   rivet.admin:
     default: op

@@ -1,5 +1,6 @@
 # Available placeholders are shown in the defaults below.
 header: "<gold><bold><player>'s statistics</bold></gold>"
+playtime-format: "<gold><player>'s playtime:</gold> <white><playtime></white>"
 lines:
   - "<gray>Playtime:</gray> <white><playtime></white>"
   - "<gray>Deaths:</gray> <white><deaths></white> <dark_gray>•</dark_gray> <gray>Player kills:</gray> <white><player_kills></white>"

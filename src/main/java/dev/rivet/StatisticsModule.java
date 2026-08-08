@@ -66,9 +66,47 @@ final class StatisticsModule {
         return true;
     }
 
+    boolean playtime(CommandSender sender, String[] args) {
+        UtilitiesModule.TargetArgument parsed = UtilitiesModule.parseOptionalTarget(args,
+            sender.hasPermission("rivet.playtime.others"));
+        if (!parsed.valid() || parsed.name() == null && !(sender instanceof Player)) {
+            sender.sendMessage(MM.deserialize("<red>Usage: /playtime"
+                + (sender.hasPermission("rivet.playtime.others") ? " [player]" : "")));
+            return true;
+        }
+        OfflinePlayer target;
+        if (parsed.name() == null) {
+            target = (Player) sender;
+        } else {
+            Player online = plugin.getServer().getPlayerExact(parsed.name());
+            if (online != null && sender instanceof Player viewer && !viewer.canSee(online)) {
+                sender.sendMessage(MM.deserialize("<red>That player could not be found."));
+                return true;
+            }
+            target = online == null ? plugin.getServer().getOfflinePlayerIfCached(parsed.name()) : online;
+        }
+        if (target == null || target.getName() == null || !target.isOnline() && !target.hasPlayedBefore()) {
+            sender.sendMessage(MM.deserialize("<red>That player could not be found."));
+            return true;
+        }
+        sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString("playtime-format",
+                "<gold><player>'s playtime:</gold> <white><playtime></white>"),
+            Placeholder.unparsed("player", target.getName()),
+            Placeholder.unparsed("playtime", duration(target.getStatistic(Statistic.PLAY_ONE_MINUTE) * 50L))));
+        return true;
+    }
+
     List<String> completions(CommandSender sender, String[] args) {
         return args.length == 1 && sender.hasPermission("rivet.stats.others")
             ? plugin.getServer().getOnlinePlayers().stream().map(Player::getName).sorted().toList()
+            : List.of();
+    }
+
+    List<String> playtimeCompletions(CommandSender sender, String[] args) {
+        return args.length == 1 && sender.hasPermission("rivet.playtime.others")
+            ? plugin.getServer().getOnlinePlayers().stream()
+                .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
+                .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList()
             : List.of();
     }
 
@@ -85,7 +123,8 @@ final class StatisticsModule {
         long days = duration.toDays();
         long hours = duration.toHoursPart();
         long minutes = duration.toMinutesPart();
-        return days > 0 ? days + "d " + hours + "h" : hours > 0 ? hours + "h " + minutes + "m"
+        return days > 0 ? days + "d " + hours + "h " + minutes + "m"
+            : hours > 0 ? hours + "h " + minutes + "m"
             : minutes + "m";
     }
 }

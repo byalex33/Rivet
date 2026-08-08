@@ -1,2 +1,2 @@
-# Glow regions currently use per-region command settings.
-# Saved regions are stored in ../data/glow.yml.
+# Player glow assignments are saved in ../data/glow.yml.
+# Use /glow color to see every color, including the animated rainbow.

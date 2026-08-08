@@ -11,6 +11,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.TreeType;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
@@ -53,6 +54,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -104,6 +106,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private ItemTools itemTools;
     private StaffTools staffTools;
     private FilterModule filter;
+    private HelpModule help;
     private RivetConfig files;
     private YamlConfiguration homes;
     private YamlConfiguration warps;
@@ -195,6 +198,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (moduleEnabled("utilities")) {
             utilities = new UtilitiesModule(this);
+            getServer().getPluginManager().registerEvents(utilities, this);
         }
         if (moduleEnabled("poses")) {
             poses = new PosesModule(this);
@@ -219,6 +223,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("filter")) {
             filter = new FilterModule(this);
             getServer().getPluginManager().registerEvents(filter, this);
+        }
+        if (moduleEnabled("help")) {
+            help = new HelpModule(this);
         }
         if (moduleEnabled("staff")) {
             staffTools = new StaffTools(this);
@@ -252,6 +259,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (eggCapture != null) {
             eggCapture.shutdown();
         }
+        if (glows != null) {
+            glows.shutdown();
+        }
         if (treeFeller != null) {
             treeFeller.shutdown();
         }
@@ -275,6 +285,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (rtp != null) {
             rtp.shutdown();
+        }
+        if (utilities != null) {
+            utilities.shutdown();
         }
         if (staffTools != null) {
             staffTools.shutdown();
@@ -362,11 +375,17 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (name.equals("glow")) {
             return glows.command(sender, args);
         }
+        if (name.equals("help")) {
+            return help.command(sender, args);
+        }
         if (name.equals("nick")) {
             return nicknames.command(sender, args);
         }
         if (name.equals("stats")) {
             return statistics.command(sender, args);
+        }
+        if (name.equals("playtime")) {
+            return statistics.playtime(sender, args);
         }
         if (!(sender instanceof Player player)) {
             send(sender, "<red>This command is only available to players.");
@@ -407,6 +426,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "socialspy" -> chat.socialSpy(player, args);
             case "ignore" -> chat.ignore(player, args);
             case "chatcolor" -> chat.chatColor(player, args);
+            case "me" -> chat.me(player, args);
             case "tp" -> teleportPlayer(player, args);
             case "vanish" -> toggleVanish(player);
             case "fly" -> toggleFlight(player, args);
@@ -415,6 +435,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "god" -> staffTools.god(player, args);
             case "flyspeed" -> staffTools.flySpeed(player, args);
             case "bossbarmsg" -> staffTools.bossBar(player, args);
+            case "note" -> staffTools.note(player, args);
+            case "sameip" -> staffTools.sameIp(player, args);
+            case "toast" -> staffTools.toast(player, args);
             case "spawn", "setspawn" -> spawn.command(player, name, args);
             case "tpa", "tpahere", "tpaccept", "tpdeny" -> tpa.command(player, name, args);
             case "kit" -> kits.command(player, args);
@@ -424,10 +447,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "invsee" -> inventoryView(player, args);
             case "enderchest" -> enderChest(player, args);
             case "repair" -> itemTools.repair(player, args);
+            case "hat" -> itemTools.hat(player, args);
             case "rename" -> itemTools.rename(player, args);
             case "lore" -> itemTools.lore(player, args);
             case "trash" -> trash.command(player, args);
-            case "craft", "anvil", "smithing", "stonecutter", "grindstone" ->
+            case "craft", "anvil", "smithing", "stonecutter", "grindstone", "jump", "list", "ping", "ride" ->
                 utilities.command(player, name, args);
             case "sit", "lay", "crawl" -> poses.command(player, name, args);
             case "head" -> playerHead(player, args);
@@ -436,6 +460,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "rtp" -> rtp.command(player, args);
             case "near" -> near.command(player, args);
             case "findbiome" -> findBiome(player, args);
+            case "top" -> top(player, args);
+            case "tree" -> tree(player, args);
             case "filter" -> filter.command(player, args);
             default -> false;
         };
@@ -476,6 +502,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "kit" -> sender instanceof Player player ? kits.completions(player, args) : List.of();
                 case "nick" -> nicknames.completions(sender, args);
                 case "stats" -> statistics.completions(sender, args);
+                case "playtime" -> statistics.playtimeCompletions(sender, args);
                 case "invsee", "enderchest", "head" -> args.length == 1
                     ? getServer().getOnlinePlayers().stream().map(Player::getName)
                         .sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
@@ -489,6 +516,20 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     ? staffTools.flySpeedCompletions(player, args) : List.of();
                 case "bossbarmsg" -> sender instanceof Player player
                     ? staffTools.bossBarCompletions(player, args) : List.of();
+                case "note" -> sender instanceof Player player
+                    ? staffTools.noteCompletions(player, args) : List.of();
+                case "sameip" -> sender instanceof Player player
+                    ? staffTools.sameIpCompletions(player, args) : List.of();
+                case "toast" -> sender instanceof Player player
+                    ? staffTools.toastCompletions(player, args) : List.of();
+                case "ping" -> sender instanceof Player player
+                    ? utilities.completions(player, "ping", args) : List.of();
+                case "top" -> args.length == 1 && sender.hasPermission("rivet.top.others")
+                    ? getServer().getOnlinePlayers().stream()
+                        .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
+                        .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
+                case "tree" -> args.length == 1 ? Arrays.stream(TreeType.values())
+                    .map(type -> type.name().toLowerCase(Locale.ROOT)).sorted().toList() : List.of();
                 case "afk", "afkcheck" -> sender instanceof Player player
                     ? afk.completions(player, command.getName(), args) : List.of();
                 case "clear", "condense", "donate", "giveall" -> sender instanceof Player player
@@ -496,6 +537,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "findbiome" -> args.length == 1 ? Registry.BIOME.keyStream()
                     .map(NamespacedKey::getKey).sorted().toList() : List.of();
                 case "filter" -> filter.completions(args);
+                case "help" -> help.completions(sender, args);
                 case "repair" -> args.length == 1 && sender.hasPermission("rivet.repair.all")
                     ? List.of("all") : List.of();
                 case "rename" -> args.length == 1 ? List.of("clear") : List.of();
@@ -947,6 +989,77 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             }
         });
         return true;
+    }
+
+    private boolean top(Player actor, String[] args) {
+        Player target = actor;
+        if (args.length == 1 && actor.hasPermission("rivet.top.others")) {
+            target = getServer().getPlayerExact(args[0]);
+            if (target == null || !actor.canSee(target)) {
+                send(actor, "<red>That player is not online.");
+                return true;
+            }
+        } else if (args.length != 0) {
+            send(actor, "<red>Usage: /top" + (actor.hasPermission("rivet.top.others") ? " [player]" : ""));
+            return true;
+        }
+        Location current = target.getLocation();
+        Location destination = SafeLocations.highest(target.getWorld(), current.getBlockX(),
+            current.getBlockZ(), current);
+        if (destination == null || !target.teleport(destination)) {
+            send(actor, "<red>No safe top location was found at that position.");
+            return true;
+        }
+        send(actor, "<green>Teleported <white>" + target.getName()
+            + "</white> to the highest safe location.");
+        if (!actor.equals(target)) {
+            send(target, "<green>You were teleported to the highest safe location by <white>"
+                + actor.getName() + "</white>.");
+        }
+        teleportFeedback(target, "Top");
+        return true;
+    }
+
+    private boolean tree(Player player, String[] args) {
+        if (args.length != 1) {
+            send(player, "<red>Usage: /tree <treeType>");
+            return true;
+        }
+        TreeType type = treeType(args[0]);
+        if (type == null) {
+            send(player, "<red>That vanilla tree type is not supported.");
+            return true;
+        }
+        int range = Math.max(1, Math.min(200,
+            settings("worlds").getInt("tree.maximum-range", 50)));
+        org.bukkit.block.Block target = player.getTargetBlockExact(range, org.bukkit.FluidCollisionMode.NEVER);
+        if (target == null) {
+            send(player, "<yellow>No block is in range.");
+            return true;
+        }
+        Location origin = target.getLocation().add(0, 1, 0);
+        if (!SafeLocations.suitableTreeBase(target) || !SafeLocations.treeClearance(origin)) {
+            send(player, "<red>That target does not have safe ground and enough clear space.");
+            return true;
+        }
+        if (!player.getWorld().generateTree(origin, type)) {
+            send(player, "<red>Tree generation failed; the location may be unsuitable or protected.");
+            return true;
+        }
+        send(player, "<green>Generated <white>" + type.name().toLowerCase(Locale.ROOT)
+            .replace('_', ' ') + "</white>.");
+        return true;
+    }
+
+    static TreeType treeType(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return TreeType.valueOf(value.toUpperCase(Locale.ROOT).replace('-', '_'));
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 
     private boolean giveItem(Player player, String[] args) {
@@ -1424,7 +1537,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     static String moduleForCommand(String command) {
         return switch (command) {
-            case "msg", "r", "socialspy", "ignore", "chatcolor" -> "chat";
+            case "msg", "r", "socialspy", "ignore", "chatcolor", "me" -> "chat";
             case "sethome", "home", "delhome" -> "homes";
             case "setwarp", "warp", "delwarp" -> "warps";
             case "hologram" -> "holograms";
@@ -1435,9 +1548,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "back" -> "graves";
             case "afk", "afkcheck" -> "afk";
             case "nick" -> "nicknames";
-            case "stats" -> "statistics";
+            case "stats", "playtime" -> "statistics";
             case "trash" -> "trash";
-            case "craft", "anvil", "smithing", "stonecutter", "grindstone" -> "utilities";
+            case "craft", "anvil", "smithing", "stonecutter", "grindstone", "jump", "list", "ping", "ride" -> "utilities";
             case "sit", "lay", "crawl" -> "poses";
             case "head" -> "mob-heads";
             case "backpack" -> "backpacks";
@@ -1445,12 +1558,14 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "rtp" -> "rtp";
             case "near" -> "near";
             case "perm", "group" -> "permissions";
-            case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall", "findbiome" -> "worlds";
-            case "gmc", "gms", "tp", "vanish", "fly", "heal", "feed", "god", "flyspeed", "bossbarmsg" -> "staff";
+            case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall", "findbiome", "top", "tree" -> "worlds";
+            case "gmc", "gms", "tp", "vanish", "fly", "heal", "feed", "god", "flyspeed", "bossbarmsg",
+                 "note", "sameip", "toast" -> "staff";
             case "day", "night", "noon", "midnight", "sun", "rain", "thunder" -> "environment";
             case "clear", "i", "invsee", "enderchest", "repair", "rename", "lore",
-                 "condense", "donate", "giveall" -> "inventory";
+                 "condense", "donate", "giveall", "hat" -> "inventory";
             case "filter" -> "filter";
+            case "help" -> "help";
             default -> null;
         };
     }

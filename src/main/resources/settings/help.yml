@@ -1,0 +1,6 @@
+# Number of commands displayed on each text help page (3-10).
+page-size: 6
+
+# MiniMessage formatting is supported for the heading and subtitle.
+title: "<gradient:#f7c948:#f59e0b><bold>RIVET HELP</bold></gradient>"
+subtitle: "<gray><commands> available commands <dark_gray>•</dark_gray> Page <page>/<pages></gray>"

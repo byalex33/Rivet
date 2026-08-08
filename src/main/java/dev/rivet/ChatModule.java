@@ -29,6 +29,9 @@ final class ChatModule implements Listener {
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final MiniMessage CHAT_COLORS = MiniMessage.builder().tags(TagResolver.resolver(
         StandardTags.color(), StandardTags.gradient(), StandardTags.rainbow())).build();
+    private static final MiniMessage PLAYER_FORMATTING = MiniMessage.builder().tags(TagResolver.resolver(
+        StandardTags.color(), StandardTags.decorations(), StandardTags.gradient(),
+        StandardTags.rainbow(), StandardTags.reset())).build();
     private static final Pattern ITEM_TOKEN = Pattern.compile("\\[(?:i|item)]",
         Pattern.CASE_INSENSITIVE);
     private final RivetPlugin plugin;
@@ -121,6 +124,25 @@ final class ChatModule implements Listener {
         if (plugin.getConfig().getBoolean("effects.sounds")) {
             recipient.playSound(recipient.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.8f, 1.4f);
         }
+        return true;
+    }
+
+    boolean me(Player sender, String[] args) {
+        if (args.length == 0) {
+            send(sender, "<red>Usage: /me <message>");
+            return true;
+        }
+        String raw = String.join(" ", args);
+        Component action = formatMeMessage(raw, sender.hasPermission("rivet.me.format"));
+        String configured = plugin.settings("chat").getString("me.format",
+            "<light_purple>* <player> <message></light_purple>");
+        plugin.getServer().getOnlinePlayers().stream()
+            .filter(viewer -> viewer.canSee(sender) || viewer.equals(sender))
+            .filter(viewer -> !ignores(ignoreData, viewer.getUniqueId(), sender.getUniqueId())
+                || sender.hasPermission("rivet.ignore.bypass"))
+            .forEach(viewer -> viewer.sendMessage(MM.deserialize(configured,
+                Placeholder.component("player", sender.displayName()),
+                Placeholder.component("message", action))));
         return true;
     }
 
@@ -338,6 +360,10 @@ final class ChatModule implements Listener {
     static Component formatMessage(String color, Component message) {
         return color == null || color.isBlank() ? message
             : CHAT_COLORS.deserialize(color + "<message>", Placeholder.component("message", message));
+    }
+
+    static Component formatMeMessage(String message, boolean formatting) {
+        return formatting ? PLAYER_FORMATTING.deserialize(message) : Component.text(message);
     }
 
     private boolean enabledChatColor(String input) {

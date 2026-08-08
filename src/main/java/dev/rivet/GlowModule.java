@@ -3,34 +3,27 @@ package dev.rivet;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.World;
+import org.bukkit.Particle;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.Transformation;
+import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -38,394 +31,363 @@ import java.util.UUID;
 
 final class GlowModule implements Listener {
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final float THICKNESS = .04f;
-    private static final List<String> COLORS = List.of(
-        "aqua", "blue", "green", "yellow", "gold", "red", "light_purple", "white", "gray");
+    private static final String RAINBOW = "rainbow";
+    private static final int RAINBOW_CYCLE_TICKS = 120;
+    private static final Map<String, NamedTextColor> COLORS = colors();
+    private static final List<NamedTextColor> RAINBOW_COLORS = List.of(
+        NamedTextColor.DARK_RED, NamedTextColor.RED, NamedTextColor.GOLD,
+        NamedTextColor.YELLOW, NamedTextColor.GREEN, NamedTextColor.DARK_GREEN,
+        NamedTextColor.DARK_AQUA, NamedTextColor.AQUA, NamedTextColor.BLUE,
+        NamedTextColor.DARK_BLUE, NamedTextColor.DARK_PURPLE, NamedTextColor.LIGHT_PURPLE);
 
     private final RivetPlugin plugin;
-    private final NamespacedKey wandKey;
-    private final NamespacedKey outlineKey;
-    private final File file;
-    private final Map<UUID, Selection> selections = new HashMap<>();
-    private final Map<String, Region> regions = new HashMap<>();
+    private final NamespacedKey legacyOutlineKey;
+    private final YamlConfiguration data;
+    private final Map<UUID, Assignment> assignments = new LinkedHashMap<>();
+    private final BukkitTask animationTask;
+    private int animationTick;
 
     GlowModule(RivetPlugin plugin) {
         this.plugin = plugin;
-        wandKey = new NamespacedKey(plugin, "glow_wand");
-        outlineKey = new NamespacedKey(plugin, "glow_outline");
-        file = plugin.dataFile("glow");
+        legacyOutlineKey = new NamespacedKey(plugin, "glow_outline");
+        data = plugin.data("glow");
         load();
-        plugin.getServer().getScheduler().runTask(plugin, this::refreshLoaded);
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            plugin.getServer().getWorlds().forEach(world ->
+                removeLegacyOutlines(world.getEntities().toArray(Entity[]::new)));
+            plugin.getServer().getOnlinePlayers().forEach(this::apply);
+        });
+        animationTask = plugin.getServer().getScheduler().runTaskTimer(
+            plugin, this::animate, 1, 1);
     }
 
     boolean command(CommandSender sender, String[] args) {
-        if (args.length == 1 && args[0].equalsIgnoreCase("wand")) {
-            return giveWand(sender);
+        List<String> values = Arrays.stream(args)
+            .filter(value -> !value.equalsIgnoreCase("-s")).toList();
+        boolean silent = values.size() != args.length;
+        if (values.size() == 1 && (values.get(0).equalsIgnoreCase("color")
+            || values.get(0).equalsIgnoreCase("colors"))) {
+            showColors(sender);
+            return true;
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("create")) {
-            return create(sender, args[1]);
+        if (values.size() == 3 && values.get(0).equalsIgnoreCase("add")) {
+            return add(sender, values.get(1), values.get(2), silent);
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("remove")) {
-            return remove(sender, args[1]);
+        if (values.size() == 2 && values.get(0).equalsIgnoreCase("remove")) {
+            return remove(sender, values.get(1), silent);
         }
-        if (args.length == 3 && args[1].equalsIgnoreCase("color")) {
-            return color(sender, args[0], args[2]);
-        }
-        send(sender, "<red>Usage: /glow wand | create <name> | <name> color <color> | remove <name>");
+        send(sender, "<red>Usage: /glow add <player> <color> [-s] | /glow remove <player> [-s] | /glow color");
         return true;
     }
 
     List<String> completions(String[] args) {
         if (args.length == 1) {
-            List<String> choices = new ArrayList<>(List.of("wand", "create", "remove"));
-            choices.addAll(names());
-            return choices;
+            return List.of("add", "remove", "color");
         }
-        if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("remove")) {
-                return names();
-            }
-            if (regions.containsKey(key(args[0]))) {
-                return List.of("color");
-            }
+        if (args.length == 2 && args[0].equalsIgnoreCase("add")) {
+            return onlinePlayerNames();
         }
-        return args.length == 3 && args[1].equalsIgnoreCase("color") ? COLORS : List.of();
+        if (args.length == 2 && args[0].equalsIgnoreCase("remove")) {
+            return assignments.values().stream().map(Assignment::name)
+                .sorted(String.CASE_INSENSITIVE_ORDER).toList();
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("add")) {
+            List<String> values = new ArrayList<>(COLORS.keySet());
+            values.add(RAINBOW);
+            return values;
+        }
+        if ((args.length == 4 && args[0].equalsIgnoreCase("add"))
+            || (args.length == 3 && args[0].equalsIgnoreCase("remove"))) {
+            return List.of("-s");
+        }
+        return List.of();
     }
 
-    private boolean giveWand(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
-            send(sender, "<red>This command is only available to players.");
-            return true;
-        }
-        ItemStack wand = new ItemStack(Material.BLAZE_ROD);
-        wand.editMeta(meta -> {
-            meta.displayName(MM.deserialize("<aqua><bold>Glow Wand"));
-            meta.lore(List.of(
-                MM.deserialize("<gray>Left-click a block: <white>pos1"),
-                MM.deserialize("<gray>Right-click a block: <white>pos2")));
-            meta.setEnchantmentGlintOverride(true);
-            meta.getPersistentDataContainer().set(wandKey, PersistentDataType.BYTE, (byte) 1);
-        });
-        player.getInventory().addItem(wand).values()
-            .forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
-        send(player, "<green>Glow wand added to your inventory.");
-        return true;
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onWandUse(PlayerInteractEvent event) {
-        if (event.getHand() != EquipmentSlot.HAND || event.getClickedBlock() == null
-            || event.getItem() == null
-            || !event.getItem().getPersistentDataContainer().has(wandKey, PersistentDataType.BYTE)) {
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        Assignment assignment = assignments.get(player.getUniqueId());
+        if (assignment == null) {
             return;
         }
-        boolean first = event.getAction() == Action.LEFT_CLICK_BLOCK;
-        if (!first && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
-            return;
+        if (!assignment.name.equals(player.getName())) {
+            removeFromGlowTeams(assignment.name);
+            assignment.name = player.getName();
+            save(null);
         }
-        event.setCancelled(true);
-        Selection selection = selections.computeIfAbsent(
-            event.getPlayer().getUniqueId(), ignored -> new Selection());
-        Location location = event.getClickedBlock().getLocation();
-        if (first) {
-            selection.first = location;
-        } else {
-            selection.second = location;
-        }
-        send(event.getPlayer(), "<aqua>Position " + (first ? "1" : "2") + ":</aqua> <white>"
-            + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
-    }
-
-    private boolean create(CommandSender sender, String name) {
-        if (!(sender instanceof Player player)) {
-            send(sender, "<red>This command is only available to players.");
-            return true;
-        }
-        if (!RivetPlugin.validWorldName(name) || regions.containsKey(key(name))) {
-            send(sender, "<red>Use a unique name containing only letters, numbers, _ or -.");
-            return true;
-        }
-        Selection selection = selections.get(player.getUniqueId());
-        if (selection == null || selection.first == null || selection.second == null
-            || !selection.first.getWorld().equals(selection.second.getWorld())) {
-            send(sender, "<red>Select two positions in the same world first.");
-            return true;
-        }
-        Region region = new Region(name, selection.first, selection.second);
-        // ponytail: 128-block sides keep display rendering sane; split larger regions if needed.
-        if (region.longestSide() > 128) {
-            send(sender, "<red>Glow outlines can be at most 128 blocks along each side.");
-            return true;
-        }
-        regions.put(key(name), region);
-        if (!save(sender)) {
-            regions.remove(key(name));
-            return true;
-        }
-        spawn(region);
-        send(sender, "<green>Created glow outline <white>" + name + "</white>.");
-        return true;
-    }
-
-    private boolean color(CommandSender sender, String name, String value) {
-        Region region = regions.get(key(name));
-        if (region == null) {
-            send(sender, "<red>That glow outline does not exist.");
-            return true;
-        }
-        Color color;
-        try {
-            color = parseColor(value);
-        } catch (IllegalArgumentException exception) {
-            send(sender, "<red>Use a named MiniMessage color or #RRGGBB.");
-            return true;
-        }
-        Color previous = region.color;
-        region.color = color;
-        if (!save(sender)) {
-            region.color = previous;
-            return true;
-        }
-        displays(region).forEach(display -> display.setGlowColorOverride(color));
-        send(sender, "<green>Set <white>" + region.name + "</white> to <" + hex(color) + ">"
-            + value + "</" + hex(color) + ">.");
-        return true;
-    }
-
-    private boolean remove(CommandSender sender, String name) {
-        Region region = regions.remove(key(name));
-        if (region == null) {
-            send(sender, "<red>That glow outline does not exist.");
-            return true;
-        }
-        if (!save(sender)) {
-            regions.put(key(name), region);
-            return true;
-        }
-        displays(region).forEach(Entity::remove);
-        send(sender, "<green>Removed glow outline <white>" + region.name + "</white>.");
-        return true;
-    }
-
-    private void spawn(Region region) {
-        World world = plugin.getServer().getWorld(region.world);
-        if (world == null) {
-            return;
-        }
-        double x0 = region.minX;
-        double y0 = region.minY;
-        double z0 = region.minZ;
-        double x1 = region.maxX + 1d;
-        double y1 = region.maxY + 1d;
-        double z1 = region.maxZ + 1d;
-        for (double y : new double[]{y0, y1}) {
-            for (double z : new double[]{z0, z1}) {
-                edge(region, world, x0, y - THICKNESS / 2, z - THICKNESS / 2,
-                    (float) (x1 - x0), THICKNESS, THICKNESS);
-            }
-        }
-        for (double x : new double[]{x0, x1}) {
-            for (double z : new double[]{z0, z1}) {
-                edge(region, world, x - THICKNESS / 2, y0, z - THICKNESS / 2,
-                    THICKNESS, (float) (y1 - y0), THICKNESS);
-            }
-        }
-        for (double x : new double[]{x0, x1}) {
-            for (double y : new double[]{y0, y1}) {
-                edge(region, world, x - THICKNESS / 2, y - THICKNESS / 2, z0,
-                    THICKNESS, THICKNESS, (float) (z1 - z0));
-            }
-        }
-    }
-
-    private void edge(Region region, World world, double x, double y, double z,
-                      float scaleX, float scaleY, float scaleZ) {
-        world.spawn(new Location(world, x, y, z), BlockDisplay.class, display -> {
-            display.setBlock(Material.WHITE_STAINED_GLASS.createBlockData());
-            display.setPersistent(true);
-            display.setInvulnerable(true);
-            display.setGlowing(true);
-            display.setGlowColorOverride(region.color);
-            display.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));
-            display.setViewRange(Math.max(1, region.longestSide() / 64f + 1));
-            Transformation transformation = display.getTransformation();
-            transformation.getScale().set(scaleX, scaleY, scaleZ);
-            display.setTransformation(transformation);
-            display.getPersistentDataContainer().set(
-                outlineKey, PersistentDataType.STRING, key(region.name));
-        });
-    }
-
-    private List<BlockDisplay> displays(Region region) {
-        String name = key(region.name);
-        List<BlockDisplay> displays = new ArrayList<>();
-        plugin.getServer().getWorlds().forEach(world -> world.getEntities().forEach(entity -> {
-            if (entity instanceof BlockDisplay display && name.equals(entity.getPersistentDataContainer()
-                .get(outlineKey, PersistentDataType.STRING))) {
-                displays.add(display);
-            }
-        }));
-        return displays;
+        plugin.getServer().getScheduler().runTask(plugin, () -> apply(player));
     }
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
-        refresh(event.getChunk().getEntities());
+        removeLegacyOutlines(event.getChunk().getEntities());
     }
 
-    private void refreshLoaded() {
-        plugin.getServer().getWorlds().forEach(world ->
-            refresh(world.getEntities().toArray(Entity[]::new)));
+    void shutdown() {
+        animationTask.cancel();
+        plugin.getServer().getOnlinePlayers().forEach(player -> {
+            Assignment assignment = assignments.get(player.getUniqueId());
+            if (assignment != null) {
+                clear(player, assignment);
+            }
+        });
     }
 
-    private void refresh(Entity[] entities) {
-        for (Entity entity : entities) {
-            String name = entity.getPersistentDataContainer().get(outlineKey, PersistentDataType.STRING);
-            if (name == null) {
-                continue;
-            }
-            Region region = regions.get(name);
-            if (!(entity instanceof BlockDisplay display) || region == null
-                || !region.world.equals(entity.getWorld().getUID())) {
-                entity.remove();
-                continue;
-            }
-            display.setGlowing(true);
-            display.setGlowColorOverride(region.color);
+    private boolean add(CommandSender sender, String playerName, String requestedColor,
+                        boolean silent) {
+        Player target = plugin.getServer().getPlayerExact(playerName);
+        if (target == null || sender instanceof Player viewer && !viewer.canSee(target)) {
+            send(sender, "<red>That player is not online.");
+            return true;
         }
+        String color = requestedColor.toLowerCase(Locale.ROOT);
+        if (!color.equals(RAINBOW) && !COLORS.containsKey(color)) {
+            send(sender, "<red>Unknown glow color. Use <white>/glow color</white> to see the list.");
+            return true;
+        }
+
+        Assignment previous = assignments.get(target.getUniqueId());
+        Team currentTeam = mainScoreboard().getEntityTeam(target);
+        String previousTeam = previous == null && currentTeam != null && !isGlowTeam(currentTeam)
+            ? currentTeam.getName() : previous == null ? null : previous.previousTeam;
+        Assignment assignment = new Assignment(target.getName(), color, previousTeam);
+        assignments.put(target.getUniqueId(), assignment);
+        if (!save(sender)) {
+            if (previous == null) {
+                assignments.remove(target.getUniqueId());
+            } else {
+                assignments.put(target.getUniqueId(), previous);
+            }
+            return true;
+        }
+        apply(target);
+        if (!silent) {
+            send(sender, "<green>Set <white>" + target.getName() + "</white>'s glow to <white>"
+                + color.replace('_', ' ') + "</white>.");
+        }
+        return true;
+    }
+
+    private boolean remove(CommandSender sender, String playerName, boolean silent) {
+        Map.Entry<UUID, Assignment> found = assignments.entrySet().stream()
+            .filter(entry -> entry.getValue().name.equalsIgnoreCase(playerName)).findFirst().orElse(null);
+        if (found == null) {
+            send(sender, "<red>That player does not have a Rivet glow.");
+            return true;
+        }
+        assignments.remove(found.getKey());
+        if (!save(sender)) {
+            assignments.put(found.getKey(), found.getValue());
+            return true;
+        }
+        Player target = plugin.getServer().getPlayer(found.getKey());
+        if (target == null) {
+            removeFromGlowTeams(found.getValue().name);
+        } else {
+            clear(target, found.getValue());
+        }
+        if (!silent) {
+            send(sender, "<green>Removed <white>" + found.getValue().name + "</white>'s glow.");
+        }
+        return true;
+    }
+
+    private void apply(Player player) {
+        Assignment assignment = assignments.get(player.getUniqueId());
+        if (assignment == null) {
+            return;
+        }
+        removeFromGlowTeams(player.getName());
+        glowTeam(assignment.color).addEntity(player);
+        player.setGlowing(true);
+    }
+
+    private void clear(Player player, Assignment assignment) {
+        removeFromGlowTeams(player.getName());
+        player.setGlowing(false);
+        if (assignment.previousTeam == null) {
+            return;
+        }
+        Team previous = mainScoreboard().getTeam(assignment.previousTeam);
+        if (previous != null) {
+            previous.addEntity(player);
+        }
+    }
+
+    private void animate() {
+        animationTick = (animationTick + 1) % RAINBOW_CYCLE_TICKS;
+        int paletteIndex = animationTick * RAINBOW_COLORS.size() / RAINBOW_CYCLE_TICKS;
+        Team rainbowTeam = existingGlowTeam(RAINBOW);
+        if (rainbowTeam != null) {
+            rainbowTeam.color(RAINBOW_COLORS.get(paletteIndex));
+        }
+
+        Color color = rainbowColor(animationTick, RAINBOW_CYCLE_TICKS);
+        Color nextColor = rainbowColor(animationTick + 1, RAINBOW_CYCLE_TICKS);
+        float pulse = (float) (.75 + .2 * Math.sin(animationTick * Math.PI * 2 / 30d));
+        Particle.DustTransition dust = new Particle.DustTransition(color, nextColor, pulse);
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            Assignment assignment = assignments.get(player.getUniqueId());
+            if (assignment == null) {
+                continue;
+            }
+            if (!player.isGlowing()) {
+                player.setGlowing(true);
+            }
+            if (!assignment.color.equals(RAINBOW)) {
+                continue;
+            }
+            player.getWorld().spawnParticle(Particle.DUST_COLOR_TRANSITION,
+                player.getLocation().add(0, 1, 0),
+                2, .32, .65, .32, 0, dust);
+        }
+    }
+
+    private void removeLegacyOutlines(Entity[] entities) {
+        for (Entity entity : entities) {
+            if (entity.getPersistentDataContainer().has(legacyOutlineKey, PersistentDataType.STRING)) {
+                entity.remove();
+            }
+        }
+    }
+
+    private Team glowTeam(String color) {
+        Team team = existingGlowTeam(color);
+        if (team == null) {
+            team = mainScoreboard().registerNewTeam(teamName(color));
+        }
+        team.color(color.equals(RAINBOW) ? RAINBOW_COLORS.get(0) : COLORS.get(color));
+        return team;
+    }
+
+    private Team existingGlowTeam(String color) {
+        return mainScoreboard().getTeam(teamName(color));
+    }
+
+    private void removeFromGlowTeams(String entry) {
+        mainScoreboard().getTeams().stream().filter(GlowModule::isGlowTeam)
+            .forEach(team -> team.removeEntry(entry));
+    }
+
+    private Scoreboard mainScoreboard() {
+        return plugin.getServer().getScoreboardManager().getMainScoreboard();
     }
 
     private void load() {
-        if (!file.isFile()) {
+        ConfigurationSection root = data.getConfigurationSection("players");
+        if (root == null) {
             return;
         }
-        YamlConfiguration yaml = new YamlConfiguration();
-        try {
-            yaml.load(file);
-            ConfigurationSection root = yaml.getConfigurationSection("glows");
-            if (root == null) {
-                return;
+        for (String key : root.getKeys(false)) {
+            try {
+                UUID owner = UUID.fromString(key);
+                String name = root.getString(key + ".name");
+                String color = root.getString(key + ".color", "white").toLowerCase(Locale.ROOT);
+                String previousTeam = root.getString(key + ".previous-team");
+                if (name == null || name.isBlank()
+                    || !color.equals(RAINBOW) && !COLORS.containsKey(color)) {
+                    throw new IllegalArgumentException("invalid player glow");
+                }
+                assignments.put(owner, new Assignment(name, color, previousTeam));
+            } catch (IllegalArgumentException exception) {
+                plugin.getLogger().warning("Skipped invalid player glow entry: " + key);
             }
-            for (String name : root.getKeys(false)) {
-                String path = "glows." + name;
-                Region region = new Region(name);
-                region.world = UUID.fromString(required(yaml.getString(path + ".world")));
-                region.minX = yaml.getInt(path + ".min-x");
-                region.minY = yaml.getInt(path + ".min-y");
-                region.minZ = yaml.getInt(path + ".min-z");
-                region.maxX = yaml.getInt(path + ".max-x");
-                region.maxY = yaml.getInt(path + ".max-y");
-                region.maxZ = yaml.getInt(path + ".max-z");
-                region.color = Color.fromRGB(yaml.getInt(path + ".color", 0x55FFFF));
-                regions.put(key(name), region);
-            }
-        } catch (IOException | InvalidConfigurationException | IllegalArgumentException exception) {
-            plugin.getLogger().severe("Could not load data/glow.yml: " + exception.getMessage());
         }
     }
 
     private boolean save(CommandSender sender) {
-        YamlConfiguration yaml = new YamlConfiguration();
-        regions.values().forEach(region -> {
-            String path = "glows." + region.name;
-            yaml.set(path + ".world", region.world.toString());
-            yaml.set(path + ".min-x", region.minX);
-            yaml.set(path + ".min-y", region.minY);
-            yaml.set(path + ".min-z", region.minZ);
-            yaml.set(path + ".max-x", region.maxX);
-            yaml.set(path + ".max-y", region.maxY);
-            yaml.set(path + ".max-z", region.maxZ);
-            yaml.set(path + ".color", region.color.asRGB());
+        data.set("players", null);
+        assignments.forEach((owner, assignment) -> {
+            String path = "players." + owner;
+            data.set(path + ".name", assignment.name);
+            data.set(path + ".color", assignment.color);
+            data.set(path + ".previous-team", assignment.previousTeam);
         });
         try {
-            Files.createDirectories(file.toPath().getParent());
-            File temporary = new File(file.getParentFile(), file.getName() + ".tmp");
-            yaml.save(temporary);
-            try {
-                Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE,
-                    StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException exception) {
-                Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
+            plugin.saveData("glow");
             return true;
         } catch (IOException exception) {
             plugin.getLogger().severe("Could not save data/glow.yml: " + exception.getMessage());
-            send(sender, "<red>The glow change could not be saved.");
+            if (sender != null) {
+                send(sender, "<red>The glow change could not be saved.");
+            }
             return false;
         }
     }
 
-    static Color parseColor(String value) {
-        String normalized = value.toLowerCase(Locale.ROOT);
-        NamedTextColor named = NamedTextColor.NAMES.value(normalized);
-        if (named != null) {
-            return Color.fromRGB(named.value());
-        }
-        String hex = normalized.startsWith("#") ? normalized.substring(1) : normalized;
-        if (hex.length() != 6 || !hex.matches("[0-9a-f]{6}")) {
-            throw new IllegalArgumentException("invalid color");
-        }
-        return Color.fromRGB(Integer.parseInt(hex, 16));
+    private void showColors(CommandSender sender) {
+        send(sender, "<aqua>Glow colors:</aqua> <white>" + String.join("</white>, <white>", COLORS.keySet())
+            + "</white>, <rainbow>rainbow</rainbow>");
     }
 
-    private List<String> names() {
-        return regions.values().stream().map(region -> region.name)
+    private List<String> onlinePlayerNames() {
+        return plugin.getServer().getOnlinePlayers().stream().map(Player::getName)
             .sorted(String.CASE_INSENSITIVE_ORDER).toList();
     }
 
-    private static String key(String name) {
-        return name.toLowerCase(Locale.ROOT);
+    static Color rainbowColor(int tick, int cycleTicks) {
+        float hue = Math.floorMod(tick, cycleTicks) / (float) cycleTicks;
+        int sector = (int) (hue * 6);
+        float fraction = hue * 6 - sector;
+        int rising = Math.round(fraction * 255);
+        int falling = 255 - rising;
+        return switch (sector) {
+            case 0 -> Color.fromRGB(255, rising, 0);
+            case 1 -> Color.fromRGB(falling, 255, 0);
+            case 2 -> Color.fromRGB(0, 255, rising);
+            case 3 -> Color.fromRGB(0, falling, 255);
+            case 4 -> Color.fromRGB(rising, 0, 255);
+            default -> Color.fromRGB(255, 0, falling);
+        };
     }
 
-    private static String hex(Color color) {
-        return String.format(Locale.ROOT, "#%06X", color.asRGB());
+    private static Map<String, NamedTextColor> colors() {
+        Map<String, NamedTextColor> colors = new LinkedHashMap<>();
+        colors.put("black", NamedTextColor.BLACK);
+        colors.put("dark_blue", NamedTextColor.DARK_BLUE);
+        colors.put("dark_green", NamedTextColor.DARK_GREEN);
+        colors.put("dark_aqua", NamedTextColor.DARK_AQUA);
+        colors.put("dark_red", NamedTextColor.DARK_RED);
+        colors.put("dark_purple", NamedTextColor.DARK_PURPLE);
+        colors.put("gold", NamedTextColor.GOLD);
+        colors.put("gray", NamedTextColor.GRAY);
+        colors.put("dark_gray", NamedTextColor.DARK_GRAY);
+        colors.put("blue", NamedTextColor.BLUE);
+        colors.put("green", NamedTextColor.GREEN);
+        colors.put("aqua", NamedTextColor.AQUA);
+        colors.put("red", NamedTextColor.RED);
+        colors.put("light_purple", NamedTextColor.LIGHT_PURPLE);
+        colors.put("yellow", NamedTextColor.YELLOW);
+        colors.put("white", NamedTextColor.WHITE);
+        return Collections.unmodifiableMap(colors);
     }
 
-    private static String required(String value) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("missing value");
-        }
-        return value;
+    private static String teamName(String color) {
+        return "rvt_glow_" + (color.equals(RAINBOW) ? "rainbow"
+            : Integer.toHexString(new ArrayList<>(COLORS.keySet()).indexOf(color)));
+    }
+
+    private static boolean isGlowTeam(Team team) {
+        return team.getName().startsWith("rvt_glow_");
     }
 
     private static void send(CommandSender sender, String message) {
         sender.sendMessage(MM.deserialize(message));
     }
 
-    private static final class Selection {
-        private Location first;
-        private Location second;
-    }
+    private static final class Assignment {
+        private String name;
+        private final String color;
+        private final String previousTeam;
 
-    private static final class Region {
-        private final String name;
-        private UUID world;
-        private int minX;
-        private int minY;
-        private int minZ;
-        private int maxX;
-        private int maxY;
-        private int maxZ;
-        private Color color = Color.AQUA;
-
-        private Region(String name) {
+        private Assignment(String name, String color, String previousTeam) {
             this.name = name;
+            this.color = color;
+            this.previousTeam = previousTeam;
         }
 
-        private Region(String name, Location first, Location second) {
-            this(name);
-            world = first.getWorld().getUID();
-            minX = Math.min(first.getBlockX(), second.getBlockX());
-            minY = Math.min(first.getBlockY(), second.getBlockY());
-            minZ = Math.min(first.getBlockZ(), second.getBlockZ());
-            maxX = Math.max(first.getBlockX(), second.getBlockX());
-            maxY = Math.max(first.getBlockY(), second.getBlockY());
-            maxZ = Math.max(first.getBlockZ(), second.getBlockZ());
-        }
-
-        private int longestSide() {
-            return Math.max(maxX - minX + 1,
-                Math.max(maxY - minY + 1, maxZ - minZ + 1));
+        private String name() {
+            return name;
         }
     }
 }

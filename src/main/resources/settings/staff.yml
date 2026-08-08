@@ -9,6 +9,17 @@ boss-bar:
   # solid, segmented_6, segmented_10, segmented_12, or segmented_20
   default-style: solid
 
+toast:
+  default-type: task
+  default-icon: paper
+
+same-ip:
+  format: "<gold>Online players sharing <player>'s session address:</gold> <white><matches></white>"
+  disclaimer: "<gray>A shared address does not prove that accounts belong to the same person; proxies and shared networks can affect results.</gray>"
+
+notes:
+  maximum-length: 500
+
 messages:
   heal: "<green>Healed <white><target></white>.</green>"
   heal-target: "<green>You were healed by <white><player></white>.</green>"

@@ -7,3 +7,6 @@ find-biome:
   radius: 6400
   horizontal-step: 32
   vertical-step: 64
+
+tree:
+  maximum-range: 50

@@ -47,6 +47,23 @@ final class ItemTools {
         settings = plugin.settings("inventory");
     }
 
+    boolean hat(Player player, String[] args) {
+        if (args.length != 0) {
+            player.sendMessage(MM.deserialize("<red>Usage: /hat"));
+            return true;
+        }
+        ItemStack held = player.getInventory().getItemInMainHand();
+        if (held.getType().isAir()) {
+            message(player, "empty-hand", "<red>Hold an item first.</red>");
+            return true;
+        }
+        ItemStack helmet = player.getInventory().getHelmet();
+        player.getInventory().setHelmet(held);
+        player.getInventory().setItemInMainHand(helmet == null ? new ItemStack(Material.AIR) : helmet);
+        message(player, "hat-success", "<green>Equipped the item as your hat.</green>");
+        return true;
+    }
+
     boolean clear(Player actor, String[] args) {
         List<String> values = Arrays.stream(args).filter(value -> !value.equalsIgnoreCase("-s")).toList();
         boolean silent = values.size() != args.length;

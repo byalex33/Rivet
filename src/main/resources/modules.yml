@@ -31,3 +31,4 @@ daily: true
 rtp: true
 near: true
 filter: true
+help: true
