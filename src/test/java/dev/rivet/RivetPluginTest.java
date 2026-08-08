@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -56,6 +57,7 @@ public final class RivetPluginTest {
         assertEquals(Material.WHEAT, AutoBreeder.breedingFood(EntityType.COW));
         assertEquals(Material.CARROT, AutoBreeder.breedingFood(EntityType.PIG));
         assertEquals(EntityType.NAUTILUS, AutoBreeder.supportedAnimal("NAUTILUS"));
+        assertEquals(EntityType.MOOSHROOM, AutoBreeder.supportedAnimal("mooshroom"));
         assertNull(AutoBreeder.supportedAnimal("MULE"));
         Arrays.stream(EntityType.values())
             .filter(type -> AutoBreeder.breedingFood(type) != null)
@@ -97,6 +99,8 @@ public final class RivetPluginTest {
         assertEquals(Set.copyOf(RivetConfig.MODULES), modules.getKeys(false));
         assertEquals(true, modules.getValues(false).values().stream()
             .allMatch(Boolean.class::isInstance));
+        assertEquals(RivetConfig.ENABLED_BY_DEFAULT,
+            modules.getKeys(false).stream().filter(modules::getBoolean).collect(Collectors.toSet()));
         RivetConfig.MODULES.forEach(module ->
             assertNotNull(module, getClass().getResource("/settings/" + module + ".yml")));
 
@@ -104,7 +108,53 @@ public final class RivetPluginTest {
         assertNotNull(globalResource);
         YamlConfiguration global = YamlConfiguration.loadConfiguration(
             new InputStreamReader(globalResource, StandardCharsets.UTF_8));
-        assertEquals(Set.of("effects"), global.getKeys(false));
+        assertEquals(Set.of("effects", "message-palette-version"), global.getKeys(false));
+    }
+
+    @Test
+    public void packagesConfigurableMessagesSoundsAndParticlesForInteractiveModules() {
+        Map<String, List<String>> required = Map.of(
+            "breeders", List.of("messages.given", "display.item-name",
+                "effects.activation.sound.name", "effects.activation.particles.enabled"),
+            "egg-capture", List.of("messages.cannot-capture", "captured-egg.name",
+                "effects.start-sound.name", "effects.particles.enabled"),
+            "environment", List.of("messages.time-set", "messages.weather-set",
+                "effects.time.sound", "effects.weather.particle"),
+            "homes", List.of("messages.set", "messages.teleported",
+                "effects.teleport.sound", "effects.teleport.particle"),
+            "tree-feller", List.of("tree-feller.message", "tree-feller.sound.name",
+                "veinminer.message", "veinminer.particles.name"),
+            "warps", List.of("messages.set", "messages.teleported",
+                "effects.teleport.sound", "effects.teleport.particle"));
+        required.forEach((module, paths) -> {
+            var resource = getClass().getResourceAsStream("/settings/" + module + ".yml");
+            assertNotNull(module, resource);
+            YamlConfiguration settings = YamlConfiguration.loadConfiguration(
+                new InputStreamReader(resource, StandardCharsets.UTF_8));
+            paths.forEach(path -> assertEquals(module + ": " + path,
+                true, settings.contains(path)));
+        });
+    }
+
+    @Test
+    public void migratesLegacyMessageColorsToTheRivetPalette() {
+        assertEquals("<white>Saved <#f72a4c>Alex</#f72a4c>.</white>",
+            RivetConfig.themeMessage("<green>Saved <white>Alex</white>.</green>"));
+        assertEquals("<#f72a4c><bold>Rivet</bold></#f72a4c>",
+            RivetConfig.themeMessage("<gradient:red:gold><bold>Rivet</bold></gradient>"));
+        assertEquals("<#f72a4c>Accent</#f72a4c>",
+            RivetConfig.themeMessage("<#f72a4c>Accent</#f72a4c>"));
+        assertEquals("<#f72a4c><player>:</#f72a4c> <white><message></white>",
+            RivetConfig.themeConfiguredMessage("chat", "format",
+                "<gray><player>:</gray> <white><message></white>"));
+        assertEquals("<#f72a4c>* <player></#f72a4c> <white><message></white>",
+            RivetConfig.themeConfiguredMessage("chat", "me.format",
+                "<light_purple>* <player> <message></light_purple>"));
+        assertEquals("<#f72a4c>[spy] <sender> → <recipient>:</#f72a4c> <white><message></white>",
+            RivetConfig.themeConfiguredMessage("chat", "social-spy.format",
+                "<dark_gray>[spy]</dark_gray> <gray><sender> → <recipient>:</gray> <white><message></white>"));
+        String themed = "<white>Saved <#f72a4c>Alex</#f72a4c>.</white>";
+        assertEquals(themed, RivetConfig.migrateMessage("kits", "messages.saved", themed));
     }
 
     @Test
@@ -126,7 +176,6 @@ public final class RivetPluginTest {
         assertEquals("inventory", RivetPlugin.moduleForCommand("i"));
         assertEquals("permissions", RivetPlugin.moduleForCommand("perm"));
         assertEquals("holograms", RivetPlugin.moduleForCommand("hologram"));
-        assertEquals("glow", RivetPlugin.moduleForCommand("glow"));
         assertEquals("spawn", RivetPlugin.moduleForCommand("setspawn"));
         assertEquals("tpa", RivetPlugin.moduleForCommand("tpaccept"));
         assertEquals("graves", RivetPlugin.moduleForCommand("back"));
@@ -137,6 +186,7 @@ public final class RivetPluginTest {
         assertEquals("daily", RivetPlugin.moduleForCommand("daily"));
         assertEquals("rtp", RivetPlugin.moduleForCommand("rtp"));
         assertEquals("near", RivetPlugin.moduleForCommand("near"));
+        assertEquals("breeders", RivetPlugin.moduleForCommand("givebreeder"));
         assertEquals("filter", RivetPlugin.moduleForCommand("filter"));
         assertEquals("chat", RivetPlugin.moduleForCommand("chatcolor"));
         assertEquals("staff", RivetPlugin.moduleForCommand("bossbarmsg"));
@@ -319,6 +369,20 @@ public final class RivetPluginTest {
     }
 
     @Test
+    public void completesEveryBossBarFlagInAnyOrderWithoutDuplicates() {
+        assertEquals(List.of("-c:pink", "-c:blue", "-c:red", "-c:green", "-c:yellow",
+                "-c:purple", "-c:white"),
+            StaffTools.bossBarFlagCompletions(new String[]{"all", "-c:"}));
+        assertEquals(List.of("-s:solid", "-s:segmented_6", "-s:segmented_10",
+                "-s:segmented_12", "-s:segmented_20"),
+            StaffTools.bossBarFlagCompletions(new String[]{"all", "-d:10", "-s:"}));
+
+        List<String> remaining = StaffTools.bossBarFlagCompletions(
+            new String[]{"all", "-s:segmented_10", "-c:red", ""});
+        assertEquals(List.of("-d:5", "-d:10", "-d:30", "-d:60"), remaining);
+    }
+
+    @Test
     public void parsesNoteActionsAndMaintainsSimpleIds() throws Exception {
         assertEquals(new StaffTools.NoteArguments("Alex", "add", "Repeated griefing", -1, false, true),
             StaffTools.parseNoteArguments(new String[]{"Alex", "add", "Repeated", "griefing"}));
@@ -353,14 +417,35 @@ public final class RivetPluginTest {
     @Test
     public void parsesToastFlagsAndRejectsUnsafeValues() {
         StaffTools.ToastArguments toast = StaffTools.parseToastArguments(
-            new String[]{"-t:challenge", "-icon:diamond", "<gold>Event!"}, "task", "paper");
+            new String[]{"i:diamond", "t:Event", "type:challenge", "<gold>Started!"},
+            "task", "paper");
         assertEquals(true, toast.valid());
         assertEquals("challenge", toast.type());
         assertEquals(Material.DIAMOND, toast.icon());
+        assertEquals("Event", toast.title());
+        assertEquals("<gold>Started!", toast.message());
+        StaffTools.ToastArguments legacy = StaffTools.parseToastArguments(
+            new String[]{"-t:goal", "-icon:emerald", "Legacy title"}, "task", "paper");
+        assertEquals("Legacy title", legacy.title());
+        assertEquals("", legacy.message());
         assertEquals(false, StaffTools.parseToastArguments(
-            new String[]{"-t:unknown", "hello"}, "task", "paper").valid());
+            new String[]{"type:unknown", "hello"}, "task", "paper").valid());
         assertEquals(false, StaffTools.parseToastArguments(
-            new String[]{"-icon:lava", "hello"}, "task", "paper").valid());
+            new String[]{"i:lava", "hello"}, "task", "paper").valid());
+    }
+
+    @Test
+    public void completesCompactToastIconTitleAndTypeTokens() {
+        assertEquals(List.of("i:diamond", "t:title", "type:task", "type:goal", "type:challenge"),
+            StaffTools.toastFlagCompletions(new String[]{"all", ""}, List.of("diamond")));
+        assertEquals(List.of("i:diamond", "i:dirt"),
+            StaffTools.toastFlagCompletions(new String[]{"all", "i:d"},
+                List.of("diamond", "dirt")));
+        assertEquals(List.of("t:title", "type:task", "type:goal", "type:challenge"),
+            StaffTools.toastFlagCompletions(new String[]{"all", "i:diamond", ""},
+                List.of("diamond")));
+        assertEquals(List.of("t:title"),
+            StaffTools.toastFlagCompletions(new String[]{"all", "t:"}, List.of("diamond")));
     }
 
     @Test
@@ -374,7 +459,11 @@ public final class RivetPluginTest {
 
     @Test
     public void topSafetyRejectsLeavesHazardsAndMissingHeadroom() {
+        assertEquals(65, SafeLocations.topScanStart(320, 64));
+        assertEquals(318, SafeLocations.topScanStart(320, 319));
         assertEquals(true, SafeLocations.safeStanding(Material.STONE, true, Material.AIR, true,
+            Material.AIR, true, true));
+        assertEquals(false, SafeLocations.safeStanding(Material.AIR, false, Material.AIR, true,
             Material.AIR, true, true));
         assertEquals(false, SafeLocations.safeStanding(Material.OAK_LEAVES, true, Material.AIR, true,
             Material.AIR, true, true));
@@ -631,6 +720,14 @@ public final class RivetPluginTest {
     }
 
     @Test
+    public void layUsesAStableHorizontalPoseAndTogglesSeparatelyFromCrawl() {
+        assertEquals(org.bukkit.entity.Pose.SWIMMING, PosesModule.modeFor("lay").pose());
+        assertEquals(org.bukkit.entity.Pose.SWIMMING, PosesModule.modeFor("crawl").pose());
+        assertEquals(false, PosesModule.modeFor("lay") == PosesModule.modeFor("crawl"));
+        assertEquals(org.bukkit.entity.Pose.SITTING, PosesModule.modeFor("sit").pose());
+    }
+
+    @Test
     public void graveHologramShowsOwnerCauseAndCoordinates() {
         Component hologram = GraveModule.hologram("Alex", "Alex fell from a high place", 12, 64, -8);
         assertEquals("Alex's Grave\nAlex fell from a high place\nX 12  Y 64  Z -8\nRight-click to reclaim",
@@ -649,22 +746,6 @@ public final class RivetPluginTest {
         assertEquals(0, HologramModule.parseBackground("delete"));
         assertEquals(0x80FF0000, HologramModule.parseBackground("#FF0000"));
         assertEquals(0x40010203, HologramModule.parseBackground("#40010203"));
-    }
-
-    @Test
-    public void smoothlyInterpolatesRainbowGlowColors() {
-        assertEquals(0xFF0000, GlowModule.rainbowColor(0, 120).asRGB());
-        assertEquals(0xFFFF00, GlowModule.rainbowColor(20, 120).asRGB());
-        assertEquals(0x00FF00, GlowModule.rainbowColor(40, 120).asRGB());
-        assertEquals(0x00FFFF, GlowModule.rainbowColor(60, 120).asRGB());
-        assertEquals(0x0000FF, GlowModule.rainbowColor(80, 120).asRGB());
-        assertEquals(0xFF00FF, GlowModule.rainbowColor(100, 120).asRGB());
-    }
-
-    @Test
-    public void rainbowGlowLoopsWithoutAColorJump() {
-        assertEquals(GlowModule.rainbowColor(0, 120), GlowModule.rainbowColor(120, 120));
-        assertEquals(GlowModule.rainbowColor(119, 120), GlowModule.rainbowColor(-1, 120));
     }
 
     @Test

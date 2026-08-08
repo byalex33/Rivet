@@ -3,6 +3,7 @@ package dev.rivet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.title.Title;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -82,7 +83,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private ChatModule chat;
     private AutoBreeder autoBreeder;
     private EggCapture eggCapture;
-    private GlowModule glows;
     private GraveModule graves;
     private HologramModule holograms;
     private PermissionModule permissions;
@@ -146,10 +146,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("chat")) {
             chat = new ChatModule(this);
             getServer().getPluginManager().registerEvents(chat, this);
-        }
-        if (moduleEnabled("glow")) {
-            glows = new GlowModule(this);
-            getServer().getPluginManager().registerEvents(glows, this);
         }
         if (moduleEnabled("graves")) {
             graves = new GraveModule(this, delayedTeleports);
@@ -259,9 +255,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (eggCapture != null) {
             eggCapture.shutdown();
         }
-        if (glows != null) {
-            glows.shutdown();
-        }
         if (treeFeller != null) {
             treeFeller.shutdown();
         }
@@ -321,9 +314,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return;
         }
         ItemStack head = createMobHead(event.getEntityType());
-        head.editMeta(meta -> meta.displayName(MM.deserialize("<gold><bold>"
+        head.editMeta(meta -> meta.displayName(MM.deserialize("<#f72a4c><bold>"
             + titleCase(event.getEntityType().name().toLowerCase(Locale.ROOT).replace('_', ' '))
-            + " Head</bold></gold>")));
+            + " Head</bold></#f72a4c>")));
         event.getDrops().add(head);
         celebrateHeadDrop(event.getEntity().getLocation().add(0, .8, 0));
     }
@@ -363,7 +356,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         String module = moduleForCommand(name);
         if (commandDisabled(name, this::moduleEnabled)) {
-            send(sender, "<yellow>The <white>" + module + "</white> module is disabled.");
+            send(sender, "<white>The <#f72a4c>" + module + "</#f72a4c> module is disabled.");
             return true;
         }
         if (name.equals("perm") || name.equals("group")) {
@@ -371,9 +364,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (name.equals("hologram")) {
             return holograms.command(sender, args);
-        }
-        if (name.equals("glow")) {
-            return glows.command(sender, args);
         }
         if (name.equals("help")) {
             return help.command(sender, args);
@@ -387,16 +377,19 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (name.equals("playtime")) {
             return statistics.playtime(sender, args);
         }
+        if (name.equals("givebreeder")) {
+            return autoBreeder.command(sender, args);
+        }
         if (!(sender instanceof Player player)) {
-            send(sender, "<red>This command is only available to players.");
+            send(sender, "<white>This command is only available to players.");
             return true;
         }
 
         GameMode gameMode = gameModeFor(name);
         if (gameMode != null) {
             player.setGameMode(gameMode);
-            send(player, "<green>Gamemode set to <white>" + gameMode.name().toLowerCase(Locale.ROOT) + "</white>.");
-            effect(player, "<green>" + titleCase(gameMode.name().toLowerCase(Locale.ROOT)) + "</green>", "<gray>Gamemode changed</gray>",
+            send(player, "<white>Gamemode set to <#f72a4c>" + gameMode.name().toLowerCase(Locale.ROOT) + "</#f72a4c>.");
+            effect(player, "<white>" + titleCase(gameMode.name().toLowerCase(Locale.ROOT)) + "</white>", "<white>Gamemode changed</white>",
                 Sound.ENTITY_EXPERIENCE_ORB_PICKUP, Particle.HAPPY_VILLAGER);
             return true;
         }
@@ -478,7 +471,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             choices = switch (command.getName()) {
                 case "perm", "group" -> permissions.completions(command.getName(), args);
                 case "hologram" -> holograms.completions(args);
-                case "glow" -> glows.completions(args);
                 case "flatworld" -> args.length == 1 ? List.of("create", "list", "reset", "tp")
                     : args.length == 2 && args[0].equalsIgnoreCase("tp") ? testWorlds(null)
                     : args.length == 2 && args[0].equalsIgnoreCase("reset") ? testWorlds("flat") : List.of();
@@ -490,6 +482,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     .filter(material -> material.isItem() && !material.isAir())
                     .map(material -> material.name().toLowerCase(Locale.ROOT)).sorted().toList()
                     : args.length == 2 ? List.of("1", "16", "32", "64") : List.of();
+                case "givebreeder" -> autoBreeder.completions(sender, args);
                 case "msg", "tp" -> args.length == 1 ? getServer().getOnlinePlayers().stream()
                     .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
                     .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
@@ -556,7 +549,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return listWorlds(player);
         }
         if (args.length != 2 || !validWorldName(args[1])) {
-            send(player, "<red>Usage: /flatworld <create|tp|reset|list> <name>");
+            send(player, "<white>Usage: /flatworld <create|tp|reset|list> <name>");
             return true;
         }
 
@@ -565,7 +558,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "tp" -> teleportWorld(player, args[1]);
             case "reset" -> resetWorld(player, args[1]);
             default -> {
-                send(player, "<red>Usage: /flatworld <create|tp|reset|list> <name>");
+                send(player, "<white>Usage: /flatworld <create|tp|reset|list> <name>");
                 yield true;
             }
         };
@@ -573,7 +566,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     private boolean voidWorld(Player player, String[] args) {
         if (args.length != 2 || !args[0].equalsIgnoreCase("create") || !validWorldName(args[1])) {
-            send(player, "<red>Usage: /voidworld create <name>");
+            send(player, "<white>Usage: /voidworld create <name>");
             return true;
         }
         return createWorld(player, args[1], "void");
@@ -582,24 +575,24 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private boolean createWorld(Player player, String name, String type) {
         Path path = worldPath(name);
         if (Files.exists(path)) {
-            send(player, "<red>A world named <white>" + name + "</white> already exists.");
+            send(player, "<white>A world named <#f72a4c>" + name + "</#f72a4c> already exists.");
             return true;
         }
 
         World world = loadWorld(name, type);
         if (world == null) {
-            send(player, "<red>Could not create <white>" + name + "</white>.");
+            send(player, "<white>Could not create <#f72a4c>" + name + "</#f72a4c>.");
             return true;
         }
 
         try {
             trackWorld(name, type);
-            send(player, "<green>Created " + type + " world <white>" + name + "</white>.");
-            effect(player, "<green>World created</green>", "<gray>" + name + "</gray>",
+            send(player, "<white>Created " + type + " world <#f72a4c>" + name + "</#f72a4c>.");
+            effect(player, "<white>World created</white>", "<white>" + name + "</white>",
                 Sound.BLOCK_BEACON_ACTIVATE, Particle.END_ROD);
         } catch (IOException exception) {
             getLogger().severe("Created world " + name + " but could not mark it as a test world: " + exception.getMessage());
-            send(player, "<red>World created, but Rivet could not track it. Check the console.");
+            send(player, "<white>World created, but Rivet could not track it. Check the console.");
         }
         return true;
     }
@@ -607,7 +600,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private boolean teleportWorld(Player player, String name) {
         String type = worldType(name);
         if (type == null) {
-            send(player, "<red>No test world named <white>" + name + "</white> exists.");
+            send(player, "<white>No test world named <#f72a4c>" + name + "</#f72a4c> exists.");
             return true;
         }
 
@@ -616,20 +609,20 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             world = loadWorld(name, type);
         }
         if (world == null) {
-            send(player, "<red>Could not load <white>" + name + "</white>.");
+            send(player, "<white>Could not load <#f72a4c>" + name + "</#f72a4c>.");
             return true;
         }
 
         player.teleport(world.getSpawnLocation());
-        send(player, "<green>Teleported to <white>" + name + "</white>.");
-        effect(player, "<aqua>" + name + "</aqua>", "<gray>Teleported</gray>",
+        send(player, "<white>Teleported to <#f72a4c>" + name + "</#f72a4c>.");
+        effect(player, "<#f72a4c>" + name + "</#f72a4c>", "<white>Teleported</white>",
             Sound.ENTITY_ENDERMAN_TELEPORT, Particle.PORTAL);
         return true;
     }
 
     private boolean resetWorld(Player player, String name) {
         if (!"flat".equals(worldType(name))) {
-            send(player, "<red>No flat test world named <white>" + name + "</white> exists.");
+            send(player, "<white>No flat test world named <#f72a4c>" + name + "</#f72a4c> exists.");
             return true;
         }
 
@@ -637,14 +630,14 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (world != null) {
             World fallback = getServer().getWorlds().stream().filter(candidate -> !candidate.equals(world)).findFirst().orElse(null);
             if (!world.getPlayers().isEmpty() && fallback == null) {
-                send(player, "<red>Cannot reset the only loaded world while players are inside it.");
+                send(player, "<white>Cannot reset the only loaded world while players are inside it.");
                 return true;
             }
             if (fallback != null) {
                 world.getPlayers().forEach(occupant -> occupant.teleport(fallback.getSpawnLocation()));
             }
             if (!getServer().unloadWorld(world, false)) {
-                send(player, "<red>Could not unload <white>" + name + "</white>.");
+                send(player, "<white>Could not unload <#f72a4c>" + name + "</#f72a4c>.");
                 return true;
             }
         }
@@ -653,23 +646,23 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             deleteWorld(worldPath(name));
         } catch (IOException exception) {
             getLogger().severe("Could not delete world " + name + ": " + exception.getMessage());
-            send(player, "<red>Could not delete <white>" + name + "</white>. Check the console.");
+            send(player, "<white>Could not delete <#f72a4c>" + name + "</#f72a4c>. Check the console.");
             return true;
         }
 
         World regenerated = loadWorld(name, "flat");
         if (regenerated == null) {
-            send(player, "<red>Deleted the world, but could not regenerate it.");
+            send(player, "<white>Deleted the world, but could not regenerate it.");
             return true;
         }
         try {
             trackWorld(name, "flat");
-            send(player, "<green>Reset flat world <white>" + name + "</white>.");
-            effect(player, "<gold>World reset</gold>", "<gray>" + name + "</gray>",
+            send(player, "<white>Reset flat world <#f72a4c>" + name + "</#f72a4c>.");
+            effect(player, "<#f72a4c>World reset</#f72a4c>", "<white>" + name + "</white>",
                 Sound.BLOCK_BEACON_ACTIVATE, Particle.POOF);
         } catch (IOException exception) {
             getLogger().severe("Regenerated world " + name + " but could not save its data: " + exception.getMessage());
-            send(player, "<red>World regenerated, but Rivet could not track it. Check the console.");
+            send(player, "<white>World regenerated, but Rivet could not track it. Check the console.");
         }
         return true;
     }
@@ -679,21 +672,21 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         try {
             worlds = testWorlds(null);
         } catch (IOException exception) {
-            send(player, "<red>Could not list test worlds.");
+            send(player, "<white>Could not list test worlds.");
             return true;
         }
 
         if (worlds.isEmpty()) {
-            send(player, "<gray>No test worlds have been generated.");
+            send(player, "<white>No test worlds have been generated.");
             return true;
         }
 
-        Component message = MM.deserialize("<gold>Test worlds:</gold>");
+        Component message = MM.deserialize("<#f72a4c>Test worlds:</#f72a4c>");
         for (String name : worlds) {
             String type = worldType(name);
             message = message.append(Component.newline()).append(MM.deserialize(
-                "<click:run_command:'/flatworld tp " + name + "'><aqua>" + name
-                    + "</aqua> <gray>(" + type + ")</gray></click>"));
+                "<click:run_command:'/flatworld tp " + name + "'><#f72a4c>" + name
+                    + "</#f72a4c> <white>(" + type + ")</white></click>"));
         }
         player.sendMessage(message);
         return true;
@@ -715,28 +708,28 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             world = new WorldCreator("flat").type(WorldType.FLAT).generateStructures(false).createWorld();
         }
         if (world == null) {
-            send(player, "<red>Could not create the flat world.");
+            send(player, "<white>Could not create the flat world.");
             return true;
         }
         player.teleport(world.getSpawnLocation());
-        send(player, "<green>Teleported to <white>flat</white>.");
-        effect(player, "<aqua>flat</aqua>", "<gray>Teleported</gray>",
+        send(player, "<white>Teleported to <#f72a4c>flat</#f72a4c>.");
+        effect(player, "<#f72a4c>flat</#f72a4c>", "<white>Teleported</white>",
             Sound.ENTITY_ENDERMAN_TELEPORT, Particle.PORTAL);
         return true;
     }
 
     private boolean worldSpawn(Player player) {
         player.teleport(player.getWorld().getSpawnLocation());
-        send(player, "<green>Teleported to this world's spawn.");
-        effect(player, "<aqua>World spawn</aqua>", "<gray>Teleported</gray>",
+        send(player, "<white>Teleported to this world's spawn.");
+        effect(player, "<#f72a4c>World spawn</#f72a4c>", "<white>Teleported</white>",
             Sound.ENTITY_ENDERMAN_TELEPORT, Particle.PORTAL);
         return true;
     }
 
     private boolean setWorldSpawn(Player player) {
         player.getWorld().setSpawnLocation(player.getLocation());
-        send(player, "<green>Set this world's spawn to your location.");
-        effect(player, "<green>Spawn set</green>", "<gray>Current location</gray>",
+        send(player, "<white>Set this world's spawn to your location.");
+        effect(player, "<white>Spawn set</white>", "<white>Current location</white>",
             Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, Particle.END_ROD);
         return true;
     }
@@ -744,11 +737,17 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private boolean setHome(Player player, String[] args) {
         String name = homeName(args);
         if (name == null) {
-            send(player, "<red>Usage: /sethome [name]");
+            moduleMessage(player, "homes", "messages.usage-set",
+                "<white>Usage: /sethome [name]</white>");
             return true;
         }
         if (saveLocation(homes, "homes", homePath(player, name), player.getLocation(), player)) {
-            send(player, "<green>Home <white>" + name + "</white> set.");
+            moduleMessage(player, "homes", "messages.set",
+                "<white>Home <#f72a4c><name></#f72a4c> set.</white>",
+                Placeholder.unparsed("name", name));
+            configuredEffect(player, "homes", "effects.set",
+                Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, Particle.END_ROD,
+                Placeholder.unparsed("name", titleCase(name)));
         }
         return true;
     }
@@ -756,7 +755,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private boolean home(Player player, String[] args) {
         String name = homeName(args);
         if (name == null) {
-            send(player, "<red>Usage: /home [name]");
+            moduleMessage(player, "homes", "messages.usage-teleport",
+                "<white>Usage: /home [name]</white>");
             return true;
         }
         String path = homePath(player, name);
@@ -764,20 +764,22 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             && homes.contains("homes." + player.getUniqueId() + ".world")) {
             path = "homes." + player.getUniqueId();
         }
-        return teleportSaved(player, homes, path, name);
+        return teleportSaved(player, homes, path, name, "homes");
     }
 
     private boolean deleteHome(Player player, String[] args) {
         String name = homeName(args);
         if (name == null) {
-            send(player, "<red>Usage: /delhome [name]");
+            moduleMessage(player, "homes", "messages.usage-delete",
+                "<white>Usage: /delhome [name]</white>");
             return true;
         }
         String path = homePath(player, name);
         String legacy = "homes." + player.getUniqueId();
         if (!homes.isConfigurationSection(path)
             && (!name.equals("home") || !homes.contains(legacy + ".world"))) {
-            send(player, "<red>No " + name + " is set.");
+            moduleMessage(player, "homes", "messages.missing",
+                "<white>No <name> is set.</white>", Placeholder.unparsed("name", name));
             return true;
         }
         homes.set(path, null);
@@ -790,67 +792,94 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             homes.set(legacy + ".pitch", null);
         }
         if (saveData("homes", player)) {
-            send(player, "<green>Home <white>" + name + "</white> deleted.");
+            moduleMessage(player, "homes", "messages.deleted",
+                "<white>Home <#f72a4c><name></#f72a4c> deleted.</white>",
+                Placeholder.unparsed("name", name));
+            configuredEffect(player, "homes", "effects.delete",
+                Sound.BLOCK_NOTE_BLOCK_PLING, Particle.POOF,
+                Placeholder.unparsed("name", titleCase(name)));
         }
         return true;
     }
 
     private boolean setWarp(Player player, String[] args) {
         if (args.length != 1 || !validWorldName(args[0])) {
-            send(player, "<red>Usage: /setwarp <name>");
+            moduleMessage(player, "warps", "messages.usage-set",
+                "<white>Usage: /setwarp <name></white>");
             return true;
         }
         String name = args[0].toLowerCase(Locale.ROOT);
         if (saveLocation(warps, "warps", "warps." + name, player.getLocation(), player)) {
-            send(player, "<green>Warp <white>" + name + "</white> set.");
+            moduleMessage(player, "warps", "messages.set",
+                "<white>Warp <#f72a4c><name></#f72a4c> set.</white>",
+                Placeholder.unparsed("name", name));
+            configuredEffect(player, "warps", "effects.set",
+                Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, Particle.END_ROD,
+                Placeholder.unparsed("name", titleCase(name)));
         }
         return true;
     }
 
     private boolean warp(Player player, String[] args) {
         if (args.length != 1 || !validWorldName(args[0])) {
-            send(player, "<red>Usage: /warp <name>");
+            moduleMessage(player, "warps", "messages.usage-teleport",
+                "<white>Usage: /warp <name></white>");
             return true;
         }
         String name = args[0].toLowerCase(Locale.ROOT);
-        return teleportSaved(player, warps, "warps." + name, name);
+        return teleportSaved(player, warps, "warps." + name, name, "warps");
     }
 
     private boolean deleteWarp(Player player, String[] args) {
         if (args.length != 1 || !validWorldName(args[0])) {
-            send(player, "<red>Usage: /delwarp <name>");
+            moduleMessage(player, "warps", "messages.usage-delete",
+                "<white>Usage: /delwarp <name></white>");
             return true;
         }
         String name = args[0].toLowerCase(Locale.ROOT);
         String path = "warps." + name;
         if (!warps.isConfigurationSection(path)) {
-            send(player, "<red>No " + name + " is set.");
+            moduleMessage(player, "warps", "messages.missing",
+                "<white>No <name> is set.</white>", Placeholder.unparsed("name", name));
             return true;
         }
         warps.set(path, null);
         if (saveData("warps", player)) {
-            send(player, "<green>Warp <white>" + name + "</white> deleted.");
+            moduleMessage(player, "warps", "messages.deleted",
+                "<white>Warp <#f72a4c><name></#f72a4c> deleted.</white>",
+                Placeholder.unparsed("name", name));
+            configuredEffect(player, "warps", "effects.delete",
+                Sound.BLOCK_NOTE_BLOCK_PLING, Particle.POOF,
+                Placeholder.unparsed("name", titleCase(name)));
         }
         return true;
     }
 
-    private boolean teleportSaved(Player player, YamlConfiguration data, String path, String name) {
+    private boolean teleportSaved(Player player, YamlConfiguration data, String path,
+                                  String name, String module) {
         if (!data.isConfigurationSection(path)) {
-            send(player, "<red>No " + name + " is set.");
+            moduleMessage(player, module, "messages.missing",
+                "<white>No <name> is set.</white>", Placeholder.unparsed("name", name));
             return true;
         }
         Location location = savedLocation(data, path);
         if (location == null) {
-            send(player, "<red>The world for <white>" + name + "</white> is unavailable.");
+            moduleMessage(player, module, "messages.world-unavailable",
+                "<white>The world for <#f72a4c><name></#f72a4c> is unavailable.</white>",
+                Placeholder.unparsed("name", name));
             return true;
         }
         if (!player.teleport(location)) {
-            send(player, "<red>Teleport failed.");
+            moduleMessage(player, module, "messages.teleport-failed",
+                "<white>Teleport failed.</white>");
             return true;
         }
-        send(player, "<green>Teleported to <white>" + name + "</white>.");
-        effect(player, "<aqua>" + titleCase(name) + "</aqua>", "<gray>Teleported</gray>",
-            Sound.ENTITY_ENDERMAN_TELEPORT, Particle.PORTAL);
+        moduleMessage(player, module, "messages.teleported",
+            "<white>Teleported to <#f72a4c><name></#f72a4c>.</white>",
+            Placeholder.unparsed("name", name));
+        configuredEffect(player, module, "effects.teleport",
+            Sound.ENTITY_ENDERMAN_TELEPORT, Particle.PORTAL,
+            Placeholder.unparsed("name", titleCase(name)));
         return true;
     }
 
@@ -871,7 +900,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return true;
         } catch (IOException exception) {
             getLogger().severe("Could not save data/" + file + ".yml: " + exception.getMessage());
-            send(player, "<red>Could not save the change. Check the console.");
+            moduleMessage(player, file, "messages.save-failed",
+                "<white>Could not save the change. Check the console.</white>");
             return false;
         }
     }
@@ -918,18 +948,18 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     private boolean findBiome(Player player, String[] args) {
         if (args.length != 1) {
-            send(player, "<red>Usage: /findbiome <biome>");
+            send(player, "<white>Usage: /findbiome <biome>");
             return true;
         }
         String value = args[0].toLowerCase(Locale.ROOT).replace(' ', '_');
         NamespacedKey key = NamespacedKey.fromString(value.contains(":") ? value : "minecraft:" + value);
         Biome biome = key == null ? null : Registry.BIOME.get(key);
         if (biome == null) {
-            send(player, "<red>That biome does not exist.");
+            send(player, "<white>That biome does not exist.");
             return true;
         }
         if (!biomeSearches.add(player.getUniqueId())) {
-            send(player, "<yellow>A biome search is already running.");
+            send(player, "<white>A biome search is already running.");
             return true;
         }
         int radius = Math.max(64, Math.min(30_000,
@@ -939,7 +969,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         int verticalStep = Math.max(1,
             settings("worlds").getInt("find-biome.vertical-step", 64));
         Location origin = player.getLocation().clone();
-        send(player, "<gray>Searching for the nearest <white>" + key.getKey().replace('_', ' ') + "</white>...</gray>");
+        send(player, "<white>Searching for the nearest <#f72a4c>" + key.getKey().replace('_', ' ') + "</#f72a4c>...</white>");
         getServer().getScheduler().runTaskAsynchronously(this, () -> {
             BiomeSearchResult result = null;
             Throwable failure = null;
@@ -962,11 +992,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     }
                     if (error != null) {
                         getLogger().warning("Biome search failed: " + error.getMessage());
-                        send(player, "<red>Biome search failed. Check the console.");
+                        send(player, "<white>Biome search failed. Check the console.");
                         return;
                     }
                     if (found == null) {
-                        send(player, "<yellow>No matching biome was found within <white>" + radius + "</white> blocks.");
+                        send(player, "<white>No matching biome was found within <#f72a4c>" + radius + "</#f72a4c> blocks.");
                         return;
                     }
                     Location location = found.getLocation();
@@ -975,9 +1005,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     int x = location.getBlockX();
                     int y = location.getBlockY();
                     int z = location.getBlockZ();
-                    player.sendMessage(MM.deserialize("<green>Nearest <white><biome></white>: "
+                    player.sendMessage(MM.deserialize("<white>Nearest <#f72a4c><biome></#f72a4c>: "
                             + "<click:suggest_command:'/tp " + x + " " + y + " " + z
-                            + "'><aqua><x>, <y>, <z></aqua></click> <gray>(<distance> blocks)</gray>",
+                            + "'><#f72a4c><x>, <y>, <z></#f72a4c></click> <white>(<distance> blocks)</white>",
                         Placeholder.unparsed("biome", key.getKey().replace('_', ' ')),
                         Placeholder.unparsed("x", Integer.toString(x)),
                         Placeholder.unparsed("y", Integer.toString(y)),
@@ -996,25 +1026,25 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (args.length == 1 && actor.hasPermission("rivet.top.others")) {
             target = getServer().getPlayerExact(args[0]);
             if (target == null || !actor.canSee(target)) {
-                send(actor, "<red>That player is not online.");
+                send(actor, "<white>That player is not online.");
                 return true;
             }
         } else if (args.length != 0) {
-            send(actor, "<red>Usage: /top" + (actor.hasPermission("rivet.top.others") ? " [player]" : ""));
+            send(actor, "<white>Usage: /top" + (actor.hasPermission("rivet.top.others") ? " [player]" : ""));
             return true;
         }
         Location current = target.getLocation();
         Location destination = SafeLocations.highest(target.getWorld(), current.getBlockX(),
             current.getBlockZ(), current);
         if (destination == null || !target.teleport(destination)) {
-            send(actor, "<red>No safe top location was found at that position.");
+            send(actor, "<white>No safe top location was found at that position.");
             return true;
         }
-        send(actor, "<green>Teleported <white>" + target.getName()
-            + "</white> to the highest safe location.");
+        send(actor, "<white>Teleported <#f72a4c>" + target.getName()
+            + "</#f72a4c> to the highest safe location.");
         if (!actor.equals(target)) {
-            send(target, "<green>You were teleported to the highest safe location by <white>"
-                + actor.getName() + "</white>.");
+            send(target, "<white>You were teleported to the highest safe location by <#f72a4c>"
+                + actor.getName() + "</#f72a4c>.");
         }
         teleportFeedback(target, "Top");
         return true;
@@ -1022,32 +1052,32 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     private boolean tree(Player player, String[] args) {
         if (args.length != 1) {
-            send(player, "<red>Usage: /tree <treeType>");
+            send(player, "<white>Usage: /tree <treeType>");
             return true;
         }
         TreeType type = treeType(args[0]);
         if (type == null) {
-            send(player, "<red>That vanilla tree type is not supported.");
+            send(player, "<white>That vanilla tree type is not supported.");
             return true;
         }
         int range = Math.max(1, Math.min(200,
             settings("worlds").getInt("tree.maximum-range", 50)));
         org.bukkit.block.Block target = player.getTargetBlockExact(range, org.bukkit.FluidCollisionMode.NEVER);
         if (target == null) {
-            send(player, "<yellow>No block is in range.");
+            send(player, "<white>No block is in range.");
             return true;
         }
         Location origin = target.getLocation().add(0, 1, 0);
         if (!SafeLocations.suitableTreeBase(target) || !SafeLocations.treeClearance(origin)) {
-            send(player, "<red>That target does not have safe ground and enough clear space.");
+            send(player, "<white>That target does not have safe ground and enough clear space.");
             return true;
         }
         if (!player.getWorld().generateTree(origin, type)) {
-            send(player, "<red>Tree generation failed; the location may be unsuitable or protected.");
+            send(player, "<white>Tree generation failed; the location may be unsuitable or protected.");
             return true;
         }
-        send(player, "<green>Generated <white>" + type.name().toLowerCase(Locale.ROOT)
-            .replace('_', ' ') + "</white>.");
+        send(player, "<white>Generated <#f72a4c>" + type.name().toLowerCase(Locale.ROOT)
+            .replace('_', ' ') + "</#f72a4c>.");
         return true;
     }
 
@@ -1064,35 +1094,35 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     private boolean giveItem(Player player, String[] args) {
         if (args.length < 1 || args.length > 2) {
-            send(player, "<red>Usage: /i <item> [amount]");
+            send(player, "<white>Usage: /i <item> [amount]");
             return true;
         }
 
         Material material = Material.matchMaterial(args[0]);
         int amount = args.length == 1 ? 64 : itemAmount(args[1]);
         if (material == null || material.isAir() || !material.isItem() || amount < 1) {
-            send(player, "<red>Use a valid item and a positive whole-number amount.");
+            send(player, "<white>Use a valid item and a positive whole-number amount.");
             return true;
         }
 
         player.getInventory().addItem(new ItemStack(material, amount)).values()
             .forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
-        send(player, "<green>Gave <white>" + amount + " " + material.name().toLowerCase(Locale.ROOT) + "</white>.");
+        send(player, "<white>Gave <#f72a4c>" + amount + " " + material.name().toLowerCase(Locale.ROOT) + "</#f72a4c>.");
         return true;
     }
 
     private boolean inventoryView(Player player, String[] args) {
         if (args.length != 1) {
-            send(player, "<red>Usage: /invsee <player>");
+            send(player, "<white>Usage: /invsee <player>");
             return true;
         }
         Player target = getServer().getPlayerExact(args[0]);
         if (target == null || !player.canSee(target)) {
-            send(player, "<red>That player is not online.");
+            send(player, "<white>That player is not online.");
             return true;
         }
         player.openInventory(target.getInventory());
-        send(player, "<gray>Opened <white>" + target.getName() + "</white>'s inventory.");
+        send(player, "<white>Opened <#f72a4c>" + target.getName() + "</#f72a4c>'s inventory.");
         return true;
     }
 
@@ -1101,11 +1131,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (args.length == 1 && player.hasPermission("rivet.inventory.enderchest.others")) {
             target = getServer().getPlayerExact(args[0]);
             if (target == null || !player.canSee(target)) {
-                send(player, "<red>That player is not online.");
+                send(player, "<white>That player is not online.");
                 return true;
             }
         } else if (args.length != 0) {
-            send(player, "<red>Usage: /enderchest [player]");
+            send(player, "<white>Usage: /enderchest [player]");
             return true;
         }
         player.openInventory(target.getEnderChest());
@@ -1114,13 +1144,13 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     private boolean playerHead(Player player, String[] args) {
         if (args.length != 1 || !args[0].matches("[A-Za-z0-9_]{1,16}")) {
-            send(player, "<red>Usage: /head <player>");
+            send(player, "<white>Usage: /head <player>");
             return true;
         }
         Player online = getServer().getPlayerExact(args[0]);
         OfflinePlayer target = online == null ? getServer().getOfflinePlayerIfCached(args[0]) : online;
         if (target == null || target.getName() == null) {
-            send(player, "<red>That player profile is not known to this server.");
+            send(player, "<white>That player profile is not known to this server.");
             return true;
         }
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
@@ -1131,42 +1161,42 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             Placeholder.unparsed("requester", player.getName())
         };
         meta.displayName(MM.deserialize(settings("mob-heads").getString("player-heads.display-name",
-            "<gold><player>'s Head</gold>"), placeholders));
+            "<#f72a4c><player>'s Head</#f72a4c>"), placeholders));
         List<String> lore = settings("mob-heads").getStringList("player-heads.lore");
         if (lore.isEmpty()) {
-            lore = List.of("<gray>Requested by <requester></gray>");
+            lore = List.of("<white>Requested by <requester></white>");
         }
         meta.lore(lore.stream()
             .map(line -> MM.deserialize(line, placeholders)).toList());
         head.setItemMeta(meta);
         player.getInventory().addItem(head).values()
             .forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
-        send(player, "<green>Gave you <white>" + target.getName() + "</white>'s head.");
+        send(player, "<white>Gave you <#f72a4c>" + target.getName() + "</#f72a4c>'s head.");
         return true;
     }
 
     private boolean killAll(Player player) {
         var mobs = player.getWorld().getEntitiesByClass(Mob.class);
         mobs.forEach(Mob::remove);
-        send(player, "<green>Removed <white>" + mobs.size() + "</white> mobs.");
+        send(player, "<white>Removed <#f72a4c>" + mobs.size() + "</#f72a4c> mobs.");
         return true;
     }
 
     private boolean teleportPlayer(Player player, String[] args) {
         if (args.length != 1) {
-            send(player, "<red>Usage: /tp <player>");
+            send(player, "<white>Usage: /tp <player>");
             return true;
         }
         Player target = getServer().getPlayerExact(args[0]);
         if (target == null || !player.canSee(target)) {
-            send(player, "<red>That player is not online.");
+            send(player, "<white>That player is not online.");
             return true;
         }
         if (!player.teleport(target)) {
-            send(player, "<red>Teleport failed.");
+            send(player, "<white>Teleport failed.");
             return true;
         }
-        send(player, "<green>Teleported to <white>" + target.getName() + "</white>.");
+        send(player, "<white>Teleported to <#f72a4c>" + target.getName() + "</#f72a4c>.");
         if (!vanished.contains(player.getUniqueId())) {
             if (getConfig().getBoolean("effects.sounds")) {
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.1f);
@@ -1181,13 +1211,13 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private boolean toggleVanish(Player player) {
         boolean enable = !vanished.contains(player.getUniqueId());
         setVanished(player, enable);
-        send(player, enable ? "<green>Vanish enabled." : "<yellow>Vanish disabled.");
+        send(player, enable ? "<white>Vanish enabled." : "<white>Vanish disabled.");
         return true;
     }
 
     private boolean toggleFlight(Player player, String[] args) {
         if (args.length != 0) {
-            send(player, "<red>Usage: /fly");
+            send(player, "<white>Usage: /fly");
             return true;
         }
         boolean enable = flightEnabled.add(player.getUniqueId());
@@ -1196,8 +1226,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         } else {
             disableFlight(player);
         }
-        send(player, enable ? "<aqua>Flight enabled.</aqua> <gray>Double-tap jump to fly."
-            : "<yellow>Flight disabled.");
+        send(player, enable ? "<#f72a4c>Flight enabled.</#f72a4c> <white>Double-tap jump to fly."
+            : "<white>Flight disabled.");
         return true;
     }
 
@@ -1299,12 +1329,12 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("staff") && vanished.contains(player.getUniqueId())
             && !player.hasPermission("rivet.vanish")) {
             setVanished(player, false);
-            send(player, "<yellow>Vanish disabled because your permission changed.");
+            send(player, "<white>Vanish disabled because your permission changed.");
         }
         if (moduleEnabled("staff") && flightEnabled.contains(player.getUniqueId())
             && !player.hasPermission("rivet.fly")) {
             disableFlight(player);
-            send(player, "<yellow>Flight disabled because your permission changed.");
+            send(player, "<white>Flight disabled because your permission changed.");
         }
         if (moduleEnabled("staff")) {
             refreshVanishVisibility(player);
@@ -1316,7 +1346,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     }
 
     void teleportFeedback(Player player, String destination) {
-        effect(player, "<aqua>" + destination + "</aqua>", "<gray>Teleported</gray>",
+        effect(player, "<#f72a4c>" + destination + "</#f72a4c>", "<white>Teleported</white>",
             Sound.ENTITY_ENDERMAN_TELEPORT, Particle.PORTAL);
     }
 
@@ -1351,9 +1381,12 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             default -> 18000;
         };
         player.getWorld().setTime(time);
-        send(player, "<green>Time set to <white>" + command + "</white>.");
-        effect(player, "<yellow>" + titleCase(command) + "</yellow>", "<gray>Time changed</gray>",
-            Sound.UI_BUTTON_CLICK, null);
+        moduleMessage(player, "environment", "messages.time-set",
+            "<white>Time set to <#f72a4c><time></#f72a4c>.</white>",
+            Placeholder.unparsed("time", command));
+        configuredEffect(player, "environment", "effects.time",
+            Sound.UI_BUTTON_CLICK, Particle.END_ROD,
+            Placeholder.unparsed("time", titleCase(command)));
         return true;
     }
 
@@ -1361,10 +1394,70 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         World world = player.getWorld();
         world.setStorm(!command.equals("sun"));
         world.setThundering(command.equals("thunder"));
-        send(player, "<green>Weather set to <white>" + command + "</white>.");
-        effect(player, "<aqua>" + titleCase(command) + "</aqua>", "<gray>Weather changed</gray>",
-            Sound.UI_BUTTON_CLICK, null);
+        moduleMessage(player, "environment", "messages.weather-set",
+            "<white>Weather set to <#f72a4c><weather></#f72a4c>.</white>",
+            Placeholder.unparsed("weather", command));
+        configuredEffect(player, "environment", "effects.weather",
+            Sound.UI_BUTTON_CLICK, Particle.CLOUD,
+            Placeholder.unparsed("weather", titleCase(command)));
         return true;
+    }
+
+    private void moduleMessage(Player player, String module, String path, String fallback,
+                               TagResolver... placeholders) {
+        player.sendMessage(MM.deserialize(settings(module).getString(path, fallback), placeholders));
+    }
+
+    private void configuredEffect(Player player, String module, String path,
+                                  Sound fallbackSound, Particle fallbackParticle,
+                                  TagResolver... placeholders) {
+        YamlConfiguration configured = settings(module);
+        if (!configured.getBoolean(path + ".enabled", true)) {
+            return;
+        }
+        if (getConfig().getBoolean("effects.titles")
+            && configured.getBoolean(path + ".titles-enabled", true)) {
+            String title = configured.getString(path + ".title", "");
+            String subtitle = configured.getString(path + ".subtitle", "");
+            player.showTitle(Title.title(MM.deserialize(title, placeholders),
+                MM.deserialize(subtitle, placeholders), Title.Times.times(
+                    Duration.ofMillis(200), Duration.ofMillis(900), Duration.ofMillis(300))));
+        }
+        if (getConfig().getBoolean("effects.sounds")
+            && configured.getBoolean(path + ".sound-enabled", true)) {
+            player.playSound(player.getLocation(), ConfiguredEffect.sound(this, configured,
+                    path + ".sound", fallbackSound),
+                (float) configured.getDouble(path + ".volume", .8),
+                (float) configured.getDouble(path + ".pitch", 1.1));
+        }
+        if (!getConfig().getBoolean("effects.particles")
+            || !configured.getBoolean(path + ".particles-enabled", fallbackParticle != null)
+            || fallbackParticle == null) {
+            return;
+        }
+        Particle particle = ConfiguredEffect.particle(this, configured,
+            path + ".particle", fallbackParticle);
+        int steps = Math.max(1, configured.getInt(path + ".particle-steps", 6));
+        int points = Math.max(1, configured.getInt(path + ".particle-points", 12));
+        long period = Math.max(1, configured.getLong(path + ".particle-period-ticks", 2));
+        new BukkitRunnable() {
+            private int step;
+
+            @Override
+            public void run() {
+                if (!player.isOnline() || step == steps) {
+                    cancel();
+                    return;
+                }
+                Location center = player.getLocation().add(0, .2, 0);
+                double radius = .35 + step++ * .12;
+                for (int point = 0; point < points; point++) {
+                    double angle = point * Math.PI * 2 / points;
+                    player.spawnParticle(particle, center.clone().add(
+                        Math.cos(angle) * radius, 0, Math.sin(angle) * radius), 1);
+                }
+            }
+        }.runTaskTimer(this, 0, period);
     }
 
     private void effect(Player player, String title, String subtitle, Sound sound, Particle particle) {
@@ -1473,15 +1566,15 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     private boolean adminCommand(CommandSender sender, String[] args) {
         if (!sender.hasPermission("rivet.admin")) {
-            send(sender, "<red>You do not have permission to use Rivet administration.");
+            send(sender, "<white>You do not have permission to use Rivet administration.");
             return true;
         }
         if (args.length == 0) {
-            send(sender, "<gold><bold>Rivet</bold></gold> <gray>- /rivet reload reloads global and module settings.</gray>");
+            send(sender, "<#f72a4c><bold>Rivet</bold></#f72a4c> <white>- /rivet reload reloads global and module settings.</white>");
             return true;
         }
         if (args.length != 1 || !args[0].equalsIgnoreCase("reload")) {
-            send(sender, "<red>Usage: /rivet [reload]");
+            send(sender, "<white>Usage: /rivet [reload]");
             return true;
         }
         try {
@@ -1498,15 +1591,15 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             if (permissions != null) {
                 permissions.reloadConfiguration();
             }
-            send(sender, "<green>Rivet configuration reloaded.</green> <gray>Loaded config.yml, modules.yml, and <white>"
-                + (result.fileCount() - 2) + "</white> settings files.</gray>");
+            send(sender, "<white>Rivet configuration reloaded.</white> <white>Loaded config.yml, modules.yml, and <#f72a4c>"
+                + (result.fileCount() - 2) + "</#f72a4c> settings files.</white>");
             if (!result.changedModules().isEmpty()) {
-                send(sender, "<yellow>Module enable/disable changes require a server restart: <white>"
-                    + String.join(", ", result.changedModules()) + "</white>.</yellow>");
+                send(sender, "<white>Module enable/disable changes require a server restart: <#f72a4c>"
+                    + String.join(", ", result.changedModules()) + "</#f72a4c>.</white>");
             }
         } catch (IOException | InvalidConfigurationException exception) {
             getLogger().severe("Rivet reload failed: " + exception.getMessage());
-            send(sender, "<red>Reload failed; existing settings remain active. Check the console for the file and error.");
+            send(sender, "<white>Reload failed; existing settings remain active. Check the console for the file and error.");
         }
         return true;
     }
@@ -1541,7 +1634,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "sethome", "home", "delhome" -> "homes";
             case "setwarp", "warp", "delwarp" -> "warps";
             case "hologram" -> "holograms";
-            case "glow" -> "glow";
             case "spawn", "setspawn" -> "spawn";
             case "tpa", "tpahere", "tpaccept", "tpdeny" -> "tpa";
             case "kit" -> "kits";
@@ -1557,6 +1649,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "daily" -> "daily";
             case "rtp" -> "rtp";
             case "near" -> "near";
+            case "givebreeder" -> "breeders";
             case "perm", "group" -> "permissions";
             case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall", "findbiome", "top", "tree" -> "worlds";
             case "gmc", "gms", "tp", "vanish", "fly", "heal", "feed", "god", "flyspeed", "bossbarmsg",

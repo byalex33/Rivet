@@ -4,6 +4,6 @@ maximum-results: 10
 exclude-spectators: true
 
 messages:
-  header: "<gold>Nearby players within <white><radius></white> blocks:</gold>"
-  entry: "<white><player></white> <gray>- <distance>m</gray>"
-  none: "<gray>No visible players are within <white><radius></white> blocks.</gray>"
+  header: "<#f72a4c>Nearby players within <#f72a4c><radius></#f72a4c> blocks:</#f72a4c>"
+  entry: "<#f72a4c><player></#f72a4c> <white>- <distance>m</white>"
+  none: "<white>No visible players are within <#f72a4c><radius></#f72a4c> blocks.</white>"

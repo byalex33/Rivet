@@ -65,9 +65,9 @@ final class ChatModule implements Listener {
 
     void reload() {
         YamlConfiguration config = plugin.settings("chat");
-        chatFormat = config.getString("format", "<gray><player>:</gray> <white><message></white>");
-        sentFormat = config.getString("private-messages.sent", "<gray>[you → <player>]</gray> <white><message></white>");
-        receivedFormat = config.getString("private-messages.received", "<gray>[<player> → you]</gray> <white><message></white>");
+        chatFormat = config.getString("format", "<#f72a4c><player>:</#f72a4c> <white><message></white>");
+        sentFormat = config.getString("private-messages.sent", "<#f72a4c>[you → <player>]</#f72a4c> <white><message></white>");
+        receivedFormat = config.getString("private-messages.received", "<#f72a4c>[<player> → you]</#f72a4c> <white><message></white>");
     }
 
     @EventHandler
@@ -87,22 +87,22 @@ final class ChatModule implements Listener {
 
     boolean message(Player sender, String[] args) {
         if (args.length < 2) {
-            send(sender, "<red>Usage: /msg <player> <message>");
+            send(sender, "<white>Usage: /msg <player> <message>");
             return true;
         }
         Player recipient = plugin.getServer().getPlayerExact(args[0]);
         if (recipient == null || !sender.canSee(recipient)) {
-            send(sender, "<red>That player is not online.");
+            send(sender, "<white>That player is not online.");
             return true;
         }
         if (sender.equals(recipient)) {
-            send(sender, "<red>You cannot message yourself.");
+            send(sender, "<white>You cannot message yourself.");
             return true;
         }
         if (ignores(ignoreData, recipient.getUniqueId(), sender.getUniqueId())
             && !sender.hasPermission("rivet.ignore.bypass")) {
             send(sender, plugin.settings("chat").getString("ignore.messages.blocked",
-                "<red>That private message could not be delivered."));
+                "<white>That private message could not be delivered."));
             return true;
         }
 
@@ -110,7 +110,7 @@ final class ChatModule implements Listener {
         sender.sendMessage(format(sentFormat, recipient.displayName(), message));
         recipient.sendMessage(format(receivedFormat, sender.displayName(), message));
         String spyFormat = plugin.settings("chat").getString("social-spy.format",
-            "<dark_gray>[spy]</dark_gray> <gray><sender> -> <recipient>:</gray> <white><message></white>");
+            "<#f72a4c>[spy] <sender> → <recipient>:</#f72a4c> <white><message></white>");
         plugin.getServer().getOnlinePlayers().stream()
             .filter(spy -> shouldReceiveSpy(spy.getUniqueId(), sender.getUniqueId(),
                 recipient.getUniqueId(), socialData.getBoolean("social-spy." + spy.getUniqueId()),
@@ -129,13 +129,13 @@ final class ChatModule implements Listener {
 
     boolean me(Player sender, String[] args) {
         if (args.length == 0) {
-            send(sender, "<red>Usage: /me <message>");
+            send(sender, "<white>Usage: /me <message>");
             return true;
         }
         String raw = String.join(" ", args);
         Component action = formatMeMessage(raw, sender.hasPermission("rivet.me.format"));
         String configured = plugin.settings("chat").getString("me.format",
-            "<light_purple>* <player> <message></light_purple>");
+            "<#f72a4c>* <player></#f72a4c> <white><message></white>");
         plugin.getServer().getOnlinePlayers().stream()
             .filter(viewer -> viewer.canSee(sender) || viewer.equals(sender))
             .filter(viewer -> !ignores(ignoreData, viewer.getUniqueId(), sender.getUniqueId())
@@ -148,13 +148,13 @@ final class ChatModule implements Listener {
 
     boolean reply(Player sender, String[] args) {
         if (args.length == 0) {
-            send(sender, "<red>Usage: /r <message>");
+            send(sender, "<white>Usage: /r <message>");
             return true;
         }
         Player recipient = plugin.getServer().getPlayer(replies.get(sender.getUniqueId()));
         if (recipient == null || !sender.canSee(recipient)) {
             replies.remove(sender.getUniqueId());
-            send(sender, "<red>You have nobody online to reply to.");
+            send(sender, "<white>You have nobody online to reply to.");
             return true;
         }
         String[] messageArgs = new String[args.length + 1];
@@ -165,7 +165,7 @@ final class ChatModule implements Listener {
 
     boolean socialSpy(Player player, String[] args) {
         if (args.length != 0) {
-            send(player, "<red>Usage: /socialspy");
+            send(player, "<white>Usage: /socialspy");
             return true;
         }
         String path = "social-spy." + player.getUniqueId();
@@ -177,13 +177,13 @@ final class ChatModule implements Listener {
         }
         send(player, plugin.settings("chat").getString("social-spy.messages." +
             (enabled ? "enabled" : "disabled"), enabled
-            ? "<green>Social spy enabled.</green>" : "<yellow>Social spy disabled.</yellow>"));
+            ? "<white>Social spy enabled.</white>" : "<white>Social spy disabled.</white>"));
         return true;
     }
 
     boolean ignore(Player player, String[] args) {
         if (args.length != 1) {
-            send(player, "<red>Usage: /ignore <player|list|clear>");
+            send(player, "<white>Usage: /ignore <player|list|clear>");
             return true;
         }
         String action = args[0];
@@ -198,7 +198,7 @@ final class ChatModule implements Listener {
                 }
             }).sorted(String.CASE_INSENSITIVE_ORDER).toList();
             player.sendMessage(MM.deserialize(plugin.settings("chat").getString("ignore.messages.list",
-                    "<gold>Ignored players:</gold> <white><players></white>"),
+                    "<#f72a4c>Ignored players:</#f72a4c> <#f72a4c><players></#f72a4c>"),
                 Placeholder.unparsed("players", names.isEmpty() ? "none" : String.join(", ", names))));
             return true;
         }
@@ -210,17 +210,17 @@ final class ChatModule implements Listener {
                 return true;
             }
             send(player, plugin.settings("chat").getString("ignore.messages.cleared",
-                "<green>Your ignore list was cleared.</green>"));
+                "<white>Your ignore list was cleared.</white>"));
             return true;
         }
         Player target = plugin.getServer().getPlayerExact(action);
         if (target == null || !player.canSee(target)) {
-            send(player, "<red>That player is not online.");
+            send(player, "<white>That player is not online.");
             return true;
         }
         if (target.equals(player)) {
             send(player, plugin.settings("chat").getString("ignore.messages.self",
-                "<red>You cannot ignore yourself.</red>"));
+                "<white>You cannot ignore yourself.</white>"));
             return true;
         }
         List<String> previous = new ArrayList<>(ignoreData.getStringList(path));
@@ -240,8 +240,8 @@ final class ChatModule implements Listener {
         }
         String key = added ? "added" : "removed";
         player.sendMessage(MM.deserialize(plugin.settings("chat").getString("ignore.messages." + key,
-                added ? "<yellow>You now ignore <white><player></white>."
-                    : "<green>You no longer ignore <white><player></white>."),
+                added ? "<white>You now ignore <#f72a4c><player></#f72a4c>."
+                    : "<white>You no longer ignore <#f72a4c><player></#f72a4c>."),
             Placeholder.unparsed("player", target.getName())));
         return true;
     }
@@ -254,12 +254,12 @@ final class ChatModule implements Listener {
         } else if (args.length == 2 && actor.hasPermission("rivet.chatcolor.others")) {
             target = plugin.getServer().getPlayerExact(args[0]);
             if (target == null || !actor.canSee(target)) {
-                send(actor, "<red>That player is not online.");
+                send(actor, "<white>That player is not online.");
                 return true;
             }
             value = args[1];
         } else {
-            send(actor, "<red>Usage: /chatcolor [player] <color|reset>");
+            send(actor, "<white>Usage: /chatcolor [player] <color|reset>");
             return true;
         }
         String path = "chat-color." + target.getUniqueId();
@@ -270,8 +270,8 @@ final class ChatModule implements Listener {
         } else {
             boolean advanced = actor.hasPermission("rivet.chatcolor.advanced");
             if (!validChatColor(value, advanced) || !enabledChatColor(value)) {
-                send(actor, "<red>Use one allowed color tag, such as <white>&lt;red&gt;</white>"
-                    + (advanced ? ", <white>&lt;gradient:red:gold&gt;</white>, or <white>&lt;rainbow&gt;</white>." : "."));
+                send(actor, "<white>Use one allowed color tag, such as <#f72a4c>&lt;red&gt;</#f72a4c>"
+                    + (advanced ? ", <#f72a4c>&lt;gradient:red:gold&gt;</#f72a4c>, or <#f72a4c>&lt;rainbow&gt;</#f72a4c>." : "."));
                 return true;
             }
             String normalized = value.toLowerCase(java.util.Locale.ROOT);
@@ -288,8 +288,8 @@ final class ChatModule implements Listener {
             return true;
         }
         actor.sendMessage(MM.deserialize(value.equalsIgnoreCase("reset")
-                ? "<yellow>Chat color reset for <white><player></white>."
-                : "<green>Chat color set for <white><player></white>.",
+                ? "<white>Chat color reset for <#f72a4c><player></#f72a4c>."
+                : "<white>Chat color set for <#f72a4c><player></#f72a4c>.",
             Placeholder.unparsed("player", target.getName())));
         return true;
     }
@@ -323,7 +323,7 @@ final class ChatModule implements Listener {
             return true;
         } catch (IOException exception) {
             plugin.getLogger().severe("Could not save data/" + file + ".yml: " + exception.getMessage());
-            send(player, "<red>That change could not be saved safely. Try again.");
+            send(player, "<white>That change could not be saved safely. Try again.");
             return false;
         }
     }
@@ -391,7 +391,7 @@ final class ChatModule implements Listener {
 
     private static Component itemLink(ItemStack item) {
         if (item.getType().isAir()) {
-            return Component.text("[Empty Hand]", NamedTextColor.DARK_GRAY);
+            return Component.text("[Empty Hand]", RivetPalette.SECONDARY);
         }
         return Component.text("[")
             .append(item.effectiveName())

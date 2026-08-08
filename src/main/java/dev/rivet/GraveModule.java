@@ -90,7 +90,7 @@ final class GraveModule implements Listener {
             death.getY(), death.getZ(), death.getYaw(), death.getPitch(),
             previous == null ? 0 : previous.lastBack));
         player.sendMessage(MM.deserialize(settings.getString("death-message",
-                "<red>You died at <white><x>, <y>, <z></white> in <gray><world></gray>.</red>"),
+                "<white>You died at <#f72a4c><x>, <y>, <z></#f72a4c> in <white><world></white>.</white>"),
             Placeholder.unparsed("x", Integer.toString(death.getBlockX())),
             Placeholder.unparsed("y", Integer.toString(death.getBlockY())),
             Placeholder.unparsed("z", Integer.toString(death.getBlockZ())),
@@ -120,15 +120,15 @@ final class GraveModule implements Listener {
             graves.remove(grave.id());
             plugin.getLogger().severe("Could not save " + player.getName() + "'s grave: " + exception.getMessage());
             player.sendMessage(Component.text("Your grave could not be saved; your items dropped normally.",
-                NamedTextColor.RED));
+                RivetPalette.PRIMARY));
             return;
         }
 
         event.getDrops().clear();
         spawnVisuals(grave, location);
-        player.sendMessage(Component.text("Your grave is waiting at ", NamedTextColor.GOLD)
-            .append(Component.text(coordinates(location), NamedTextColor.YELLOW))
-            .append(Component.text(".", NamedTextColor.GOLD)));
+        player.sendMessage(Component.text("Your grave is waiting at ", RivetPalette.PRIMARY)
+            .append(Component.text(coordinates(location), RivetPalette.SECONDARY))
+            .append(Component.text(".", RivetPalette.PRIMARY)));
     }
 
     @EventHandler
@@ -148,10 +148,10 @@ final class GraveModule implements Listener {
         meta.setLodestone(location);
         meta.setLodestoneTracked(false);
         meta.displayName(MM.deserialize(settings.getString("tracking-compass.name",
-            "<gold>Grave Tracker</gold>")));
+            "<#f72a4c>Grave Tracker</#f72a4c>")));
         List<String> lore = settings.getStringList("tracking-compass.lore");
         if (lore.isEmpty()) {
-            lore = List.of("<gray>Points to your latest active grave.</gray>");
+            lore = List.of("<white>Points to your latest active grave.</white>");
         }
         meta.lore(lore.stream()
             .map(MM::deserialize).toList());
@@ -162,14 +162,14 @@ final class GraveModule implements Listener {
 
     boolean back(Player player, String[] args) {
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /back"));
+            player.sendMessage(MM.deserialize("<white>Usage: /back"));
             return true;
         }
         DeathState state = deaths.get(player.getUniqueId());
         Location destination = state == null ? null : location(state);
         if (destination == null) {
             player.sendMessage(MM.deserialize(settings.getString("back.messages.none",
-                "<red>No death location is saved.</red>")));
+                "<white>No death location is saved.</white>")));
             return true;
         }
         long now = System.currentTimeMillis();
@@ -177,7 +177,7 @@ final class GraveModule implements Listener {
             Math.max(0, settings.getLong("back.cooldown-seconds", 30)), now);
         if (remaining > 0) {
             player.sendMessage(MM.deserialize(settings.getString("back.messages.cooldown",
-                    "<red>You can use /back again in <seconds> seconds.</red>"),
+                    "<white>You can use /back again in <seconds> seconds.</white>"),
                 Placeholder.unparsed("seconds", Long.toString(remaining))));
             return true;
         }
@@ -185,10 +185,10 @@ final class GraveModule implements Listener {
         teleports.start(player, destination, delay,
             settings.getBoolean("back.cancel-on-move", true),
             MM.deserialize(settings.getString("back.messages.wait",
-                    "<yellow>Returning in <white><seconds></white> seconds. Do not move.</yellow>"),
+                    "<white>Returning in <#f72a4c><seconds></#f72a4c> seconds. Do not move.</white>"),
                 Placeholder.unparsed("seconds", Integer.toString(delay))),
             MM.deserialize(settings.getString("back.messages.cancelled",
-                "<red>Back teleport cancelled because you moved.</red>")),
+                "<white>Back teleport cancelled because you moved.</white>")),
             () -> {
                 deaths.put(player.getUniqueId(), state.withLastBack(System.currentTimeMillis()));
                 try {
@@ -197,7 +197,7 @@ final class GraveModule implements Listener {
                     plugin.getLogger().severe("Could not save /back cooldown: " + exception.getMessage());
                 }
                 player.sendMessage(MM.deserialize(settings.getString("back.messages.teleported",
-                    "<green>Returned to your latest death location.</green>")));
+                    "<white>Returned to your latest death location.</white>")));
                 plugin.teleportFeedback(player, "Death location");
             });
         return true;
@@ -242,7 +242,9 @@ final class GraveModule implements Listener {
             settings.getBoolean("ownership.owner-only", true),
             Math.max(0, settings.getLong("ownership.allow-others-after-seconds", 0)),
             System.currentTimeMillis())) {
-            player.sendMessage(Component.text("This grave belongs to " + grave.name() + ".", NamedTextColor.RED));
+            player.sendMessage(Component.text("This grave belongs to ", RivetPalette.PRIMARY)
+                .append(Component.text(grave.name(), RivetPalette.SECONDARY))
+                .append(Component.text(".", RivetPalette.PRIMARY)));
             return;
         }
 
@@ -252,7 +254,8 @@ final class GraveModule implements Listener {
         } catch (IOException exception) {
             graves.put(id, grave);
             plugin.getLogger().severe("Could not claim " + player.getName() + "'s grave: " + exception.getMessage());
-            player.sendMessage(Component.text("Your grave could not be opened safely. Try again.", NamedTextColor.RED));
+            player.sendMessage(Component.text("Your grave could not be opened safely. Try again.",
+                RivetPalette.PRIMARY));
             return;
         }
 
@@ -262,7 +265,8 @@ final class GraveModule implements Listener {
         player.getInventory().addItem(items).values()
             .forEach(item -> location.getWorld().dropItemNaturally(location, item));
         player.sendMessage(Component.text(grave.owner().equals(player.getUniqueId())
-            ? "Your items have been returned." : "The grave's items have been claimed.", NamedTextColor.GREEN));
+            ? "Your items have been returned." : "The grave's items have been claimed.",
+            RivetPalette.PRIMARY));
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, .8f);
         player.spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0, 1, 0),
             18, .5, .6, .5);
@@ -513,13 +517,13 @@ final class GraveModule implements Listener {
     }
 
     static Component hologram(String username, String cause, int x, int y, int z) {
-        return Component.text(username + "'s Grave", NamedTextColor.GOLD, TextDecoration.BOLD)
+        return Component.text(username + "'s Grave", RivetPalette.SECONDARY, TextDecoration.BOLD)
             .append(Component.newline())
-            .append(Component.text(cause, NamedTextColor.GRAY))
+            .append(Component.text(cause, RivetPalette.PRIMARY))
             .append(Component.newline())
-            .append(Component.text("X " + x + "  Y " + y + "  Z " + z, NamedTextColor.YELLOW))
+            .append(Component.text("X " + x + "  Y " + y + "  Z " + z, RivetPalette.SECONDARY))
             .append(Component.newline())
-            .append(Component.text("Right-click to reclaim", NamedTextColor.GREEN));
+            .append(Component.text("Right-click to reclaim", RivetPalette.PRIMARY));
     }
 
     static boolean canOpen(UUID owner, UUID player, long createdAt, boolean ownerOnly,

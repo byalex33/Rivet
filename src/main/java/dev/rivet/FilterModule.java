@@ -93,7 +93,7 @@ final class FilterModule implements Listener {
         var settings = plugin.settings("filter");
         if (settings.getBoolean("feedback.action-bar", true)) {
             player.sendActionBar(MM.deserialize(settings.getString("messages.blocked-pickup",
-                    "<yellow>Pickup blocked: <white><item></white>"),
+                    "<white>Pickup blocked: <#f72a4c><item></#f72a4c>"),
                 Placeholder.unparsed("item", display(event.getItem().getItemStack().getType()))));
         }
         String configuredSound = settings.getString("feedback.sound", "");
@@ -120,7 +120,7 @@ final class FilterModule implements Listener {
             Material material = holder.items.get(slot);
             if (remove(state(player.getUniqueId()).items(), material)) {
                 if (save(player)) {
-                    send(player, "<green>Removed <white>" + display(material) + "</white> from your filter.");
+                    send(player, "<white>Removed <#f72a4c>" + display(material) + "</#f72a4c> from your filter.");
                 } else {
                     state(player.getUniqueId()).items().add(material);
                     syncData(player.getUniqueId());
@@ -140,7 +140,7 @@ final class FilterModule implements Listener {
                 clear(player, new String[]{"clear"});
                 open(player, 0);
             } else {
-                send(player, "<yellow>Shift-click the clear button to confirm.");
+                send(player, "<white>Shift-click the clear button to confirm.");
             }
         } else if (slot == 53 && (holder.page + 1) * PAGE_SIZE < sorted(player).size()) {
             open(player, holder.page + 1);
@@ -158,12 +158,12 @@ final class FilterModule implements Listener {
             return true;
         }
         if (args.length != 2) {
-            send(player, "<red>Usage: /filter add [item]");
+            send(player, "<white>Usage: /filter add [item]");
             return true;
         }
         Material material = Material.matchMaterial(args[1]);
         if (material == null || material.isAir() || !material.isItem()) {
-            send(player, "<red>That is not a valid item material.");
+            send(player, "<white>That is not a valid item material.");
             return true;
         }
         add(player, material);
@@ -173,7 +173,7 @@ final class FilterModule implements Listener {
     private void addHeld(Player player) {
         Material material = player.getInventory().getItemInMainHand().getType();
         if (material.isAir()) {
-            send(player, "<red>Hold an item or use <white>/filter add &lt;item&gt;</white>.");
+            send(player, "<white>Hold an item or use <#f72a4c>/filter add &lt;item&gt;</#f72a4c>.");
             return;
         }
         add(player, material);
@@ -183,15 +183,15 @@ final class FilterModule implements Listener {
         FilterState state = state(player.getUniqueId());
         int maximum = Math.max(1, plugin.settings("filter").getInt("maximum-size", 50));
         if (state.items().contains(material)) {
-            send(player, "<yellow>That material is already filtered.");
+            send(player, "<white>That material is already filtered.");
             return;
         }
         if (!add(state.items(), material, maximum, player.hasPermission("rivet.filter.admin"))) {
-            send(player, "<red>Your filter is full (<white>" + maximum + "</white> materials).");
+            send(player, "<white>Your filter is full (<#f72a4c>" + maximum + "</#f72a4c> materials).");
             return;
         }
         if (save(player)) {
-            send(player, "<green>Added <white>" + display(material) + "</white> to your filter.");
+            send(player, "<white>Added <#f72a4c>" + display(material) + "</#f72a4c> to your filter.");
         } else {
             state.items().remove(material);
             syncData(player.getUniqueId());
@@ -200,7 +200,7 @@ final class FilterModule implements Listener {
 
     private boolean openCommand(Player player, String[] args) {
         if (args.length != 1) {
-            send(player, "<red>Usage: /filter remove");
+            send(player, "<white>Usage: /filter remove");
             return true;
         }
         open(player, 0);
@@ -209,12 +209,12 @@ final class FilterModule implements Listener {
 
     private boolean list(Player player, String[] args) {
         if (args.length != 1) {
-            send(player, "<red>Usage: /filter list");
+            send(player, "<white>Usage: /filter list");
             return true;
         }
         List<Material> materials = sorted(player);
         player.sendMessage(MM.deserialize(plugin.settings("filter").getString("messages.list",
-                "<gold>Filtered items:</gold> <white><items></white>"),
+                "<#f72a4c>Filtered items:</#f72a4c> <#f72a4c><items></#f72a4c>"),
             Placeholder.unparsed("items", materials.isEmpty() ? "none"
                 : String.join(", ", materials.stream().map(FilterModule::display).toList()))));
         return true;
@@ -222,12 +222,12 @@ final class FilterModule implements Listener {
 
     private boolean clear(Player player, String[] args) {
         if (args.length != 1) {
-            send(player, "<red>Usage: /filter clear");
+            send(player, "<white>Usage: /filter clear");
             return true;
         }
         FilterState state = state(player.getUniqueId());
         if (state.items().isEmpty()) {
-            send(player, "<gray>Your filter is already empty.");
+            send(player, "<white>Your filter is already empty.");
             return true;
         }
         Set<Material> old = EnumSet.copyOf(state.items());
@@ -237,13 +237,13 @@ final class FilterModule implements Listener {
             syncData(player.getUniqueId());
             return true;
         }
-        send(player, "<green>Your item filter was cleared.");
+        send(player, "<white>Your item filter was cleared.");
         return true;
     }
 
     private boolean toggle(Player player, String[] args) {
         if (args.length != 1) {
-            send(player, "<red>Usage: /filter toggle");
+            send(player, "<white>Usage: /filter toggle");
             return true;
         }
         FilterState state = state(player.getUniqueId());
@@ -253,14 +253,14 @@ final class FilterModule implements Listener {
             syncData(player.getUniqueId());
             return true;
         }
-        send(player, state.enabled ? "<green>Item filtering enabled.</green>"
-            : "<yellow>Item filtering disabled.</yellow>");
+        send(player, state.enabled ? "<white>Item filtering enabled.</white>"
+            : "<white>Item filtering disabled.</white>");
         return true;
     }
 
     private boolean help(Player player, String[] args) {
-        send(player, "<gold>/filter</gold> <gray>GUI</gray>  <gold>add [item]</gold>  <gold>remove</gold>  "
-            + "<gold>list</gold>  <gold>clear</gold>  <gold>toggle</gold>");
+        send(player, "<#f72a4c>/filter</#f72a4c> <white>GUI</white>  <#f72a4c>add [item]</#f72a4c>  <#f72a4c>remove</#f72a4c>  "
+            + "<#f72a4c>list</#f72a4c>  <#f72a4c>clear</#f72a4c>  <#f72a4c>toggle</#f72a4c>");
         return true;
     }
 
@@ -272,19 +272,19 @@ final class FilterModule implements Listener {
             Math.min(all.size(), (page + 1) * PAGE_SIZE)));
         FilterHolder holder = new FilterHolder(player.getUniqueId(), page, pageItems);
         holder.inventory = plugin.getServer().createInventory(holder, 54,
-            MM.deserialize(plugin.settings("filter").getString("gui.title", "<dark_green>Item Filter")));
+            MM.deserialize(plugin.settings("filter").getString("gui.title", "<white>Item Filter")));
         for (int slot = 0; slot < pageItems.size(); slot++) {
             ItemStack icon = new ItemStack(pageItems.get(slot));
-            icon.editMeta(meta -> meta.lore(List.of(MM.deserialize("<red>Click to remove"))));
+            icon.editMeta(meta -> meta.lore(List.of(MM.deserialize("<white>Click to remove"))));
             holder.inventory.setItem(slot, icon);
         }
-        holder.inventory.setItem(45, button(Material.ARROW, "<yellow>Previous page"));
-        holder.inventory.setItem(47, button(Material.HOPPER, "<green>Add held item"));
+        holder.inventory.setItem(45, button(Material.ARROW, "<white>Previous page"));
+        holder.inventory.setItem(47, button(Material.HOPPER, "<white>Add held item"));
         holder.inventory.setItem(49, button(state(player.getUniqueId()).enabled()
             ? Material.LIME_DYE : Material.GRAY_DYE, state(player.getUniqueId()).enabled()
-            ? "<green>Filtering enabled" : "<yellow>Filtering disabled"));
-        holder.inventory.setItem(51, button(Material.BARRIER, "<red>Shift-click to clear"));
-        holder.inventory.setItem(53, button(Material.ARROW, "<yellow>Next page"));
+            ? "<white>Filtering enabled" : "<white>Filtering disabled"));
+        holder.inventory.setItem(51, button(Material.BARRIER, "<white>Shift-click to clear"));
+        holder.inventory.setItem(53, button(Material.ARROW, "<white>Next page"));
         player.openInventory(holder.inventory);
     }
 
@@ -303,7 +303,7 @@ final class FilterModule implements Listener {
             return true;
         } catch (IOException exception) {
             plugin.getLogger().severe("Could not save data/filters.yml: " + exception.getMessage());
-            send(player, "<red>Your filter change could not be saved safely.");
+            send(player, "<white>Your filter change could not be saved safely.");
             return false;
         }
     }

@@ -14,18 +14,18 @@ toast:
   default-icon: paper
 
 same-ip:
-  format: "<gold>Online players sharing <player>'s session address:</gold> <white><matches></white>"
-  disclaimer: "<gray>A shared address does not prove that accounts belong to the same person; proxies and shared networks can affect results.</gray>"
+  format: "<#f72a4c>Online players sharing <player>'s session address:</#f72a4c> <#f72a4c><matches></#f72a4c>"
+  disclaimer: "<white>A shared address does not prove that accounts belong to the same person; proxies and shared networks can affect results.</white>"
 
 notes:
   maximum-length: 500
 
 messages:
-  heal: "<green>Healed <white><target></white>.</green>"
-  heal-target: "<green>You were healed by <white><player></white>.</green>"
-  feed: "<green>Fed <white><target></white>.</green>"
-  feed-target: "<green>You were fed by <white><player></white>.</green>"
-  god-enabled: "<green>God mode enabled for <white><target></white>.</green>"
-  god-disabled: "<yellow>God mode disabled for <white><target></white>.</yellow>"
-  god-target-enabled: "<green>God mode was enabled.</green>"
-  god-target-disabled: "<yellow>God mode was disabled.</yellow>"
+  heal: "<white>Healed <#f72a4c><target></#f72a4c>.</white>"
+  heal-target: "<white>You were healed by <#f72a4c><player></#f72a4c>.</white>"
+  feed: "<white>Fed <#f72a4c><target></#f72a4c>.</white>"
+  feed-target: "<white>You were fed by <#f72a4c><player></#f72a4c>.</white>"
+  god-enabled: "<white>God mode enabled for <#f72a4c><target></#f72a4c>.</white>"
+  god-disabled: "<white>God mode disabled for <#f72a4c><target></#f72a4c>.</white>"
+  god-target-enabled: "<white>God mode was enabled.</white>"
+  god-target-disabled: "<white>God mode was disabled.</white>"

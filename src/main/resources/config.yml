@@ -1,5 +1,7 @@
 # Settings shared across Rivet modules. Feature switches live in modules.yml;
 # module options live in settings/; saved runtime data lives in data/.
+# Internal one-time migration marker for Rivet's white and #f72a4c message palette.
+message-palette-version: 1
 effects:
   # Show title feedback for supported commands.
   titles: true

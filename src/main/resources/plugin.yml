@@ -70,6 +70,11 @@ commands:
     description: Give an item to every online player
     usage: /giveall <item> [amount]
     permission: rivet.giveall
+  givebreeder:
+    aliases: [giveautobreeder]
+    description: Give an animal-specific auto breeder
+    usage: /givebreeder <animal> [amount] or /givebreeder <player> <animal> [amount]
+    permission: rivet.givebreeder
   killall:
     description: Remove all mobs from the current world
     permission: rivet.world
@@ -159,10 +164,6 @@ commands:
     description: Manage holograms
     usage: /hologram help
     permission: rivet.holograms
-  glow:
-    description: Add persistent colored glows to players
-    usage: /glow add <player> <color> [-s]
-    permission: rivet.glow
   spawn:
     description: Teleport to the server spawn
     permission: rivet.spawn
@@ -316,7 +317,7 @@ commands:
     permission: rivet.sameip
   toast:
     description: Show a temporary advancement toast
-    usage: /toast <player|all> [-t:type] [-icon:material] <message>
+    usage: /toast <player|all> i:<icon> t:<title> <message> [type:<type>]
     permission: rivet.toast
   top:
     description: Teleport to the highest safe location
@@ -359,6 +360,8 @@ permissions:
   rivet.donate:
     default: true
   rivet.giveall:
+    default: op
+  rivet.givebreeder:
     default: op
   rivet.message:
     default: true
@@ -406,8 +409,6 @@ permissions:
     default: op
   rivet.holograms.view.*:
     default: false
-  rivet.glow:
-    default: op
   rivet.eggcapture:
     default: true
   rivet.spawn:

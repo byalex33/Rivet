@@ -25,7 +25,7 @@ final class DailyModule {
 
     boolean command(Player player, String[] args) {
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /daily"));
+            player.sendMessage(MM.deserialize("<white>Usage: /daily"));
             return true;
         }
         long now = System.currentTimeMillis();
@@ -35,7 +35,7 @@ final class DailyModule {
         ClaimState state = evaluate(data.getLong(path + ".last-claim"),
             data.getInt(path + ".streak"), period, reset, now);
         if (!state.eligible()) {
-            message(player, "wait", "<yellow>Your next daily reward is available in <white><time></white>.",
+            message(player, "wait", "<white>Your next daily reward is available in <#f72a4c><time></#f72a4c>.",
                 "time", duration(state.remainingMillis()));
             return true;
         }
@@ -45,7 +45,7 @@ final class DailyModule {
         ConfigurationSection reward = rewardDay < 1 ? null
             : settings.getConfigurationSection("rewards." + rewardDay);
         if (reward == null) {
-            message(player, "unconfigured", "<red>No reward is configured for this streak day.",
+            message(player, "unconfigured", "<white>No reward is configured for this streak day.",
                 "streak", Integer.toString(state.streak()));
             return true;
         }
@@ -60,7 +60,7 @@ final class DailyModule {
             data.set(path + ".last-claim", oldLast);
             data.set(path + ".streak", oldStreak);
             plugin.getLogger().severe("Could not save data/daily.yml: " + exception.getMessage());
-            message(player, "save-error", "<red>Your reward could not be saved safely. Try again.",
+            message(player, "save-error", "<white>Your reward could not be saved safely. Try again.",
                 "streak", Integer.toString(state.streak()));
             return true;
         }
@@ -70,7 +70,7 @@ final class DailyModule {
         if (milestone != null) {
             grant(player, milestone);
         }
-        message(player, "claimed", "<green>Daily reward claimed! <gray>Streak: <white><streak></white>",
+        message(player, "claimed", "<white>Daily reward claimed! <white>Streak: <#f72a4c><streak></#f72a4c>",
             "streak", Integer.toString(state.streak()));
         return true;
     }

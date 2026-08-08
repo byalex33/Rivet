@@ -1,4 +1,4 @@
 # Inventory rows, from 1 to 6.
 rows: 6
-title: "<dark_red>Trash — items are destroyed</dark_red>"
-warning: "<red>Items left in the trash when it closes cannot be recovered.</red>"
+title: "<#f72a4c>Trash — items are destroyed</#f72a4c>"
+warning: "<white>Items left in the trash when it closes cannot be recovered.</white>"

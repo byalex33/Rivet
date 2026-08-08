@@ -7,21 +7,33 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 final class RivetConfig {
+    private static final Pattern LEGACY_MESSAGE_COLOR = Pattern.compile(
+        "(?i)<(?:/?(?:black|dark_blue|dark_green|dark_aqua|dark_red|dark_purple|gold|gray|"
+            + "dark_gray|blue|green|aqua|red|light_purple|yellow)|/?gradient(?::[^>]*)?|"
+            + "/?rainbow(?::[^>]*)?|/?#(?!f72a4c)[0-9a-f]{6})>");
     static final List<String> MODULES = List.of(
         "chat", "homes", "warps", "graves", "breeders", "egg-capture", "tree-feller",
-        "mob-heads", "holograms", "glow", "permissions", "worlds", "staff",
+        "mob-heads", "holograms", "permissions", "worlds", "staff",
         "environment", "inventory", "spawn", "tpa", "kits", "afk", "join-leave",
         "announcements", "nicknames", "statistics", "trash", "utilities", "poses",
         "backpacks", "daily", "rtp", "near", "filter", "help");
+    static final Set<String> ENABLED_BY_DEFAULT = Set.of(
+        "chat", "homes", "warps", "graves", "breeders", "egg-capture", "tree-feller",
+        "mob-heads", "holograms", "environment", "spawn", "afk", "join-leave",
+        "nicknames", "statistics", "trash", "utilities", "filter", "help");
 
     private final RivetPlugin plugin;
     private final File settingsDirectory;
@@ -41,26 +53,42 @@ final class RivetConfig {
         migrateFile("chat.yml", "settings/chat.yml");
         migrateFile("permissions/groups.yml", "settings/permissions.yml");
         migrateFile("graves.yml", "data/graves.yml");
-        migrateFile("glows.yml", "data/glow.yml");
         migrateFile("holograms.yml", "data/holograms.yml");
         migrateFile("permissions/users.yml", "data/permissions.yml");
 
+        File globalFile = new File(plugin.getDataFolder(), "config.yml");
+        boolean migrateMessagePalette = loadChecked(globalFile)
+            .getInt("message-palette-version", 0) < 1;
         boolean worldsSettingsExisted = settingsFile("worlds").exists();
         saveResource("modules.yml");
         for (String module : MODULES) {
             saveResource("settings/" + module + ".yml");
-            settings.put(module, loadChecked(settingsFile(module)));
+            YamlConfiguration configured = loadChecked(settingsFile(module));
+            boolean settingsChanged = mergeBundledDefaults(module, configured);
+            if (migrateMessagePalette && migrateMessagePalette(configured, module)) {
+                settingsChanged = true;
+            }
+            if (settingsChanged) {
+                configured.save(settingsFile(module));
+            }
+            settings.put(module, configured);
+        }
+        if (migrateMessagePalette) {
+            plugin.getConfig().set("message-palette-version", 1);
+            plugin.saveConfig();
+            plugin.getLogger().info("Updated configurable messages to Rivet's white and #f72a4c palette.");
         }
         File modulesFile = new File(plugin.getDataFolder(), "modules.yml");
         addMissingModuleSwitches(modulesFile);
         modules = loadChecked(modulesFile);
         validateModules(modules, modulesFile);
-        MODULES.forEach(module -> activeModules.put(module, modules.getBoolean(module, true)));
+        MODULES.forEach(module -> activeModules.put(module,
+            modules.getBoolean(module, ENABLED_BY_DEFAULT.contains(module))));
         migrateLegacyConfig(worldsSettingsExisted);
     }
 
     boolean enabled(String module) {
-        return activeModules.getOrDefault(module, true);
+        return activeModules.getOrDefault(module, ENABLED_BY_DEFAULT.contains(module));
     }
 
     YamlConfiguration settings(String module) {
@@ -128,8 +156,25 @@ final class RivetConfig {
     }
 
     static List<String> changedModules(Map<String, Boolean> active, YamlConfiguration configured) {
-        return MODULES.stream().filter(module -> active.getOrDefault(module, true)
-            != configured.getBoolean(module, true)).toList();
+        return MODULES.stream().filter(module -> active.getOrDefault(module,
+                ENABLED_BY_DEFAULT.contains(module))
+            != configured.getBoolean(module, ENABLED_BY_DEFAULT.contains(module))).toList();
+    }
+
+    static String themeMessage(String message) {
+        String namedColors = "black|dark_blue|dark_green|dark_aqua|dark_red|dark_purple|gold|gray|"
+            + "dark_gray|blue|green|aqua|red|light_purple|yellow";
+        return message
+            .replaceAll("(?i)<white>", "<#f72a4c>")
+            .replaceAll("(?i)</white>", "</#f72a4c>")
+            .replaceAll("(?i)<(?:" + namedColors + ")>", "<white>")
+            .replaceAll("(?i)</(?:" + namedColors + ")>", "</white>")
+            .replaceAll("(?i)<gradient:[^>]+>", "<#f72a4c>")
+            .replaceAll("(?i)</gradient>", "</#f72a4c>")
+            .replaceAll("(?i)<rainbow(?::[^>]*)?>", "<#f72a4c>")
+            .replaceAll("(?i)</rainbow>", "</#f72a4c>")
+            .replaceAll("(?i)<#(?!f72a4c)[0-9a-f]{6}>", "<#f72a4c>")
+            .replaceAll("(?i)</#(?!f72a4c)[0-9a-f]{6}>", "</#f72a4c>");
     }
 
     record ReloadResult(List<String> changedModules, int fileCount) {
@@ -138,6 +183,27 @@ final class RivetConfig {
     private void saveResource(String path) {
         if (!new File(plugin.getDataFolder(), path).exists()) {
             plugin.saveResource(path, false);
+        }
+    }
+
+    private boolean mergeBundledDefaults(String module, YamlConfiguration configured) {
+        try (var resource = plugin.getResource("settings/" + module + ".yml")) {
+            if (resource == null) {
+                return false;
+            }
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                new InputStreamReader(resource, StandardCharsets.UTF_8));
+            boolean changed = false;
+            for (Map.Entry<String, Object> entry : defaults.getValues(true).entrySet()) {
+                if (!(entry.getValue() instanceof ConfigurationSection)
+                    && !configured.contains(entry.getKey())) {
+                    configured.set(entry.getKey(), entry.getValue());
+                    changed = true;
+                }
+            }
+            return changed;
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not read bundled settings for " + module, exception);
         }
     }
 
@@ -156,7 +222,8 @@ final class RivetConfig {
         }
         StringBuilder addition = new StringBuilder(System.lineSeparator())
             .append("# Module switches added by a Rivet update.").append(System.lineSeparator());
-        missing.forEach(module -> addition.append(module).append(": true")
+        missing.forEach(module -> addition.append(module).append(": ")
+            .append(ENABLED_BY_DEFAULT.contains(module))
             .append(System.lineSeparator()));
         Files.writeString(file.toPath(), addition, StandardOpenOption.APPEND);
         plugin.getLogger().info("Added " + missing.size() + " new module switches to modules.yml.");
@@ -200,6 +267,62 @@ final class RivetConfig {
             config.save(new File(plugin.getDataFolder(), "config.yml"));
             plugin.getLogger().info("Migrated legacy values from config.yml.");
         }
+    }
+
+    private static boolean migrateMessagePalette(YamlConfiguration configuration, String module) {
+        boolean changed = false;
+        for (Map.Entry<String, Object> entry
+             : new HashMap<>(configuration.getValues(true)).entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof String message) {
+                String themed = migrateMessage(module, entry.getKey(), message);
+                if (!themed.equals(message)) {
+                    configuration.set(entry.getKey(), themed);
+                    changed = true;
+                }
+            } else if (value instanceof List<?> values && values.stream().allMatch(String.class::isInstance)) {
+                List<String> themed = values.stream().map(String.class::cast)
+                    .map(message -> migrateMessage(module, entry.getKey(), message)).toList();
+                if (!themed.equals(values)) {
+                    configuration.set(entry.getKey(), themed);
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
+    static String migrateMessage(String module, String path, String message) {
+        return LEGACY_MESSAGE_COLOR.matcher(message).find()
+            ? themeConfiguredMessage(module, path, message) : message;
+    }
+
+    static String themeConfiguredMessage(String module, String path, String message) {
+        if (!module.equals("chat")) {
+            return themeMessage(message);
+        }
+        return switch (path) {
+            case "format" -> replaceExact(message,
+                "<gray><player>:</gray> <white><message></white>",
+                "<#f72a4c><player>:</#f72a4c> <white><message></white>");
+            case "me.format" -> replaceExact(message,
+                "<light_purple>* <player> <message></light_purple>",
+                "<#f72a4c>* <player></#f72a4c> <white><message></white>");
+            case "private-messages.sent" -> replaceExact(message,
+                "<gray>[you → <player>]</gray> <white><message></white>",
+                "<#f72a4c>[you → <player>]</#f72a4c> <white><message></white>");
+            case "private-messages.received" -> replaceExact(message,
+                "<gray>[<player> → you]</gray> <white><message></white>",
+                "<#f72a4c>[<player> → you]</#f72a4c> <white><message></white>");
+            case "social-spy.format" -> replaceExact(message,
+                "<dark_gray>[spy]</dark_gray> <gray><sender> → <recipient>:</gray> <white><message></white>",
+                "<#f72a4c>[spy] <sender> → <recipient>:</#f72a4c> <white><message></white>");
+            default -> themeMessage(message);
+        };
+    }
+
+    private static String replaceExact(String message, String legacy, String replacement) {
+        return message.equals(legacy) ? replacement : themeMessage(message);
     }
 
     private boolean migrateSection(FileConfiguration source, String path,

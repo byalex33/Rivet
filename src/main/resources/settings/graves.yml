@@ -1,16 +1,16 @@
 # Saved graves and latest death locations are stored in ../data/graves.yml.
-death-message: "<red>You died at <white><x>, <y>, <z></white> in <gray><world></gray>.</red>"
+death-message: "<white>You died at <#f72a4c><x>, <y>, <z></#f72a4c> in <white><world></white>.</white>"
 
 back:
   teleport-delay-seconds: 3
   cooldown-seconds: 30
   cancel-on-move: true
   messages:
-    none: "<red>No death location is saved.</red>"
-    wait: "<yellow>Returning in <white><seconds></white> seconds. Do not move.</yellow>"
-    cancelled: "<red>Back teleport cancelled because you moved.</red>"
-    cooldown: "<red>You can use /back again in <seconds> seconds.</red>"
-    teleported: "<green>Returned to your latest death location.</green>"
+    none: "<white>No death location is saved.</white>"
+    wait: "<white>Returning in <#f72a4c><seconds></#f72a4c> seconds. Do not move.</white>"
+    cancelled: "<white>Back teleport cancelled because you moved.</white>"
+    cooldown: "<white>You can use /back again in <seconds> seconds.</white>"
+    teleported: "<white>Returned to your latest death location.</white>"
 
 ownership:
   # When true, only the owner can initially open a grave.
@@ -25,6 +25,6 @@ expiry:
 
 tracking-compass:
   enabled: true
-  name: "<gold>Grave Tracker</gold>"
+  name: "<#f72a4c>Grave Tracker</#f72a4c>"
   lore:
-    - "<gray>Points to your latest active grave.</gray>"
+    - "<white>Points to your latest active grave.</white>"

@@ -42,22 +42,22 @@ final class AfkModule implements Listener {
     boolean command(Player player, String[] args) {
         AfkArguments parsed = parseArguments(args);
         if (!parsed.valid()) {
-            player.sendMessage(MM.deserialize("<red>Usage: /afk [reason] [-p:<player>] [-s]"));
+            player.sendMessage(MM.deserialize("<white>Usage: /afk [reason] [-p:<player>] [-s]"));
             return true;
         }
         if (parsed.silent() && !player.hasPermission("rivet.afk.silent")) {
-            player.sendMessage(MM.deserialize("<red>You cannot use silent AFK changes."));
+            player.sendMessage(MM.deserialize("<white>You cannot use silent AFK changes."));
             return true;
         }
         Player target = player;
         if (parsed.player() != null) {
             if (!player.hasPermission("rivet.afk.others")) {
-                player.sendMessage(MM.deserialize("<red>You cannot change another player's AFK state."));
+                player.sendMessage(MM.deserialize("<white>You cannot change another player's AFK state."));
                 return true;
             }
             target = plugin.getServer().getPlayerExact(parsed.player());
             if (target == null || !player.canSee(target)) {
-                player.sendMessage(MM.deserialize("<red>That player is not online."));
+                player.sendMessage(MM.deserialize("<white>That player is not online."));
                 return true;
             }
         }
@@ -65,8 +65,8 @@ final class AfkModule implements Listener {
         set(target, value, parsed.reason(), parsed.silent());
         if (parsed.silent()) {
             player.sendMessage(MM.deserialize(value
-                    ? "<green>AFK enabled for <white><player></white>."
-                    : "<yellow>AFK disabled for <white><player></white>.",
+                    ? "<white>AFK enabled for <#f72a4c><player></#f72a4c>."
+                    : "<white>AFK disabled for <#f72a4c><player></#f72a4c>.",
                 Placeholder.unparsed("player", target.getName())));
         }
         return true;
@@ -74,12 +74,12 @@ final class AfkModule implements Listener {
 
     boolean check(Player viewer, String[] args) {
         if (args.length > 1) {
-            viewer.sendMessage(MM.deserialize("<red>Usage: /afkcheck [player|all]"));
+            viewer.sendMessage(MM.deserialize("<white>Usage: /afkcheck [player|all]"));
             return true;
         }
         if (args.length == 1 && args[0].equalsIgnoreCase("all")) {
             if (!viewer.hasPermission("rivet.afkcheck.others")) {
-                viewer.sendMessage(MM.deserialize("<red>You cannot inspect other players."));
+                viewer.sendMessage(MM.deserialize("<white>You cannot inspect other players."));
                 return true;
             }
             List<? extends Player> players = plugin.getServer().getOnlinePlayers().stream()
@@ -87,22 +87,22 @@ final class AfkModule implements Listener {
                 .sorted(java.util.Comparator.comparing(Player::getName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
             if (players.isEmpty()) {
-                viewer.sendMessage(MM.deserialize("<gray>No visible online players are AFK."));
+                viewer.sendMessage(MM.deserialize("<white>No visible online players are AFK."));
                 return true;
             }
-            viewer.sendMessage(MM.deserialize("<gold>AFK players:</gold>"));
+            viewer.sendMessage(MM.deserialize("<#f72a4c>AFK players:</#f72a4c>"));
             players.forEach(player -> status(viewer, player));
             return true;
         }
         Player target = viewer;
         if (args.length == 1) {
             if (!viewer.hasPermission("rivet.afkcheck.others")) {
-                viewer.sendMessage(MM.deserialize("<red>You cannot inspect other players."));
+                viewer.sendMessage(MM.deserialize("<white>You cannot inspect other players."));
                 return true;
             }
             target = plugin.getServer().getPlayerExact(args[0]);
             if (target == null || !viewer.canSee(target)) {
-                viewer.sendMessage(MM.deserialize("<red>That player is not online."));
+                viewer.sendMessage(MM.deserialize("<white>That player is not online."));
                 return true;
             }
         }
@@ -140,7 +140,7 @@ final class AfkModule implements Listener {
     }
 
     Component indicator() {
-        return MM.deserialize(plugin.settings("afk").getString("indicator.format", " <gray>[AFK]</gray>"));
+        return MM.deserialize(plugin.settings("afk").getString("indicator.format", " <white>[AFK]</white>"));
     }
 
     boolean showIndicator() {
@@ -254,11 +254,11 @@ final class AfkModule implements Listener {
             return;
         }
         String path = value ? "messages.afk" : "messages.return";
-        String fallback = value ? "<yellow><player> is now AFK.</yellow>"
-            : "<green><player> is no longer AFK.</green>";
+        String fallback = value ? "<white><player> is now AFK.</white>"
+            : "<white><player> is no longer AFK.</white>";
         if (value && reason != null) {
             path = "messages.afk-with-reason";
-            fallback = "<yellow><player> is now AFK: <white><reason></white></yellow>";
+            fallback = "<white><player> is now AFK: <#f72a4c><reason></#f72a4c></white>";
         }
         Component message = MM.deserialize(plugin.settings("afk").getString(path, fallback),
             Placeholder.unparsed("player", player.getName()),
@@ -272,8 +272,8 @@ final class AfkModule implements Listener {
         String duration = value ? duration(System.currentTimeMillis()
             - afkSince.getOrDefault(target.getUniqueId(), System.currentTimeMillis())) : "0s";
         viewer.sendMessage(MM.deserialize(value
-                ? "<yellow><player> is AFK</yellow> <gray>(<duration>)</gray><white> — <reason></white>"
-                : "<green><player> is not AFK.</green>",
+                ? "<white><player> is AFK</white> <white>(<duration>)</white><#f72a4c> — <reason></#f72a4c>"
+                : "<white><player> is not AFK.</white>",
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("duration", duration), Placeholder.unparsed("reason", reason)));
     }

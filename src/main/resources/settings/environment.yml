@@ -1,1 +1,27 @@
-# Time and weather commands currently use gameplay-preserving built-in defaults.
+messages:
+  time-set: "<white>Time set to <#f72a4c><time></#f72a4c>.</white>"
+  weather-set: "<white>Weather set to <#f72a4c><weather></#f72a4c>.</white>"
+
+effects:
+  time:
+    enabled: true
+    title: "<white><time></white>"
+    subtitle: "<white>Time changed</white>"
+    titles-enabled: true
+    sound-enabled: true
+    sound: ui_button_click
+    volume: 0.8
+    pitch: 1.1
+    particles-enabled: false
+    particle: end_rod
+  weather:
+    enabled: true
+    title: "<#f72a4c><weather></#f72a4c>"
+    subtitle: "<white>Weather changed</white>"
+    titles-enabled: true
+    sound-enabled: true
+    sound: ui_button_click
+    volume: 0.8
+    pitch: 1.1
+    particles-enabled: false
+    particle: cloud

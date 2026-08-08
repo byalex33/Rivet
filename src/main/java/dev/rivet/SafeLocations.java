@@ -1,6 +1,7 @@
 package dev.rivet;
 
 import org.bukkit.Location;
+import org.bukkit.HeightMap;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -45,12 +46,21 @@ final class SafeLocations {
     }
 
     static Location highest(World world, int x, int z, Location facing) {
-        for (int feetY = world.getMaxHeight() - 2; feetY > world.getMinHeight(); feetY--) {
+        int highestNonAirY = world.getHighestBlockYAt(x, z, HeightMap.WORLD_SURFACE);
+        int startFeetY = topScanStart(world.getMaxHeight(), highestNonAirY);
+        for (int feetY = startFeetY; feetY > world.getMinHeight(); feetY--) {
+            if (world.getBlockAt(x, feetY - 1, z).getType().isAir()) {
+                continue;
+            }
             if (safeStanding(world, x, feetY, z, true)) {
                 return centered(world, x, feetY, z, facing);
             }
         }
         return null;
+    }
+
+    static int topScanStart(int maxHeight, int highestNonAirY) {
+        return Math.min(maxHeight - 2, highestNonAirY + 1);
     }
 
     static boolean safeStanding(World world, int x, int feetY, int z, boolean avoidLeaves) {

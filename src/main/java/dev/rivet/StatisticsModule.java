@@ -29,11 +29,11 @@ final class StatisticsModule {
             Player online = plugin.getServer().getPlayerExact(args[0]);
             target = online == null ? plugin.getServer().getOfflinePlayerIfCached(args[0]) : online;
         } else {
-            sender.sendMessage(MM.deserialize("<red>Usage: /stats [player]"));
+            sender.sendMessage(MM.deserialize("<white>Usage: /stats [player]"));
             return true;
         }
         if (target == null || target.getName() == null) {
-            sender.sendMessage(MM.deserialize("<red>That player could not be found."));
+            sender.sendMessage(MM.deserialize("<white>That player could not be found."));
             return true;
         }
 
@@ -60,7 +60,7 @@ final class StatisticsModule {
             Placeholder.unparsed("since_first_join", firstPlayed <= 0 ? "unknown"
                 : duration(System.currentTimeMillis() - firstPlayed)));
         sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString("header",
-            "<gold><bold><player>'s statistics</bold></gold>"), placeholders));
+            "<#f72a4c><bold><player>'s statistics</bold></#f72a4c>"), placeholders));
         plugin.settings("statistics").getStringList("lines")
             .forEach(line -> sender.sendMessage(MM.deserialize(line, placeholders)));
         return true;
@@ -70,7 +70,7 @@ final class StatisticsModule {
         UtilitiesModule.TargetArgument parsed = UtilitiesModule.parseOptionalTarget(args,
             sender.hasPermission("rivet.playtime.others"));
         if (!parsed.valid() || parsed.name() == null && !(sender instanceof Player)) {
-            sender.sendMessage(MM.deserialize("<red>Usage: /playtime"
+            sender.sendMessage(MM.deserialize("<white>Usage: /playtime"
                 + (sender.hasPermission("rivet.playtime.others") ? " [player]" : "")));
             return true;
         }
@@ -80,17 +80,17 @@ final class StatisticsModule {
         } else {
             Player online = plugin.getServer().getPlayerExact(parsed.name());
             if (online != null && sender instanceof Player viewer && !viewer.canSee(online)) {
-                sender.sendMessage(MM.deserialize("<red>That player could not be found."));
+                sender.sendMessage(MM.deserialize("<white>That player could not be found."));
                 return true;
             }
             target = online == null ? plugin.getServer().getOfflinePlayerIfCached(parsed.name()) : online;
         }
         if (target == null || target.getName() == null || !target.isOnline() && !target.hasPlayedBefore()) {
-            sender.sendMessage(MM.deserialize("<red>That player could not be found."));
+            sender.sendMessage(MM.deserialize("<white>That player could not be found."));
             return true;
         }
         sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString("playtime-format",
-                "<gold><player>'s playtime:</gold> <white><playtime></white>"),
+                "<#f72a4c><player>'s playtime:</#f72a4c> <#f72a4c><playtime></#f72a4c>"),
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("playtime", duration(target.getStatistic(Statistic.PLAY_ONE_MINUTE) * 50L))));
         return true;

@@ -19,7 +19,7 @@ final class NearModule {
 
     boolean command(Player player, String[] args) {
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /near"));
+            player.sendMessage(MM.deserialize("<white>Usage: /near"));
             return true;
         }
         double configuredRadius = settings.getDouble("radius", 100);
@@ -34,14 +34,14 @@ final class NearModule {
                 other.getLocation().distanceSquared(player.getLocation())))
             .limit(maximum).toList();
         if (nearby.isEmpty()) {
-            send(player, "messages.none", "<gray>No visible players are within <white><radius></white> blocks.",
+            send(player, "messages.none", "<white>No visible players are within <#f72a4c><radius></#f72a4c> blocks.",
                 "radius", number(radius));
             return true;
         }
-        send(player, "messages.header", "<gold>Nearby players within <white><radius></white> blocks:</gold>",
+        send(player, "messages.header", "<#f72a4c>Nearby players within <#f72a4c><radius></#f72a4c> blocks:</#f72a4c>",
             "radius", number(radius));
         nearby.forEach(other -> player.sendMessage(MM.deserialize(settings.getString("messages.entry",
-                "<white><player></white> <gray>- <distance>m</gray>"),
+                "<#f72a4c><player></#f72a4c> <white>- <distance>m</white>"),
             Placeholder.unparsed("player", other.getName()),
             Placeholder.unparsed("distance", number(other.getLocation().distance(player.getLocation()))))));
         return true;

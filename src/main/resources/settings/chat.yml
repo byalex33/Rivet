@@ -1,11 +1,11 @@
 # MiniMessage formats. <player> and <message> are safe component placeholders.
-format: "<gray><player>:</gray> <white><message></white>"
+format: "<#f72a4c><player>:</#f72a4c> <white><message></white>"
 me:
   # <player> and <message> are safe component placeholders.
-  format: "<light_purple>* <player> <message></light_purple>"
+  format: "<#f72a4c>* <player></#f72a4c> <white><message></white>"
 private-messages:
-  sent: "<gray>[you → <player>]</gray> <white><message></white>"
-  received: "<gray>[<player> → you]</gray> <white><message></white>"
+  sent: "<#f72a4c>[you → <player>]</#f72a4c> <white><message></white>"
+  received: "<#f72a4c>[<player> → you]</#f72a4c> <white><message></white>"
 
 chat-colors:
   allow-hex: true
@@ -13,16 +13,16 @@ chat-colors:
   allow-rainbow: true
 
 social-spy:
-  format: "<dark_gray>[spy]</dark_gray> <gray><sender> → <recipient>:</gray> <white><message></white>"
+  format: "<#f72a4c>[spy] <sender> → <recipient>:</#f72a4c> <white><message></white>"
   messages:
-    enabled: "<green>Social spy enabled.</green>"
-    disabled: "<yellow>Social spy disabled.</yellow>"
+    enabled: "<white>Social spy enabled.</white>"
+    disabled: "<white>Social spy disabled.</white>"
 
 ignore:
   messages:
-    added: "<yellow>You now ignore <white><player></white>."
-    removed: "<green>You no longer ignore <white><player></white>."
-    list: "<gold>Ignored players:</gold> <white><players></white>"
-    cleared: "<green>Your ignore list was cleared.</green>"
-    self: "<red>You cannot ignore yourself.</red>"
-    blocked: "<red>That private message could not be delivered.</red>"
+    added: "<white>You now ignore <#f72a4c><player></#f72a4c>."
+    removed: "<white>You no longer ignore <#f72a4c><player></#f72a4c>."
+    list: "<#f72a4c>Ignored players:</#f72a4c> <#f72a4c><players></#f72a4c>"
+    cleared: "<white>Your ignore list was cleared.</white>"
+    self: "<white>You cannot ignore yourself.</white>"
+    blocked: "<white>That private message could not be delivered.</white>"

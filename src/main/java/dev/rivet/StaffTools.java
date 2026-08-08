@@ -75,7 +75,7 @@ final class StaffTools implements Listener {
         target.setHealth(attribute == null ? 20 : attribute.getValue());
         target.setFireTicks(0);
         target.setFreezeTicks(0);
-        feedback(actor, target, "heal", "<green>Healed <white><target></white>.");
+        feedback(actor, target, "heal", "<white>Healed <#f72a4c><target></#f72a4c>.");
         return true;
     }
 
@@ -87,25 +87,25 @@ final class StaffTools implements Listener {
         target.setFoodLevel(20);
         target.setSaturation(20);
         target.setExhaustion(0);
-        feedback(actor, target, "feed", "<green>Fed <white><target></white>.");
+        feedback(actor, target, "feed", "<white>Fed <#f72a4c><target></#f72a4c>.");
         return true;
     }
 
     boolean god(Player actor, String[] args) {
         GodArguments parsed = parseGodArguments(args);
         if (!parsed.valid()) {
-            actor.sendMessage(MM.deserialize("<red>Usage: /god [player] [true|false] [-s]"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /god [player] [true|false] [-s]"));
             return true;
         }
         Player target = actor;
         if (parsed.player() != null) {
             if (!actor.hasPermission("rivet.god.others")) {
-                actor.sendMessage(MM.deserialize("<red>You cannot change god mode for another player."));
+                actor.sendMessage(MM.deserialize("<white>You cannot change god mode for another player."));
                 return true;
             }
             target = plugin.getServer().getPlayerExact(parsed.player());
             if (target == null || !actor.canSee(target)) {
-                actor.sendMessage(MM.deserialize("<red>That player is not online.</red>"));
+                actor.sendMessage(MM.deserialize("<white>That player is not online.</white>"));
                 return true;
             }
         }
@@ -125,21 +125,21 @@ final class StaffTools implements Listener {
             }
             data.set("god-players", god.stream().map(UUID::toString).sorted().toList());
             target.setInvulnerable(wasEnabled);
-            actor.sendMessage(MM.deserialize("<red>God mode could not be saved safely.</red>"));
+            actor.sendMessage(MM.deserialize("<white>God mode could not be saved safely.</white>"));
             return true;
         }
         if (parsed.silent()) {
             return true;
         }
-        String fallback = enabled ? "<green>God mode enabled for <white><target></white>."
-            : "<yellow>God mode disabled for <white><target></white>.";
+        String fallback = enabled ? "<white>God mode enabled for <#f72a4c><target></#f72a4c>."
+            : "<white>God mode disabled for <#f72a4c><target></#f72a4c>.";
         actor.sendMessage(MM.deserialize(settings.getString("messages.god-" +
                 (enabled ? "enabled" : "disabled"), fallback),
             Placeholder.unparsed("target", target.getName())));
         if (actor != target) {
             target.sendMessage(MM.deserialize(settings.getString("messages.god-target-" +
                 (enabled ? "enabled" : "disabled"), enabled
-                ? "<green>God mode was enabled.</green>" : "<yellow>God mode was disabled.</yellow>")));
+                ? "<white>God mode was enabled.</white>" : "<white>God mode was disabled.</white>")));
         }
         return true;
     }
@@ -152,24 +152,24 @@ final class StaffTools implements Listener {
         } else if (args.length == 2 && actor.hasPermission("rivet.flyspeed.others")) {
             target = plugin.getServer().getPlayerExact(args[0]);
             if (target == null || !actor.canSee(target)) {
-                actor.sendMessage(MM.deserialize("<red>That player is not online.</red>"));
+                actor.sendMessage(MM.deserialize("<white>That player is not online.</white>"));
                 return true;
             }
             value = args[1];
         } else {
-            actor.sendMessage(MM.deserialize("<red>Usage: /flyspeed [player] <amount>"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /flyspeed [player] <amount>"));
             return true;
         }
         Float speed = parseFlySpeed(value);
         if (speed == null) {
-            actor.sendMessage(MM.deserialize("<red>Flight speed must be between -1.0 and 1.0."));
+            actor.sendMessage(MM.deserialize("<white>Flight speed must be between -1.0 and 1.0."));
             return true;
         }
         target.setFlySpeed(speed);
-        actor.sendMessage(MM.deserialize("<green>Flight speed for <white><player></white> set to <white><speed></white>.",
+        actor.sendMessage(MM.deserialize("<white>Flight speed for <#f72a4c><player></#f72a4c> set to <#f72a4c><speed></#f72a4c>.",
             Placeholder.unparsed("player", target.getName()), Placeholder.unparsed("speed", Float.toString(speed))));
         if (actor != target) {
-            target.sendMessage(MM.deserialize("<green>Your flight speed is now <white><speed></white>.",
+            target.sendMessage(MM.deserialize("<white>Your flight speed is now <#f72a4c><speed></#f72a4c>.",
                 Placeholder.unparsed("speed", Float.toString(speed))));
         }
         return true;
@@ -177,7 +177,7 @@ final class StaffTools implements Listener {
 
     boolean bossBar(Player actor, String[] args) {
         if (args.length < 2) {
-            actor.sendMessage(MM.deserialize("<red>Usage: /bossbarmsg <player|all> [-d:seconds] [-c:color] [-s:style] <message>"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /bossbarmsg <player|all> [-d:seconds] [-c:color] [-s:style] <message>"));
             return true;
         }
         BossBarArguments parsed = parseBossBarArguments(Arrays.copyOfRange(args, 1, args.length),
@@ -185,7 +185,7 @@ final class StaffTools implements Listener {
             settings.getString("boss-bar.default-color", "purple"),
             settings.getString("boss-bar.default-style", "solid"));
         if (!parsed.valid()) {
-            actor.sendMessage(MM.deserialize("<red>" + parsed.error() + "</red>"));
+            actor.sendMessage(MM.deserialize("<white>" + parsed.error() + "</white>"));
             return true;
         }
         List<Player> targets;
@@ -194,20 +194,20 @@ final class StaffTools implements Listener {
         } else {
             Player target = plugin.getServer().getPlayerExact(args[0]);
             if (target == null || !actor.canSee(target)) {
-                actor.sendMessage(MM.deserialize("<red>That player is not online.</red>"));
+                actor.sendMessage(MM.deserialize("<white>That player is not online.</white>"));
                 return true;
             }
             targets = List.of(target);
         }
         if (targets.isEmpty()) {
-            actor.sendMessage(MM.deserialize("<yellow>No players are online.</yellow>"));
+            actor.sendMessage(MM.deserialize("<white>No players are online.</white>"));
             return true;
         }
         Component title;
         try {
             title = MM.deserialize(parsed.message());
         } catch (RuntimeException exception) {
-            actor.sendMessage(MM.deserialize("<red>That MiniMessage text is invalid.</red>"));
+            actor.sendMessage(MM.deserialize("<white>That MiniMessage text is invalid.</white>"));
             return true;
         }
         BossBar bar = BossBar.bossBar(title, 1, parsed.color(), parsed.overlay());
@@ -216,7 +216,7 @@ final class StaffTools implements Listener {
         active.task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> remove(active),
             Math.max(1, (long) Math.ceil(parsed.duration() * 20)));
         bossBars.add(active);
-        actor.sendMessage(MM.deserialize("<green>Boss bar shown to <white><count></white> player(s).",
+        actor.sendMessage(MM.deserialize("<white>Boss bar shown to <#f72a4c><count></#f72a4c> player(s).",
             Placeholder.unparsed("count", Integer.toString(targets.size()))));
         return true;
     }
@@ -224,17 +224,17 @@ final class StaffTools implements Listener {
     boolean note(Player actor, String[] args) {
         NoteArguments parsed = parseNoteArguments(args);
         if (!parsed.valid()) {
-            actor.sendMessage(MM.deserialize("<red>Usage: /note <player> <add <note>|remove <id>|clear [confirm]|list>"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /note <player> <add <note>|remove <id>|clear [confirm]|list>"));
             return true;
         }
         if (parsed.action().equals("add") && !validNoteText(parsed.value(),
             Math.max(1, settings.getInt("notes.maximum-length", 500)))) {
-            actor.sendMessage(MM.deserialize("<red>Notes must be non-empty, contain no control characters, and fit the configured length limit.</red>"));
+            actor.sendMessage(MM.deserialize("<white>Notes must be non-empty, contain no control characters, and fit the configured length limit.</white>"));
             return true;
         }
         OfflinePlayer target = resolveKnownPlayer(parsed.player());
         if (target == null || target.getName() == null) {
-            actor.sendMessage(MM.deserialize("<red>That player profile is not known to this server."));
+            actor.sendMessage(MM.deserialize("<white>That player profile is not known to this server."));
             return true;
         }
         String base = "players." + target.getUniqueId();
@@ -250,20 +250,20 @@ final class StaffTools implements Listener {
 
     boolean sameIp(Player actor, String[] args) {
         if (args.length > 1) {
-            actor.sendMessage(MM.deserialize("<red>Usage: /sameip [player]"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /sameip [player]"));
             return true;
         }
         Player target = actor;
         if (args.length == 1) {
             target = plugin.getServer().getPlayerExact(args[0]);
             if (target == null || !actor.canSee(target)) {
-                actor.sendMessage(MM.deserialize("<red>That player is not online."));
+                actor.sendMessage(MM.deserialize("<white>That player is not online."));
                 return true;
             }
         }
         String address = address(target);
         if (address == null) {
-            actor.sendMessage(MM.deserialize("<red>That player's session address is unavailable."));
+            actor.sendMessage(MM.deserialize("<white>That player's session address is unavailable."));
             return true;
         }
         List<IpEntry> online = plugin.getServer().getOnlinePlayers().stream()
@@ -275,28 +275,28 @@ final class StaffTools implements Listener {
                 return player != null && actor.canSee(player);
             });
         actor.sendMessage(MM.deserialize(settings.getString("same-ip.format",
-                "<gold>Online players sharing <player>'s session address:</gold> <white><matches></white>"),
+                "<#f72a4c>Online players sharing <player>'s session address:</#f72a4c> <#f72a4c><matches></#f72a4c>"),
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("matches", matches.isEmpty() ? "none" : String.join(", ", matches))));
         actor.sendMessage(MM.deserialize(settings.getString("same-ip.disclaimer",
-            "<gray>A shared address does not prove that accounts belong to the same person; proxies and shared networks can affect results.</gray>")));
+            "<white>A shared address does not prove that accounts belong to the same person; proxies and shared networks can affect results.</white>")));
         return true;
     }
 
     boolean toast(Player actor, String[] args) {
         if (args.length < 2) {
-            actor.sendMessage(MM.deserialize("<red>Usage: /toast <player|all> [-t:type] [-icon:material] <message>"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /toast <player|all> i:<icon> t:<title> <message> [type:<type>]"));
             return true;
         }
         ToastArguments parsed = parseToastArguments(Arrays.copyOfRange(args, 1, args.length),
             settings.getString("toast.default-type", "task"),
             settings.getString("toast.default-icon", "paper"));
         if (!parsed.valid()) {
-            actor.sendMessage(MM.deserialize("<red>" + parsed.error() + "</red>"));
+            actor.sendMessage(MM.deserialize("<white>" + parsed.error() + "</white>"));
             return true;
         }
         if (!parsed.icon().isItem()) {
-            actor.sendMessage(MM.deserialize("<red>Toast icon must be a valid item material.</red>"));
+            actor.sendMessage(MM.deserialize("<white>Toast icon must be a valid item material.</white>"));
             return true;
         }
         List<Player> targets;
@@ -306,34 +306,38 @@ final class StaffTools implements Listener {
         } else {
             Player target = plugin.getServer().getPlayerExact(args[0]);
             if (target == null || !actor.canSee(target)) {
-                actor.sendMessage(MM.deserialize("<red>That player is not online."));
+                actor.sendMessage(MM.deserialize("<white>That player is not online."));
                 return true;
             }
             targets = List.of(target);
         }
         if (targets.isEmpty()) {
-            actor.sendMessage(MM.deserialize("<yellow>No visible players are online."));
+            actor.sendMessage(MM.deserialize("<white>No visible players are online."));
             return true;
         }
         Component title;
+        Component description;
         try {
-            title = MM.deserialize(parsed.message());
+            title = MM.deserialize(parsed.title());
+            description = parsed.message().isEmpty() ? Component.empty()
+                : MM.deserialize(parsed.message());
         } catch (RuntimeException exception) {
-            actor.sendMessage(MM.deserialize("<red>That MiniMessage text is invalid.</red>"));
+            actor.sendMessage(MM.deserialize("<white>That MiniMessage text is invalid.</white>"));
             return true;
         }
         NamespacedKey key = new NamespacedKey(plugin, "toast_" + UUID.randomUUID().toString().replace("-", ""));
-        String json = toastJson(parsed, GsonComponentSerializer.gson().serialize(title));
+        String json = toastJson(parsed, GsonComponentSerializer.gson().serialize(title),
+            GsonComponentSerializer.gson().serialize(description));
         Advancement advancement;
         try {
             advancement = Bukkit.getUnsafe().loadAdvancement(key, json);
         } catch (RuntimeException exception) {
             plugin.getLogger().warning("Could not create temporary toast: " + exception.getMessage());
-            actor.sendMessage(MM.deserialize("<red>The toast could not be displayed safely.</red>"));
+            actor.sendMessage(MM.deserialize("<white>The toast could not be displayed safely.</white>"));
             return true;
         }
         if (advancement == null) {
-            actor.sendMessage(MM.deserialize("<red>The toast could not be displayed safely.</red>"));
+            actor.sendMessage(MM.deserialize("<white>The toast could not be displayed safely.</white>"));
             return true;
         }
         temporaryToasts.put(key, new ActiveToast(advancement, List.copyOf(targets)));
@@ -341,7 +345,7 @@ final class StaffTools implements Listener {
             player.getAdvancementProgress(advancement).awardCriteria(criterion)));
         plugin.getServer().getScheduler().runTaskLater(plugin,
             () -> cleanupToast(key, advancement, targets), 2L);
-        actor.sendMessage(MM.deserialize("<green>Toast shown to <white>" + targets.size() + "</white> player(s)."));
+        actor.sendMessage(MM.deserialize("<white>Toast shown to <#f72a4c>" + targets.size() + "</#f72a4c> player(s)."));
         return true;
     }
 
@@ -349,17 +353,17 @@ final class StaffTools implements Listener {
         var section = notes.getConfigurationSection(base + ".notes");
         List<Integer> ids = section == null ? List.of() : section.getKeys(false).stream()
             .map(StaffTools::positiveInteger).filter(java.util.Objects::nonNull).sorted().toList();
-        actor.sendMessage(MM.deserialize("<gold><bold>Notes for <player></bold></gold> <gray>(<count>)</gray>",
+        actor.sendMessage(MM.deserialize("<#f72a4c><bold>Notes for <player></bold></#f72a4c> <white>(<count>)</white>",
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("count", Integer.toString(ids.size()))));
         if (ids.isEmpty()) {
-            actor.sendMessage(MM.deserialize("<gray>No notes recorded.</gray>"));
+            actor.sendMessage(MM.deserialize("<white>No notes recorded.</white>"));
             return;
         }
         for (int id : ids) {
             String path = base + ".notes." + id;
             long timestamp = notes.getLong(path + ".timestamp");
-            actor.sendMessage(MM.deserialize("<yellow>#<id></yellow> <white><text></white> <dark_gray>— <staff>, <time></dark_gray>",
+            actor.sendMessage(MM.deserialize("<white>#<id></white> <#f72a4c><text></#f72a4c> <#f72a4c>— <staff>, <time></#f72a4c>",
                 Placeholder.unparsed("id", Integer.toString(id)),
                 Placeholder.unparsed("text", notes.getString(path + ".text", "")),
                 Placeholder.unparsed("staff", notes.getString(path + ".staff", "unknown")),
@@ -384,31 +388,31 @@ final class StaffTools implements Listener {
             notes.set(base + ".next-id", previousNextId);
             return;
         }
-        actor.sendMessage(MM.deserialize("<green>Added note <white>#<id></white> to <white><player></white>.",
+        actor.sendMessage(MM.deserialize("<white>Added note <#f72a4c>#<id></#f72a4c> to <#f72a4c><player></#f72a4c>.",
             Placeholder.unparsed("id", Integer.toString(id)), Placeholder.unparsed("player", target.getName())));
     }
 
     private void removeNote(Player actor, OfflinePlayer target, String base, int id) {
         java.util.Map<String, Object> previous = snapshot(notes, base + ".notes." + id);
         if (!removeNote(notes, base, id)) {
-            actor.sendMessage(MM.deserialize("<red>No note with that ID exists."));
+            actor.sendMessage(MM.deserialize("<white>No note with that ID exists."));
             return;
         }
         if (!saveNotes(actor)) {
             restore(notes, base + ".notes." + id, previous);
             return;
         }
-        actor.sendMessage(MM.deserialize("<green>Removed note <white>#<id></white> from <white><player></white>.",
+        actor.sendMessage(MM.deserialize("<white>Removed note <#f72a4c>#<id></#f72a4c> from <#f72a4c><player></#f72a4c>.",
             Placeholder.unparsed("id", Integer.toString(id)), Placeholder.unparsed("player", target.getName())));
     }
 
     private void clearNotes(Player actor, OfflinePlayer target, String base, boolean confirmed) {
         if (!notes.isConfigurationSection(base + ".notes")) {
-            actor.sendMessage(MM.deserialize("<gray>That player has no notes.</gray>"));
+            actor.sendMessage(MM.deserialize("<white>That player has no notes.</white>"));
             return;
         }
         if (!confirmed) {
-            actor.sendMessage(MM.deserialize("<yellow>Run <white>/note <player> clear confirm</white> to remove every note.",
+            actor.sendMessage(MM.deserialize("<white>Run <#f72a4c>/note <player> clear confirm</#f72a4c> to remove every note.",
                 Placeholder.unparsed("player", target.getName())));
             return;
         }
@@ -418,7 +422,7 @@ final class StaffTools implements Listener {
             restore(notes, base + ".notes", previous);
             return;
         }
-        actor.sendMessage(MM.deserialize("<green>Cleared all notes for <white><player></white>.",
+        actor.sendMessage(MM.deserialize("<white>Cleared all notes for <#f72a4c><player></#f72a4c>.",
             Placeholder.unparsed("player", target.getName())));
     }
 
@@ -449,7 +453,7 @@ final class StaffTools implements Listener {
             return true;
         } catch (IOException exception) {
             plugin.getLogger().severe("Could not save data/notes.yml: " + exception.getMessage());
-            actor.sendMessage(MM.deserialize("<red>The notes change could not be saved safely.</red>"));
+            actor.sendMessage(MM.deserialize("<white>The notes change could not be saved safely.</white>"));
             return false;
         }
     }
@@ -502,7 +506,60 @@ final class StaffTools implements Listener {
                 .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).forEach(values::add);
             return values;
         }
-        return args.length == 2 ? List.of("-d:10", "-c:red", "-s:solid") : List.of();
+        return bossBarFlagCompletions(args);
+    }
+
+    static List<String> bossBarFlagCompletions(String[] args) {
+        if (args.length < 2) {
+            return List.of();
+        }
+        int currentIndex = args.length - 1;
+        boolean durationUsed = hasFlag(args, currentIndex, "-d:");
+        boolean colorUsed = hasFlag(args, currentIndex, "-c:");
+        boolean styleUsed = hasFlag(args, currentIndex, "-s:");
+        String current = args[currentIndex].toLowerCase(Locale.ROOT);
+
+        if (current.startsWith("-d:")) {
+            return durationUsed ? List.of() : durationFlags();
+        }
+        if (current.startsWith("-c:")) {
+            return colorUsed ? List.of() : colorFlags();
+        }
+        if (current.startsWith("-s:")) {
+            return styleUsed ? List.of() : styleFlags();
+        }
+
+        List<String> values = new ArrayList<>();
+        if (!durationUsed) {
+            values.addAll(durationFlags());
+        }
+        if (!colorUsed) {
+            values.addAll(colorFlags());
+        }
+        if (!styleUsed) {
+            values.addAll(styleFlags());
+        }
+        return values;
+    }
+
+    private static boolean hasFlag(String[] args, int end, String prefix) {
+        return java.util.stream.IntStream.range(1, end)
+            .mapToObj(index -> args[index])
+            .anyMatch(argument -> argument.regionMatches(true, 0, prefix, 0, prefix.length()));
+    }
+
+    private static List<String> durationFlags() {
+        return List.of("-d:5", "-d:10", "-d:30", "-d:60");
+    }
+
+    private static List<String> colorFlags() {
+        return Arrays.stream(BossBar.Color.values())
+            .map(color -> "-c:" + color.name().toLowerCase(Locale.ROOT)).toList();
+    }
+
+    private static List<String> styleFlags() {
+        return List.of("-s:solid", "-s:segmented_6", "-s:segmented_10",
+            "-s:segmented_12", "-s:segmented_20");
     }
 
     List<String> noteCompletions(Player actor, String[] args) {
@@ -528,7 +585,34 @@ final class StaffTools implements Listener {
             targets.addAll(visiblePlayerNames(actor));
             return targets;
         }
-        return args.length == 2 ? List.of("-t:task", "-t:goal", "-t:challenge", "-icon:diamond") : List.of();
+        List<String> icons = Arrays.stream(Material.values()).filter(Material::isItem)
+            .map(material -> material.name().toLowerCase(Locale.ROOT)).sorted().toList();
+        return toastFlagCompletions(args, icons);
+    }
+
+    static List<String> toastFlagCompletions(String[] args, List<String> icons) {
+        String current = args[args.length - 1].toLowerCase(Locale.ROOT);
+        if (current.startsWith("i:")) {
+            return icons.stream().map(material -> "i:" + material).toList();
+        }
+        if (current.startsWith("type:")) {
+            return List.of("type:task", "type:goal", "type:challenge");
+        }
+        if (current.startsWith("t:")) {
+            return List.of("t:title");
+        }
+        if (args.length <= 3) {
+            List<String> choices = new ArrayList<>();
+            if (Arrays.stream(args).noneMatch(argument -> argument.regionMatches(true, 0, "i:", 0, 2))) {
+                choices.add("i:diamond");
+            }
+            if (Arrays.stream(args).noneMatch(argument -> argument.regionMatches(true, 0, "t:", 0, 2))) {
+                choices.add("t:title");
+            }
+            choices.addAll(List.of("type:task", "type:goal", "type:challenge"));
+            return choices;
+        }
+        return List.of();
     }
 
     private List<String> knownPlayerNames(Player actor) {
@@ -578,12 +662,12 @@ final class StaffTools implements Listener {
             return actor;
         }
         if (args.length != 1 || !actor.hasPermission(othersPermission)) {
-            actor.sendMessage(MM.deserialize("<red>Usage: " + usage));
+            actor.sendMessage(MM.deserialize("<white>Usage: " + usage));
             return null;
         }
         Player target = plugin.getServer().getPlayerExact(args[0]);
         if (target == null || !actor.canSee(target)) {
-            actor.sendMessage(MM.deserialize("<red>That player is not online.</red>"));
+            actor.sendMessage(MM.deserialize("<white>That player is not online.</white>"));
             return null;
         }
         return target;
@@ -594,7 +678,7 @@ final class StaffTools implements Listener {
             Placeholder.unparsed("target", target.getName())));
         if (actor != target) {
             target.sendMessage(MM.deserialize(settings.getString("messages." + key + "-target",
-                "<green>You were restored by <white><player></white>."),
+                "<white>You were restored by <#f72a4c><player></#f72a4c>."),
                 Placeholder.unparsed("player", actor.getName())));
         }
     }
@@ -750,6 +834,7 @@ final class StaffTools implements Listener {
     static ToastArguments parseToastArguments(String[] args, String defaultType, String defaultIcon) {
         String type = toastType(defaultType);
         Material icon = Material.matchMaterial(defaultIcon == null ? "" : defaultIcon);
+        String title = null;
         String error = type == null || !validToastIcon(icon)
             ? "Toast defaults are invalid; check settings/staff.yml." : null;
         List<String> message = new ArrayList<>();
@@ -759,10 +844,25 @@ final class StaffTools implements Listener {
                 if (type == null) {
                     error = "Toast type must be task, goal, or challenge.";
                 }
+            } else if (argument.regionMatches(true, 0, "type:", 0, 5)) {
+                type = toastType(argument.substring(5));
+                if (type == null) {
+                    error = "Toast type must be task, goal, or challenge.";
+                }
             } else if (argument.regionMatches(true, 0, "-icon:", 0, 6)) {
                 icon = Material.matchMaterial(argument.substring(6));
                 if (!validToastIcon(icon)) {
                     error = "Toast icon must be a valid item material.";
+                }
+            } else if (argument.regionMatches(true, 0, "i:", 0, 2)) {
+                icon = Material.matchMaterial(argument.substring(2));
+                if (!validToastIcon(icon)) {
+                    error = "Toast icon must be a valid item material.";
+                }
+            } else if (argument.regionMatches(true, 0, "t:", 0, 2)) {
+                title = argument.substring(2);
+                if (title.isBlank()) {
+                    error = "Toast title cannot be empty.";
                 }
             } else if (argument.startsWith("-")) {
                 error = "Unknown toast flag: " + argument;
@@ -773,7 +873,12 @@ final class StaffTools implements Listener {
         if (message.isEmpty()) {
             error = "Toast message cannot be empty.";
         }
-        return new ToastArguments(type, icon, String.join(" ", message), error, error == null);
+        String joined = String.join(" ", message);
+        if (title == null) {
+            title = joined;
+            joined = "";
+        }
+        return new ToastArguments(type, icon, title, joined, error, error == null);
     }
 
     static List<String> sameIpMatches(List<IpEntry> entries, UUID target, String address,
@@ -806,10 +911,10 @@ final class StaffTools implements Listener {
             Material.PISTON_HEAD, Material.MOVING_PISTON).contains(material);
     }
 
-    private static String toastJson(ToastArguments parsed, String titleJson) {
+    private static String toastJson(ToastArguments parsed, String titleJson, String descriptionJson) {
         return "{\"criteria\":{\"show\":{\"trigger\":\"minecraft:impossible\"}},"
             + "\"display\":{\"icon\":{\"id\":\"" + parsed.icon().getKey() + "\"},"
-            + "\"title\":" + titleJson + ",\"description\":{\"text\":\"\"},"
+            + "\"title\":" + titleJson + ",\"description\":" + descriptionJson + ","
             + "\"frame\":\"" + parsed.type() + "\",\"announce_to_chat\":false,"
             + "\"show_toast\":true,\"hidden\":true}}";
     }
@@ -885,7 +990,8 @@ final class StaffTools implements Listener {
                          boolean confirmed, boolean valid) {
     }
 
-    record ToastArguments(String type, Material icon, String message, String error, boolean valid) {
+    record ToastArguments(String type, Material icon, String title, String message,
+                          String error, boolean valid) {
     }
 
     record IpEntry(UUID uuid, String name, String address) {

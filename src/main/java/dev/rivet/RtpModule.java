@@ -41,13 +41,13 @@ final class RtpModule {
 
     boolean command(Player player, String[] args) {
         if (args.length > 1 || args.length == 1 && !player.hasPermission("rivet.rtp.world")) {
-            player.sendMessage(MM.deserialize("<red>Usage: /rtp" +
+            player.sendMessage(MM.deserialize("<white>Usage: /rtp" +
                 (player.hasPermission("rivet.rtp.world") ? " [world]" : "")));
             return true;
         }
         World world = args.length == 0 ? player.getWorld() : plugin.getServer().getWorld(args[0]);
         if (world == null || !allowedWorld(world)) {
-            message(player, "world-disabled", "<red>Random teleport is unavailable in that world.");
+            message(player, "world-disabled", "<white>Random teleport is unavailable in that world.");
             return true;
         }
         long now = System.currentTimeMillis();
@@ -56,12 +56,12 @@ final class RtpModule {
             + cooldown - now;
         if (remaining > 0 && !player.hasPermission("rivet.rtp.cooldown.bypass")) {
             player.sendMessage(MM.deserialize(settings.getString("messages.cooldown",
-                    "<yellow>You can use RTP again in <white><seconds>s</white>."),
+                    "<white>You can use RTP again in <#f72a4c><seconds>s</#f72a4c>."),
                 Placeholder.unparsed("seconds", Long.toString((remaining + 999) / 1000))));
             return true;
         }
         if (!searching.add(player.getUniqueId())) {
-            message(player, "searching", "<yellow>Already searching for a safe location.");
+            message(player, "searching", "<white>Already searching for a safe location.");
             return true;
         }
 
@@ -70,10 +70,10 @@ final class RtpModule {
         if (!validRadius(minimum, maximum)) {
             searching.remove(player.getUniqueId());
             plugin.getLogger().warning("Invalid RTP radius for world " + world.getName() + ".");
-            message(player, "failed", "<red>Could not find a safe location. Try again later.");
+            message(player, "failed", "<white>Could not find a safe location. Try again later.");
             return true;
         }
-        message(player, "searching", "<gray>Searching for a safe location...</gray>");
+        message(player, "searching", "<white>Searching for a safe location...</white>");
         search(player, world, minimum, maximum,
             Math.max(1, settings.getInt("maximum-attempts", 24)));
         return true;
@@ -98,7 +98,7 @@ final class RtpModule {
         }
         if (attemptsLeft <= 0) {
             searching.remove(player.getUniqueId());
-            message(player, "failed", "<red>Could not find a safe location. Try again later.");
+            message(player, "failed", "<white>Could not find a safe location. Try again later.");
             return;
         }
         double angle = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
@@ -126,10 +126,10 @@ final class RtpModule {
                 }
                 int warmup = Math.max(0, settings.getInt("warmup-seconds", 3));
                 Component waiting = MM.deserialize(settings.getString("messages.warmup",
-                        "<gray>Teleporting in <white><seconds></white> seconds. Do not move."),
+                        "<white>Teleporting in <#f72a4c><seconds></#f72a4c> seconds. Do not move."),
                     Placeholder.unparsed("seconds", Integer.toString(warmup)));
                 Component cancelled = MM.deserialize(settings.getString("messages.cancelled",
-                    "<red>Random teleport cancelled because you moved."));
+                    "<white>Random teleport cancelled because you moved."));
                 teleports.start(player, safe, warmup,
                     settings.getBoolean("cancel-on-movement", true), waiting, cancelled, () -> success(player));
             });
@@ -166,7 +166,7 @@ final class RtpModule {
         } catch (IOException exception) {
             plugin.getLogger().warning("Could not save data/rtp.yml: " + exception.getMessage());
         }
-        message(player, "success", "<green>Teleported to a safe random location.");
+        message(player, "success", "<white>Teleported to a safe random location.");
         plugin.teleportFeedback(player, "Random location");
     }
 

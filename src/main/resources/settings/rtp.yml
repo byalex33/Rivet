@@ -26,10 +26,10 @@ worlds:
     maximum-radius: 5000
 
 messages:
-  searching: "<gray>Searching for a safe location...</gray>"
-  warmup: "<gray>Teleporting in <white><seconds></white> seconds. Do not move.</gray>"
-  cancelled: "<red>Random teleport cancelled because you moved.</red>"
-  cooldown: "<yellow>You can use RTP again in <white><seconds>s</white>."
-  success: "<green>Teleported to a safe random location.</green>"
-  failed: "<red>Could not find a safe location. Try again later.</red>"
-  world-disabled: "<red>Random teleport is unavailable in that world.</red>"
+  searching: "<white>Searching for a safe location...</white>"
+  warmup: "<white>Teleporting in <#f72a4c><seconds></#f72a4c> seconds. Do not move.</white>"
+  cancelled: "<white>Random teleport cancelled because you moved.</white>"
+  cooldown: "<white>You can use RTP again in <#f72a4c><seconds>s</#f72a4c>."
+  success: "<white>Teleported to a safe random location.</white>"
+  failed: "<white>Could not find a safe location. Try again later.</white>"
+  world-disabled: "<white>Random teleport is unavailable in that world.</white>"

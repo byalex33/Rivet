@@ -1,1 +1,31 @@
-# Tree felling and vein mining currently use gameplay-preserving built-in limits.
+tree-feller:
+  enabled: true
+  maximum-logs: 96
+  maximum-leaves: 512
+  minimum-logs: 4
+  minimum-leaves: 10
+  maximum-horizontal-log-run: 6
+  ticks-per-layer: 2
+  message: "<white>Felled <#f72a4c><count></#f72a4c> × <#f72a4c><material></#f72a4c></white>"
+  sound:
+    enabled: true
+    name: block_wood_break
+    volume: 0.8
+    pitch: 1.1
+  particles:
+    enabled: true
+    count: 8
+
+veinminer:
+  enabled: true
+  maximum-ores: 64
+  message: "<white>Mined <#f72a4c><count></#f72a4c> of <#f72a4c><material></#f72a4c></white>"
+  sound:
+    enabled: false
+    name: block_stone_break
+    volume: 0.8
+    pitch: 1.1
+  particles:
+    enabled: false
+    name: crit
+    count: 8

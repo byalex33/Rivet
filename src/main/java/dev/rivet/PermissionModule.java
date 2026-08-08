@@ -88,15 +88,15 @@ final class PermissionModule implements Listener {
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             reload();
             plugin.getServer().getOnlinePlayers().forEach(this::apply);
-            success(sender, "<green>Permissions reloaded.");
+            success(sender, "<white>Permissions reloaded.");
             return true;
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
             OfflinePlayer target = player(args[1], sender);
             if (target != null) {
                 Set<String> permissions = effective(target.getUniqueId());
-                send(sender, "<gold>" + args[1] + "'s permissions:</gold> <white>"
-                    + (permissions.isEmpty() ? "none" : String.join(", ", permissions)) + "</white>");
+                send(sender, "<#f72a4c>" + args[1] + "'s permissions:</#f72a4c> <#f72a4c>"
+                    + (permissions.isEmpty() ? "none" : String.join(", ", permissions)) + "</#f72a4c>");
             }
             return true;
         }
@@ -107,7 +107,7 @@ final class PermissionModule implements Listener {
                 boolean granted = target.isOnline()
                     ? target.getPlayer().hasPermission(permission)
                     : grants(effective(target.getUniqueId()), permission);
-                send(sender, granted ? "<green>Granted." : "<red>Not granted.");
+                send(sender, granted ? "<white>Granted." : "<white>Not granted.");
             }
             return true;
         }
@@ -126,7 +126,7 @@ final class PermissionModule implements Listener {
                     }
                 }
                 refresh(target);
-                success(sender, "<green>Added <white>" + permission + "</white> to <white>" + args[1] + "</white>.");
+                success(sender, "<white>Added <#f72a4c>" + permission + "</#f72a4c> to <#f72a4c>" + args[1] + "</#f72a4c>.");
             }
             return true;
         }
@@ -143,26 +143,26 @@ final class PermissionModule implements Listener {
                     return true;
                 }
                 refresh(target);
-                success(sender, "<green>Removed <white>" + permission + "</white> from <white>" + args[2] + "</white>.");
+                success(sender, "<white>Removed <#f72a4c>" + permission + "</#f72a4c> from <#f72a4c>" + args[2] + "</#f72a4c>.");
             }
             return true;
         }
-        send(sender, "<red>Usage: /perm <add user permission|remove permission user|list user|check user permission|reload>");
+        send(sender, "<white>Usage: /perm <add user permission|remove permission user|list user|check user permission|reload>");
         return true;
     }
 
     private boolean groupCommand(CommandSender sender, String[] args) {
         if (args.length == 1 && args[0].equalsIgnoreCase("list")) {
-            send(sender, "<gold>Groups:</gold> <white>" + String.join(", ", groupNames()) + "</white>");
+            send(sender, "<#f72a4c>Groups:</#f72a4c> <#f72a4c>" + String.join(", ", groupNames()) + "</#f72a4c>");
             return true;
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("info")) {
             String group = group(args[1], sender);
             if (group != null) {
                 String parent = groups.getString("groups." + group + ".parent", "none");
-                send(sender, "<gold>" + group + "</gold> <gray>parent:</gray> <white>" + parent
-                    + "</white> <gray>permissions:</gray> <white>"
-                    + String.join(", ", groupPermissions(groups, group)) + "</white>");
+                send(sender, "<#f72a4c>" + group + "</#f72a4c> <white>parent:</white> <#f72a4c>" + parent
+                    + "</#f72a4c> <white>permissions:</white> <#f72a4c>"
+                    + String.join(", ", groupPermissions(groups, group)) + "</#f72a4c>");
             }
             return true;
         }
@@ -176,11 +176,11 @@ final class PermissionModule implements Listener {
                     return true;
                 }
                 refresh(target);
-                success(sender, "<green>Set <white>" + args[1] + "</white> to group <white>" + group + "</white>.");
+                success(sender, "<white>Set <#f72a4c>" + args[1] + "</#f72a4c> to group <#f72a4c>" + group + "</#f72a4c>.");
             }
             return true;
         }
-        send(sender, "<red>Usage: /group <set user group|list|info group>");
+        send(sender, "<white>Usage: /group <set user group|list|info group>");
         return true;
     }
 
@@ -250,14 +250,14 @@ final class PermissionModule implements Listener {
             return true;
         } catch (IOException exception) {
             plugin.getLogger().severe("Could not save data/permissions.yml: " + exception.getMessage());
-            send(sender, "<red>Permission changed for this session, but could not be saved. Check the console.");
+            send(sender, "<white>Permission changed for this session, but could not be saved. Check the console.");
             return false;
         }
     }
 
     private OfflinePlayer player(String name, CommandSender sender) {
         if (!name.matches("[A-Za-z0-9_]{1,16}")) {
-            send(sender, "<red>Use a valid player name.");
+            send(sender, "<white>Use a valid player name.");
             return null;
         }
         return plugin.getServer().getOfflinePlayer(name);
@@ -266,7 +266,7 @@ final class PermissionModule implements Listener {
     private String permission(String value, CommandSender sender) {
         String permission = value.toLowerCase(Locale.ROOT);
         if (!permission.matches("(\\*|[a-z0-9_.-]+(?:\\.\\*)?)")) {
-            send(sender, "<red>Use a valid permission node.");
+            send(sender, "<white>Use a valid permission node.");
             return null;
         }
         return permission;
@@ -275,7 +275,7 @@ final class PermissionModule implements Listener {
     private String group(String value, CommandSender sender) {
         String group = value.toLowerCase(Locale.ROOT);
         if (!groups.isConfigurationSection("groups." + group)) {
-            send(sender, "<red>Unknown group.");
+            send(sender, "<white>Unknown group.");
             return null;
         }
         return group;

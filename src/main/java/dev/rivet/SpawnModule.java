@@ -28,7 +28,7 @@ final class SpawnModule implements Listener {
 
     boolean command(Player player, String command, String[] args) {
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /" + command));
+            player.sendMessage(MM.deserialize("<white>Usage: /" + command));
             return true;
         }
         if (command.equals("setspawn")) {
@@ -58,10 +58,10 @@ final class SpawnModule implements Listener {
         try {
             plugin.saveData("spawn");
             player.sendMessage(MM.deserialize(settings.getString("messages.set",
-                "<green>Spawn set to your location.")));
+                "<white>Spawn set to your location.")));
         } catch (IOException exception) {
             plugin.getLogger().severe("Could not save data/spawn.yml: " + exception.getMessage());
-            player.sendMessage(MM.deserialize("<red>Could not save the spawn. Check the console."));
+            player.sendMessage(MM.deserialize("<white>Could not save the spawn. Check the console."));
         }
     }
 
@@ -69,18 +69,18 @@ final class SpawnModule implements Listener {
         Location destination = location();
         if (destination == null) {
             player.sendMessage(MM.deserialize(settings.getString("messages.not-set",
-                "<red>The server spawn has not been set.")));
+                "<white>The server spawn has not been set.")));
             return;
         }
         int delay = Math.max(0, settings.getInt("teleport-delay-seconds", 3));
         teleports.start(player, destination, delay, settings.getBoolean("cancel-on-move", true),
             MM.deserialize(settings.getString("messages.wait",
-                    "<yellow>Teleporting to spawn in <white><seconds></white> seconds. Do not move.</yellow>"),
+                    "<white>Teleporting to spawn in <#f72a4c><seconds></#f72a4c> seconds. Do not move.</white>"),
                 Placeholder.unparsed("seconds", Integer.toString(delay))),
-            MM.deserialize(settings.getString("messages.cancelled", "<red>Teleport cancelled because you moved.")),
+            MM.deserialize(settings.getString("messages.cancelled", "<white>Teleport cancelled because you moved.")),
             () -> {
                 player.sendMessage(MM.deserialize(settings.getString("messages.teleported",
-                    "<green>Teleported to spawn.")));
+                    "<white>Teleported to spawn.")));
                 plugin.teleportFeedback(player, "Spawn");
             });
     }

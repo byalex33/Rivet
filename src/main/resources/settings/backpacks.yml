@@ -1,10 +1,10 @@
 # Personal persistent storage. Rows are clamped to the standard 1-6 range.
 default-rows: 3
-title: "<dark_gray>Backpack"
+title: "<#f72a4c>Backpack"
 
 # World names are matched case-insensitively. Leave empty to allow every world.
 blocked-worlds: []
 
 messages:
-  blocked-world: "<red>Backpacks are disabled in this world.</red>"
-  overflow: "<yellow>Items above your current backpack size are safely retained until you regain more rows.</yellow>"
+  blocked-world: "<white>Backpacks are disabled in this world.</white>"
+  overflow: "<white>Items above your current backpack size are safely retained until you regain more rows.</white>"

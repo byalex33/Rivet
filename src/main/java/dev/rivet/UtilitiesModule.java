@@ -48,11 +48,11 @@ final class UtilitiesModule implements Listener {
             return ride(player, args);
         }
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /" + command));
+            player.sendMessage(MM.deserialize("<white>Usage: /" + command));
             return true;
         }
         if (!plugin.settings("utilities").getBoolean("interfaces." + command, true)) {
-            player.sendMessage(MM.deserialize("<yellow>That portable utility is disabled."));
+            player.sendMessage(MM.deserialize("<white>That portable utility is disabled."));
             return true;
         }
         switch (command) {
@@ -70,21 +70,21 @@ final class UtilitiesModule implements Listener {
 
     private boolean jump(Player player, String[] args) {
         if (args.length != 0) {
-            send(player, "<red>Usage: /jump");
+            send(player, "<white>Usage: /jump");
             return true;
         }
         int range = boundedRange("jump.maximum-range", 50);
         Block target = player.getTargetBlockExact(range, FluidCollisionMode.NEVER);
         if (target == null) {
-            send(player, "<yellow>No block is in range.");
+            send(player, "<white>No block is in range.");
             return true;
         }
         var destination = SafeLocations.nearTarget(target, player.getLocation());
         if (destination == null || !player.teleport(destination)) {
-            send(player, "<red>No safe standing position was found near that block.");
+            send(player, "<white>No safe standing position was found near that block.");
             return true;
         }
-        send(player, "<green>Jumped to the targeted block.");
+        send(player, "<white>Jumped to the targeted block.");
         if (plugin.getConfig().getBoolean("effects.sounds")) {
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, .8f, 1.25f);
         }
@@ -97,7 +97,7 @@ final class UtilitiesModule implements Listener {
 
     private boolean list(Player viewer, String[] args) {
         if (args.length != 0) {
-            send(viewer, "<red>Usage: /list");
+            send(viewer, "<white>Usage: /list");
             return true;
         }
         List<Player> visible = new ArrayList<Player>(plugin.getServer().getOnlinePlayers().stream()
@@ -114,7 +114,7 @@ final class UtilitiesModule implements Listener {
             names = Component.text("none");
         }
         String format = plugin.settings("utilities").getString("list.format",
-            "<gold>Online (<count>/<maximum>):</gold> <white><players></white>");
+            "<#f72a4c>Online (<count>/<maximum>):</#f72a4c> <#f72a4c><players></#f72a4c>");
         viewer.sendMessage(MM.deserialize(format,
             Placeholder.unparsed("count", Integer.toString(visible.size())),
             Placeholder.unparsed("maximum", Integer.toString(plugin.getServer().getMaxPlayers())),
@@ -125,18 +125,18 @@ final class UtilitiesModule implements Listener {
     private boolean ping(Player actor, String[] args) {
         TargetArgument parsed = parseOptionalTarget(args, actor.hasPermission("rivet.ping.others"));
         if (!parsed.valid()) {
-            send(actor, "<red>Usage: /ping" + (actor.hasPermission("rivet.ping.others") ? " [player]" : ""));
+            send(actor, "<white>Usage: /ping" + (actor.hasPermission("rivet.ping.others") ? " [player]" : ""));
             return true;
         }
         Player target = parsed.name() == null ? actor : plugin.getServer().getPlayerExact(parsed.name());
         if (target == null || !actor.canSee(target)) {
-            send(actor, "<red>That player is not online.");
+            send(actor, "<white>That player is not online.");
             return true;
         }
         int ping = target.getPing();
         String quality = pingQuality(ping);
         actor.sendMessage(MM.deserialize(plugin.settings("utilities").getString("ping.format",
-                "<gold><player>'s ping:</gold> <white><ping> ms</white> <gray>(<quality>)</gray>"),
+                "<#f72a4c><player>'s ping:</#f72a4c> <#f72a4c><ping> ms</#f72a4c> <white>(<quality>)</white>"),
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("ping", Integer.toString(ping)),
             Placeholder.unparsed("quality", quality)));
@@ -145,13 +145,13 @@ final class UtilitiesModule implements Listener {
 
     private boolean ride(Player player, String[] args) {
         if (args.length != 0) {
-            send(player, "<red>Usage: /ride");
+            send(player, "<white>Usage: /ride");
             return true;
         }
         if (player.isInsideVehicle()) {
             riders.remove(player.getUniqueId());
             player.leaveVehicle();
-            send(player, "<yellow>You dismounted.");
+            send(player, "<white>You dismounted.");
             return true;
         }
         int range = boundedRange("ride.maximum-range", 10);
@@ -163,16 +163,16 @@ final class UtilitiesModule implements Listener {
                 && (target instanceof LivingEntity || target instanceof Vehicle)
                 && !(target instanceof ArmorStand),
             target != null && !target.getPassengers().isEmpty())) {
-            send(player, "<red>No safe rideable entity is in range.");
+            send(player, "<white>No safe rideable entity is in range.");
             return true;
         }
         if (!target.addPassenger(player)) {
-            send(player, "<red>That entity could not be ridden.");
+            send(player, "<white>That entity could not be ridden.");
             return true;
         }
         riders.add(player.getUniqueId());
-        send(player, "<green>You are now riding <white>" + target.getType().name()
-            .toLowerCase(Locale.ROOT).replace('_', ' ') + "</white>.");
+        send(player, "<white>You are now riding <#f72a4c>" + target.getType().name()
+            .toLowerCase(Locale.ROOT).replace('_', ' ') + "</#f72a4c>.");
         return true;
     }
 

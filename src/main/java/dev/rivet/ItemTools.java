@@ -49,18 +49,18 @@ final class ItemTools {
 
     boolean hat(Player player, String[] args) {
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /hat"));
+            player.sendMessage(MM.deserialize("<white>Usage: /hat"));
             return true;
         }
         ItemStack held = player.getInventory().getItemInMainHand();
         if (held.getType().isAir()) {
-            message(player, "empty-hand", "<red>Hold an item first.</red>");
+            message(player, "empty-hand", "<white>Hold an item first.</white>");
             return true;
         }
         ItemStack helmet = player.getInventory().getHelmet();
         player.getInventory().setHelmet(held);
         player.getInventory().setItemInMainHand(helmet == null ? new ItemStack(Material.AIR) : helmet);
-        message(player, "hat-success", "<green>Equipped the item as your hat.</green>");
+        message(player, "hat-success", "<white>Equipped the item as your hat.</white>");
         return true;
     }
 
@@ -68,7 +68,7 @@ final class ItemTools {
         List<String> values = Arrays.stream(args).filter(value -> !value.equalsIgnoreCase("-s")).toList();
         boolean silent = values.size() != args.length;
         if (values.size() > 2) {
-            actor.sendMessage(MM.deserialize("<red>Usage: /clear [player] [item[:amount][;plain]] [-s]"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /clear [player] [item[:amount][;plain]] [-s]"));
             return true;
         }
         Player target = actor;
@@ -77,7 +77,7 @@ final class ItemTools {
             Player possible = plugin.getServer().getPlayerExact(values.get(0));
             if (possible != null && actor.canSee(possible)) {
                 if (!actor.hasPermission("rivet.inventory.clear.others")) {
-                    actor.sendMessage(MM.deserialize("<red>You cannot clear another player's inventory."));
+                    actor.sendMessage(MM.deserialize("<white>You cannot clear another player's inventory."));
                     return true;
                 }
                 target = possible;
@@ -86,12 +86,12 @@ final class ItemTools {
             }
         } else if (values.size() == 2) {
             if (!actor.hasPermission("rivet.inventory.clear.others")) {
-                actor.sendMessage(MM.deserialize("<red>You cannot clear another player's inventory."));
+                actor.sendMessage(MM.deserialize("<white>You cannot clear another player's inventory."));
                 return true;
             }
             target = plugin.getServer().getPlayerExact(values.get(0));
             if (target == null || !actor.canSee(target)) {
-                actor.sendMessage(MM.deserialize("<red>That player is not online.</red>"));
+                actor.sendMessage(MM.deserialize("<white>That player is not online.</white>"));
                 return true;
             }
             item = values.get(1);
@@ -105,14 +105,14 @@ final class ItemTools {
         } else {
             parsed = parseClearItem(item);
             if (parsed == null) {
-                actor.sendMessage(MM.deserialize("<red>Use a valid item, optional positive amount, and optional <white>;plain</white>."));
+                actor.sendMessage(MM.deserialize("<white>Use a valid item, optional positive amount, and optional <#f72a4c>;plain</#f72a4c>."));
                 return true;
             }
             removed = remove(target, parsed);
         }
         if (!silent) {
             String material = parsed == null ? "items" : parsed.material().name().toLowerCase(Locale.ROOT);
-            actor.sendMessage(MM.deserialize("<green>Removed <white><count> <item></white> from <white><player></white>.",
+            actor.sendMessage(MM.deserialize("<white>Removed <#f72a4c><count> <item></#f72a4c> from <#f72a4c><player></#f72a4c>.",
                 net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("count", Integer.toString(removed)),
                 net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", material),
                 net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", target.getName())));
@@ -122,7 +122,7 @@ final class ItemTools {
 
     boolean condense(Player player, String[] args) {
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /condense"));
+            player.sendMessage(MM.deserialize("<white>Usage: /condense"));
             return true;
         }
         ItemStack[] contents = Arrays.stream(player.getInventory().getStorageContents())
@@ -144,40 +144,40 @@ final class ItemTools {
             }
         });
         if (made.isEmpty()) {
-            player.sendMessage(MM.deserialize("<gray>Nothing in your inventory can be condensed."));
+            player.sendMessage(MM.deserialize("<white>Nothing in your inventory can be condensed."));
             return true;
         }
         player.getInventory().setStorageContents(contents);
         String summary = String.join(", ", made.entrySet().stream()
             .map(entry -> entry.getValue() + " " + entry.getKey().name().toLowerCase(Locale.ROOT).replace('_', ' '))
             .toList());
-        player.sendMessage(MM.deserialize("<green>Condensed: <white><items></white>.",
+        player.sendMessage(MM.deserialize("<white>Condensed: <#f72a4c><items></#f72a4c>.",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("items", summary)));
         return true;
     }
 
     boolean donate(Player sender, String[] args) {
         if (args.length < 1 || args.length > 2) {
-            sender.sendMessage(MM.deserialize("<red>Usage: /donate <player> [amount]"));
+            sender.sendMessage(MM.deserialize("<white>Usage: /donate <player> [amount]"));
             return true;
         }
         Player receiver = plugin.getServer().getPlayerExact(args[0]);
         if (receiver == null || !sender.canSee(receiver)) {
-            sender.sendMessage(MM.deserialize("<red>That player is not online.</red>"));
+            sender.sendMessage(MM.deserialize("<white>That player is not online.</white>"));
             return true;
         }
         if (receiver.equals(sender)) {
-            sender.sendMessage(MM.deserialize("<red>You cannot donate to yourself.</red>"));
+            sender.sendMessage(MM.deserialize("<white>You cannot donate to yourself.</white>"));
             return true;
         }
         ItemStack held = sender.getInventory().getItemInMainHand();
         if (held.getType().isAir()) {
-            sender.sendMessage(MM.deserialize("<red>Hold the item you want to donate.</red>"));
+            sender.sendMessage(MM.deserialize("<white>Hold the item you want to donate.</white>"));
             return true;
         }
         int amount = args.length == 1 ? held.getAmount() : RivetPlugin.itemAmount(args[1]);
         if (!validDonateAmount(amount, held.getAmount())) {
-            sender.sendMessage(MM.deserialize("<red>Amount must be between 1 and the held stack size.</red>"));
+            sender.sendMessage(MM.deserialize("<white>Amount must be between 1 and the held stack size.</white>"));
             return true;
         }
         ItemStack donated = held.clone();
@@ -189,11 +189,11 @@ final class ItemTools {
         } else {
             held.setAmount(held.getAmount() - amount);
         }
-        sender.sendMessage(MM.deserialize("<green>Donated <white><amount> <item></white> to <white><player></white>.",
+        sender.sendMessage(MM.deserialize("<white>Donated <#f72a4c><amount> <item></#f72a4c> to <#f72a4c><player></#f72a4c>.",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("amount", Integer.toString(amount)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", held.getType().name().toLowerCase(Locale.ROOT)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", receiver.getName())));
-        receiver.sendMessage(MM.deserialize("<green>Received <white><amount> <item></white> from <white><player></white>.",
+        receiver.sendMessage(MM.deserialize("<white>Received <#f72a4c><amount> <item></#f72a4c> from <#f72a4c><player></#f72a4c>.",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("amount", Integer.toString(amount)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", donated.getType().name().toLowerCase(Locale.ROOT)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", sender.getName())));
@@ -202,19 +202,19 @@ final class ItemTools {
 
     boolean giveAll(Player actor, String[] args) {
         if (args.length < 1 || args.length > 2) {
-            actor.sendMessage(MM.deserialize("<red>Usage: /giveall <item> [amount]"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /giveall <item> [amount]"));
             return true;
         }
         Material material = Material.matchMaterial(args[0]);
         int amount = args.length == 1 ? 1 : RivetPlugin.itemAmount(args[1]);
         if (material == null || material.isAir() || !material.isItem() || amount < 1) {
-            actor.sendMessage(MM.deserialize("<red>Use a valid item and positive whole-number amount.</red>"));
+            actor.sendMessage(MM.deserialize("<white>Use a valid item and positive whole-number amount.</white>"));
             return true;
         }
         plugin.getServer().getOnlinePlayers().forEach(player ->
             player.getInventory().addItem(new ItemStack(material, amount)).values()
                 .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover)));
-        actor.sendMessage(MM.deserialize("<green>Gave <white><amount> <item></white> to <white><count></white> player(s).",
+        actor.sendMessage(MM.deserialize("<white>Gave <#f72a4c><amount> <item></#f72a4c> to <#f72a4c><count></#f72a4c> player(s).",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("amount", Integer.toString(amount)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", material.name().toLowerCase(Locale.ROOT)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("count",
@@ -249,15 +249,15 @@ final class ItemTools {
         if (args.length == 0) {
             ItemStack item = player.getInventory().getItemInMainHand();
             if (!repair(item)) {
-                message(player, "repair-invalid", "<red>Hold a damaged repairable item.");
+                message(player, "repair-invalid", "<white>Hold a damaged repairable item.");
                 return true;
             }
-            message(player, "repair-success", "<green>Repaired the item in your hand.");
+            message(player, "repair-success", "<white>Repaired the item in your hand.");
             return true;
         }
         if (args.length != 1 || !args[0].equalsIgnoreCase("all")
             || !player.hasPermission("rivet.repair.all")) {
-            player.sendMessage(MM.deserialize("<red>Usage: /repair [all]"));
+            player.sendMessage(MM.deserialize("<white>Usage: /repair [all]"));
             return true;
         }
         int repaired = 0;
@@ -267,7 +267,7 @@ final class ItemTools {
             }
         }
         player.sendMessage(MM.deserialize(settings.getString("messages.repair-all",
-                "<green>Repaired <white><count></white> items."),
+                "<white>Repaired <#f72a4c><count></#f72a4c> items."),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed(
                 "count", Integer.toString(repaired))));
         return true;
@@ -275,7 +275,7 @@ final class ItemTools {
 
     boolean rename(Player player, String[] args) {
         if (args.length == 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /rename <name|clear>"));
+            player.sendMessage(MM.deserialize("<white>Usage: /rename <name|clear>"));
             return true;
         }
         ItemStack item = held(player);
@@ -284,7 +284,7 @@ final class ItemTools {
         }
         if (args.length == 1 && args[0].equalsIgnoreCase("clear")) {
             item.editMeta(meta -> meta.displayName(null));
-            message(player, "rename-cleared", "<yellow>Item name cleared.");
+            message(player, "rename-cleared", "<white>Item name cleared.");
             return true;
         }
         String input = String.join(" ", args);
@@ -295,7 +295,7 @@ final class ItemTools {
             return true;
         }
         item.editMeta(meta -> meta.displayName(name));
-        message(player, "rename-success", "<green>Item renamed.");
+        message(player, "rename-success", "<white>Item renamed.");
         return true;
     }
 
@@ -313,13 +313,13 @@ final class ItemTools {
         String action = args[0].toLowerCase(Locale.ROOT);
         if (action.equals("clear") && args.length == 1) {
             item.lore(null);
-            message(player, "lore-cleared", "<yellow>Item lore cleared.");
+            message(player, "lore-cleared", "<white>Item lore cleared.");
             return true;
         }
         if (action.equals("remove") && args.length == 2) {
             int line = positiveInt(args[1]);
             if (line < 1 || line > lore.size()) {
-                message(player, "lore-line-invalid", "<red>That lore line does not exist.");
+                message(player, "lore-line-invalid", "<white>That lore line does not exist.");
                 return true;
             }
             lore.remove(line - 1);
@@ -343,7 +343,7 @@ final class ItemTools {
             } else if (line <= lore.size()) {
                 lore.set(line - 1, value);
             } else {
-                message(player, "lore-line-invalid", "<red>That lore line does not exist.");
+                message(player, "lore-line-invalid", "<white>That lore line does not exist.");
                 return true;
             }
         } else {
@@ -351,19 +351,19 @@ final class ItemTools {
             return true;
         }
         item.lore(lore.isEmpty() ? null : lore);
-        message(player, "lore-success", "<green>Item lore updated.");
+        message(player, "lore-success", "<white>Item lore updated.");
         return true;
     }
 
     private ItemStack held(Player player) {
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType().isAir()) {
-            message(player, "empty-hand", "<red>Hold an item first.");
+            message(player, "empty-hand", "<white>Hold an item first.");
             return null;
         }
         if (settings.getStringList("item-editing.blocked-materials").stream()
             .anyMatch(material -> material.equalsIgnoreCase(item.getType().name()))) {
-            message(player, "blocked-item", "<red>That material cannot be edited.");
+            message(player, "blocked-item", "<white>That material cannot be edited.");
             return null;
         }
         return item;
@@ -389,7 +389,7 @@ final class ItemTools {
 
     private void invalid(Player player, int maximum) {
         player.sendMessage(MM.deserialize(settings.getString("messages.invalid-text",
-                "<red>Text must be 1-<max> visible characters without control characters."),
+                "<white>Text must be 1-<max> visible characters without control characters."),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed(
                 "max", Integer.toString(maximum))));
     }
@@ -403,7 +403,7 @@ final class ItemTools {
     }
 
     private void usage(Player player) {
-        player.sendMessage(MM.deserialize("<red>Usage: /lore <add|set|remove|clear> ..."));
+        player.sendMessage(MM.deserialize("<white>Usage: /lore <add|set|remove|clear> ..."));
     }
 
     private void message(Player player, String key, String fallback) {

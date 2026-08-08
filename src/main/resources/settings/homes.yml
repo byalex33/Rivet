@@ -1,2 +1,48 @@
-# Homes have no module-specific tuning options yet.
 # Saved player homes are stored in ../data/homes.yml.
+
+messages:
+  usage-set: "<white>Usage: /sethome [name]</white>"
+  usage-teleport: "<white>Usage: /home [name]</white>"
+  usage-delete: "<white>Usage: /delhome [name]</white>"
+  set: "<white>Home <#f72a4c><name></#f72a4c> set.</white>"
+  missing: "<white>No <name> is set.</white>"
+  deleted: "<white>Home <#f72a4c><name></#f72a4c> deleted.</white>"
+  world-unavailable: "<white>The world for <#f72a4c><name></#f72a4c> is unavailable.</white>"
+  teleport-failed: "<white>Teleport failed.</white>"
+  teleported: "<white>Teleported to <#f72a4c><name></#f72a4c>.</white>"
+  save-failed: "<white>Could not save the change. Check the console.</white>"
+
+effects:
+  teleport:
+    enabled: true
+    title: "<#f72a4c><name></#f72a4c>"
+    subtitle: "<white>Teleported</white>"
+    titles-enabled: true
+    sound-enabled: true
+    sound: entity_enderman_teleport
+    volume: 0.8
+    pitch: 1.1
+    particles-enabled: true
+    particle: portal
+  set:
+    enabled: false
+    title: "<#f72a4c><name></#f72a4c>"
+    subtitle: "<white>Home set</white>"
+    titles-enabled: true
+    sound-enabled: true
+    sound: block_respawn_anchor_set_spawn
+    volume: 0.8
+    pitch: 1.1
+    particles-enabled: true
+    particle: end_rod
+  delete:
+    enabled: false
+    title: "<#f72a4c><name></#f72a4c>"
+    subtitle: "<white>Home deleted</white>"
+    titles-enabled: true
+    sound-enabled: true
+    sound: block_note_block_pling
+    volume: 0.8
+    pitch: 1.1
+    particles-enabled: true
+    particle: poof

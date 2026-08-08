@@ -27,22 +27,22 @@ final class JoinLeaveModule implements Listener {
         boolean first = !player.hasPlayedBefore();
         if (first && settings.getBoolean("first-join.enabled", true)) {
             event.joinMessage(message(settings.getString("first-join.message",
-                "<gold>Welcome <white><player></white> to the server for the first time!</gold>"), player));
+                "<#f72a4c>Welcome <#f72a4c><player></#f72a4c> to the server for the first time!</#f72a4c>"), player));
         } else if (settings.getBoolean("join.enabled", true)) {
             event.joinMessage(message(settings.getString("join.message",
-                "<green><player> joined the server.</green>"), player));
+                "<white><player> joined the server.</white>"), player));
         } else {
             event.joinMessage(null);
         }
         if (settings.getBoolean("welcome-title.enabled", true)) {
             player.showTitle(Title.title(
-                message(settings.getString("welcome-title.title", "<gold>Welcome, <player>!</gold>"), player),
-                message(settings.getString("welcome-title.subtitle", "<gray>Enjoy your stay.</gray>"), player),
+                message(settings.getString("welcome-title.title", "<#f72a4c>Welcome, <player>!</#f72a4c>"), player),
+                message(settings.getString("welcome-title.subtitle", "<white>Enjoy your stay.</white>"), player),
                 Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(500))));
         }
         if (settings.getBoolean("welcome-chat.enabled", false)) {
             player.sendMessage(message(settings.getString("welcome-chat.message",
-                "<yellow>Welcome to the server, <white><player></white>!</yellow>"), player));
+                "<white>Welcome to the server, <#f72a4c><player></#f72a4c>!</white>"), player));
         }
         if (settings.getBoolean("motd.enabled", false)) {
             settings.getStringList("motd.lines").forEach(line -> player.sendMessage(message(line, player)));
@@ -52,7 +52,7 @@ final class JoinLeaveModule implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         event.quitMessage(settings.getBoolean("leave.enabled", true)
-            ? message(settings.getString("leave.message", "<red><player> left the server.</red>"), event.getPlayer())
+            ? message(settings.getString("leave.message", "<white><player> left the server.</white>"), event.getPlayer())
             : null);
     }
 

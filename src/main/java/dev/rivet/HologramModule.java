@@ -68,7 +68,7 @@ final class HologramModule implements Listener {
 
     boolean command(CommandSender sender, String[] args) {
         if (!sender.hasPermission("rivet.holograms")) {
-            send(sender, "<red>You do not have permission to manage holograms.");
+            send(sender, "<white>You do not have permission to manage holograms.");
             return true;
         }
         if (args.length == 0) {
@@ -86,7 +86,7 @@ final class HologramModule implements Listener {
             case "info" -> info(sender, args);
             case "edit" -> edit(sender, args);
             default -> {
-                send(sender, "<red>Unknown subcommand. Use <white>/hologram help</white>.");
+                send(sender, "<white>Unknown subcommand. Use <#f72a4c>/hologram help</#f72a4c>.");
                 yield true;
             }
         };
@@ -131,44 +131,44 @@ final class HologramModule implements Listener {
 
     private boolean help(CommandSender sender) {
         sender.sendMessage(MM.deserialize("""
-            <gold><bold>Hologram commands</bold></gold>
-            <yellow>/hologram list</yellow> <gray>— list holograms
-            <yellow>/hologram nearby <range></yellow> <gray>— list nearby holograms
-            <yellow>/hologram create [text|item|block] <name></yellow>
-            <yellow>/hologram remove <name></yellow>
-            <yellow>/hologram copy <name> <new-name></yellow>
-            <yellow>/hologram info <name></yellow>
-            <yellow>/hologram edit <name> <operation> ...</yellow>
-            <gray>Move:</gray> movehere, moveto, rotate, rotatepitch, translate
-            <gray>Display:</gray> scale, billboard, visibilitydistance, visibility, shadowstrength, shadowradius, animation
-            <gray>Animation presets:</gray> none, float, spin, pulse, float_spin
-            <gray>Text:</gray> setline, addline, removeline, insertbefore, insertafter, background, textshadow, brightness, textalignment
-            <gray>Other:</gray> item, block
+            <#f72a4c><bold>Hologram commands</bold></#f72a4c>
+            <white>/hologram list</white> <white>— list holograms
+            <white>/hologram nearby <range></white> <white>— list nearby holograms
+            <white>/hologram create [text|item|block] <name></white>
+            <white>/hologram remove <name></white>
+            <white>/hologram copy <name> <new-name></white>
+            <white>/hologram info <name></white>
+            <white>/hologram edit <name> <operation> ...</white>
+            <white>Move:</white> movehere, moveto, rotate, rotatepitch, translate
+            <white>Display:</white> scale, billboard, visibilitydistance, visibility, shadowstrength, shadowradius, animation
+            <white>Animation presets:</white> none, float, spin, pulse, float_spin
+            <white>Text:</white> setline, addline, removeline, insertbefore, insertafter, background, textshadow, brightness, textalignment
+            <white>Other:</white> item, block
             """));
         return true;
     }
 
     private boolean list(CommandSender sender) {
         if (holograms.isEmpty()) {
-            send(sender, "<gray>No holograms exist.");
+            send(sender, "<white>No holograms exist.");
             return true;
         }
-        send(sender, "<gold>Holograms:</gold> <white>" + String.join(", ", names()));
+        send(sender, "<#f72a4c>Holograms:</#f72a4c> <#f72a4c>" + String.join(", ", names()));
         return true;
     }
 
     private boolean nearby(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            send(sender, "<red>This subcommand is only available to players.");
+            send(sender, "<white>This subcommand is only available to players.");
             return true;
         }
         if (args.length != 2) {
-            send(sender, "<red>Usage: /hologram nearby <range>");
+            send(sender, "<white>Usage: /hologram nearby <range>");
             return true;
         }
         Double range = number(args[1]);
         if (range == null || range < 0) {
-            send(sender, "<red>Range must be a positive number.");
+            send(sender, "<white>Range must be a positive number.");
             return true;
         }
         List<String> nearby = holograms.values().stream()
@@ -176,14 +176,14 @@ final class HologramModule implements Listener {
             .filter(hologram -> hologram.location(player.getWorld()).distanceSquared(player.getLocation())
                 <= range * range)
             .map(hologram -> hologram.name).sorted(String.CASE_INSENSITIVE_ORDER).toList();
-        send(sender, nearby.isEmpty() ? "<gray>No holograms are nearby."
-            : "<gold>Nearby holograms:</gold> <white>" + String.join(", ", nearby));
+        send(sender, nearby.isEmpty() ? "<white>No holograms are nearby."
+            : "<#f72a4c>Nearby holograms:</#f72a4c> <#f72a4c>" + String.join(", ", nearby));
         return true;
     }
 
     private boolean create(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
-            send(sender, "<red>This subcommand is only available to players.");
+            send(sender, "<white>This subcommand is only available to players.");
             return true;
         }
         Type type;
@@ -195,16 +195,16 @@ final class HologramModule implements Listener {
             type = enumValue(Type.class, args[1]);
             name = args[2];
         } else {
-            send(sender, "<red>Usage: /hologram create [text|item|block] <name>");
+            send(sender, "<white>Usage: /hologram create [text|item|block] <name>");
             return true;
         }
         if (type == null || !validName(name)) {
-            send(sender, "<red>Use a valid type and a 1–32 character name containing letters, numbers, _ or -.");
+            send(sender, "<white>Use a valid type and a 1–32 character name containing letters, numbers, _ or -.");
             return true;
         }
         String key = key(name);
         if (holograms.containsKey(key)) {
-            send(sender, "<red>A hologram named <white>" + name + "</white> already exists.");
+            send(sender, "<white>A hologram named <#f72a4c>" + name + "</#f72a4c> already exists.");
             return true;
         }
 
@@ -213,7 +213,7 @@ final class HologramModule implements Listener {
         if (type == Type.ITEM) {
             ItemStack held = player.getInventory().getItemInMainHand();
             if (held.getType().isAir()) {
-                send(sender, "<red>Hold the item to display first.");
+                send(sender, "<white>Hold the item to display first.");
                 return true;
             }
             hologram.item = held.clone();
@@ -229,8 +229,8 @@ final class HologramModule implements Listener {
             return true;
         }
         spawn(hologram);
-        send(sender, "<green>Created " + type.name().toLowerCase(Locale.ROOT)
-            + " hologram <white>" + name + "</white>.");
+        send(sender, "<white>Created " + type.name().toLowerCase(Locale.ROOT)
+            + " hologram <#f72a4c>" + name + "</#f72a4c>.");
         return true;
     }
 
@@ -245,22 +245,22 @@ final class HologramModule implements Listener {
             return true;
         }
         removeDisplays(hologram);
-        send(sender, "<green>Removed hologram <white>" + hologram.name + "</white>.");
+        send(sender, "<white>Removed hologram <#f72a4c>" + hologram.name + "</#f72a4c>.");
         return true;
     }
 
     private boolean copy(CommandSender sender, String[] args) {
         if (args.length != 3 || !validName(args[2])) {
-            send(sender, "<red>Usage: /hologram copy <name> <new-name>");
+            send(sender, "<white>Usage: /hologram copy <name> <new-name>");
             return true;
         }
         Hologram source = holograms.get(key(args[1]));
         if (source == null) {
-            send(sender, "<red>That hologram does not exist.");
+            send(sender, "<white>That hologram does not exist.");
             return true;
         }
         if (holograms.containsKey(key(args[2]))) {
-            send(sender, "<red>A hologram with that name already exists.");
+            send(sender, "<white>A hologram with that name already exists.");
             return true;
         }
         Hologram copy = source.copy(args[2]);
@@ -270,7 +270,7 @@ final class HologramModule implements Listener {
             return true;
         }
         spawn(copy);
-        send(sender, "<green>Copied <white>" + source.name + "</white> to <white>" + copy.name + "</white>.");
+        send(sender, "<white>Copied <#f72a4c>" + source.name + "</#f72a4c> to <#f72a4c>" + copy.name + "</#f72a4c>.");
         return true;
     }
 
@@ -280,35 +280,35 @@ final class HologramModule implements Listener {
             return true;
         }
         World world = plugin.getServer().getWorld(hologram.world);
-        sender.sendMessage(MM.deserialize("<gold><bold>" + hologram.name + "</bold></gold>"
-            + "\n<gray>Type:</gray> <white>" + hologram.type.name().toLowerCase(Locale.ROOT)
-            + "\n<gray>World:</gray> <white>" + (world == null ? hologram.world : world.getName())
-            + "\n<gray>Position:</gray> <white>" + decimal(hologram.x) + ", " + decimal(hologram.y)
+        sender.sendMessage(MM.deserialize("<#f72a4c><bold>" + hologram.name + "</bold></#f72a4c>"
+            + "\n<white>Type:</white> <#f72a4c>" + hologram.type.name().toLowerCase(Locale.ROOT)
+            + "\n<white>World:</white> <#f72a4c>" + (world == null ? hologram.world : world.getName())
+            + "\n<white>Position:</white> <#f72a4c>" + decimal(hologram.x) + ", " + decimal(hologram.y)
             + ", " + decimal(hologram.z)
-            + "\n<gray>Rotation:</gray> <white>" + decimal(hologram.yaw) + " yaw, "
+            + "\n<white>Rotation:</white> <#f72a4c>" + decimal(hologram.yaw) + " yaw, "
             + decimal(hologram.pitch) + " pitch"
-            + "\n<gray>Scale:</gray> <white>" + decimal(hologram.scale)
-            + "\n<gray>Animation:</gray> <white>" + hologram.animation.name().toLowerCase(Locale.ROOT)
-            + "\n<gray>Billboard:</gray> <white>" + hologram.billboard.name().toLowerCase(Locale.ROOT)
-            + "\n<gray>Visibility:</gray> <white>" + hologram.visibility.name().toLowerCase(Locale.ROOT)));
+            + "\n<white>Scale:</white> <#f72a4c>" + decimal(hologram.scale)
+            + "\n<white>Animation:</white> <#f72a4c>" + hologram.animation.name().toLowerCase(Locale.ROOT)
+            + "\n<white>Billboard:</white> <#f72a4c>" + hologram.billboard.name().toLowerCase(Locale.ROOT)
+            + "\n<white>Visibility:</white> <#f72a4c>" + hologram.visibility.name().toLowerCase(Locale.ROOT)));
         return true;
     }
 
     private boolean edit(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            send(sender, "<red>Usage: /hologram edit <name> <operation> ...");
+            send(sender, "<white>Usage: /hologram edit <name> <operation> ...");
             return true;
         }
         Hologram original = holograms.get(key(args[1]));
         if (original == null) {
-            send(sender, "<red>That hologram does not exist.");
+            send(sender, "<white>That hologram does not exist.");
             return true;
         }
         Hologram changed = original.copy(original.name);
         String operation = args[2].toLowerCase(Locale.ROOT);
         String error = applyEdit(sender, changed, operation, args);
         if (error != null) {
-            send(sender, "<red>" + error);
+            send(sender, "<white>" + error);
             return true;
         }
 
@@ -319,7 +319,7 @@ final class HologramModule implements Listener {
         }
         removeDisplays(original);
         spawn(changed);
-        send(sender, "<green>Updated hologram <white>" + changed.name + "</white>.");
+        send(sender, "<white>Updated hologram <#f72a4c>" + changed.name + "</#f72a4c>.");
         return true;
     }
 
@@ -531,12 +531,12 @@ final class HologramModule implements Listener {
 
     private Hologram require(CommandSender sender, String[] args, int length, String usage) {
         if (args.length != length) {
-            send(sender, "<red>Usage: " + usage);
+            send(sender, "<white>Usage: " + usage);
             return null;
         }
         Hologram hologram = holograms.get(key(args[1]));
         if (hologram == null) {
-            send(sender, "<red>That hologram does not exist.");
+            send(sender, "<white>That hologram does not exist.");
         }
         return hologram;
     }
@@ -766,7 +766,7 @@ final class HologramModule implements Listener {
         hologram.shadowRadius = (float) yaml.getDouble(path + ".shadow-radius", 0);
         hologram.lines = new ArrayList<>(yaml.getStringList(path + ".lines"));
         if (hologram.lines.isEmpty()) {
-            hologram.lines.add("<gold>" + name);
+            hologram.lines.add("<#f72a4c>" + name);
         }
         hologram.background = (int) yaml.getLong(path + ".background", 0);
         hologram.textShadow = yaml.getBoolean(path + ".text-shadow", true);
@@ -798,7 +798,7 @@ final class HologramModule implements Listener {
             return true;
         } catch (IOException exception) {
             plugin.getLogger().severe("Could not save data/holograms.yml: " + exception.getMessage());
-            send(sender, "<red>The hologram change could not be saved.");
+            send(sender, "<white>The hologram change could not be saved.");
             return false;
         }
     }
@@ -977,7 +977,7 @@ final class HologramModule implements Listener {
         private Hologram(String name, Type type) {
             this.name = name;
             this.type = type;
-            lines = new ArrayList<>(List.of("<gold><bold>" + name + "</bold>"));
+            lines = new ArrayList<>(List.of("<#f72a4c><bold>" + name + "</bold>"));
         }
 
         private Hologram copy(String newName) {

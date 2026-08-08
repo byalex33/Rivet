@@ -38,12 +38,12 @@ final class NicknameModule implements Listener {
         } else if (args.length == 2 && sender.hasPermission("rivet.nick.others")) {
             target = plugin.getServer().getPlayerExact(args[0]);
             if (target == null) {
-                sender.sendMessage(FORMATTED.deserialize("<red>That player is not online."));
+                sender.sendMessage(FORMATTED.deserialize("<white>That player is not online."));
                 return true;
             }
             nickname = args[1];
         } else {
-            sender.sendMessage(FORMATTED.deserialize("<red>Usage: /nick <nickname|off> or /nick <player> <nickname|off>"));
+            sender.sendMessage(FORMATTED.deserialize("<white>Usage: /nick <nickname|off> or /nick <player> <nickname|off>"));
             return true;
         }
 
@@ -56,14 +56,14 @@ final class NicknameModule implements Listener {
             try {
                 rendered = render(target, nickname);
             } catch (RuntimeException exception) {
-                sender.sendMessage(FORMATTED.deserialize("<red>That nickname contains invalid formatting.</red>"));
+                sender.sendMessage(FORMATTED.deserialize("<white>That nickname contains invalid formatting.</white>"));
                 return true;
             }
             String plain = PLAIN.serialize(rendered);
             int maximum = Math.max(1, settings.getInt("maximum-length", 24));
             if (!validNickname(plain, maximum)) {
                 sender.sendMessage(FORMATTED.deserialize(settings.getString("messages.invalid",
-                    "<red>Nicknames must be 1-<max> visible characters with no control characters.</red>"),
+                    "<white>Nicknames must be 1-<max> visible characters with no control characters.</white>"),
                     net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed(
                         "max", Integer.toString(maximum))));
                 return true;
@@ -75,13 +75,13 @@ final class NicknameModule implements Listener {
         } catch (IOException exception) {
             data.set(path, previous);
             plugin.getLogger().severe("Could not save data/nicknames.yml: " + exception.getMessage());
-            sender.sendMessage(FORMATTED.deserialize("<red>Could not save that nickname."));
+            sender.sendMessage(FORMATTED.deserialize("<white>Could not save that nickname."));
             return true;
         }
         plugin.refreshDisplayName(target);
         sender.sendMessage(FORMATTED.deserialize(nickname.equalsIgnoreCase("off")
-            ? settings.getString("messages.removed", "<yellow>Nickname removed.</yellow>")
-            : settings.getString("messages.set", "<green>Nickname updated.</green>")));
+            ? settings.getString("messages.removed", "<white>Nickname removed.</white>")
+            : settings.getString("messages.set", "<white>Nickname updated.</white>")));
         return true;
     }
 

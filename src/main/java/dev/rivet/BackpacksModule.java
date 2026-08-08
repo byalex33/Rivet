@@ -36,13 +36,13 @@ final class BackpacksModule implements Listener {
 
     boolean command(Player player, String[] args) {
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /backpack"));
+            player.sendMessage(MM.deserialize("<white>Usage: /backpack"));
             return true;
         }
         if (settings.getStringList("blocked-worlds").stream()
             .map(name -> name.toLowerCase(Locale.ROOT))
             .anyMatch(player.getWorld().getName().toLowerCase(Locale.ROOT)::equals)) {
-            message(player, "blocked-world", "<red>Backpacks are disabled in this world.");
+            message(player, "blocked-world", "<white>Backpacks are disabled in this world.");
             return true;
         }
         Inventory inventory = open.computeIfAbsent(player.getUniqueId(), ignored -> load(player));
@@ -93,7 +93,7 @@ final class BackpacksModule implements Listener {
         int rows = resolvedRows(settings.getInt("default-rows", 3),
             row -> player.hasPermission("rivet.backpack.rows." + row));
         Inventory inventory = plugin.getServer().createInventory(null, rows * 9,
-            MM.deserialize(settings.getString("title", "<dark_gray>Backpack")));
+            MM.deserialize(settings.getString("title", "<#f72a4c>Backpack")));
         List<?> stored = data.getList(path(player.getUniqueId()), List.of());
         for (int slot = 0; slot < Math.min(inventory.getSize(), stored.size()); slot++) {
             if (stored.get(slot) instanceof ItemStack item) {
@@ -102,7 +102,7 @@ final class BackpacksModule implements Listener {
         }
         if (stored.subList(Math.min(inventory.getSize(), stored.size()), stored.size()).stream()
             .anyMatch(ItemStack.class::isInstance)) {
-            message(player, "overflow", "<yellow>Items above your current backpack size are safely retained until you regain more rows.</yellow>");
+            message(player, "overflow", "<white>Items above your current backpack size are safely retained until you regain more rows.</white>");
         }
         return inventory;
     }

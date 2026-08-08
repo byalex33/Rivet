@@ -1,10 +1,10 @@
 # Available placeholders are shown in the defaults below.
-header: "<gold><bold><player>'s statistics</bold></gold>"
-playtime-format: "<gold><player>'s playtime:</gold> <white><playtime></white>"
+header: "<#f72a4c><bold><player>'s statistics</bold></#f72a4c>"
+playtime-format: "<#f72a4c><player>'s playtime:</#f72a4c> <#f72a4c><playtime></#f72a4c>"
 lines:
-  - "<gray>Playtime:</gray> <white><playtime></white>"
-  - "<gray>Deaths:</gray> <white><deaths></white> <dark_gray>•</dark_gray> <gray>Player kills:</gray> <white><player_kills></white>"
-  - "<gray>Mob kills:</gray> <white><mob_kills></white> <dark_gray>•</dark_gray> <gray>Jumps:</gray> <white><jumps></white>"
-  - "<gray>Blocks broken:</gray> <white><blocks_broken></white> <dark_gray>•</dark_gray> <gray>Placed:</gray> <white><blocks_placed></white>"
-  - "<gray>Distance:</gray> <white><distance></white>"
-  - "<gray>Time since first join:</gray> <white><since_first_join></white>"
+  - "<white>Playtime:</white> <#f72a4c><playtime></#f72a4c>"
+  - "<white>Deaths:</white> <#f72a4c><deaths></#f72a4c> <#f72a4c>•</#f72a4c> <white>Player kills:</white> <#f72a4c><player_kills></#f72a4c>"
+  - "<white>Mob kills:</white> <#f72a4c><mob_kills></#f72a4c> <#f72a4c>•</#f72a4c> <white>Jumps:</white> <#f72a4c><jumps></#f72a4c>"
+  - "<white>Blocks broken:</white> <#f72a4c><blocks_broken></#f72a4c> <#f72a4c>•</#f72a4c> <white>Placed:</white> <#f72a4c><blocks_placed></#f72a4c>"
+  - "<white>Distance:</white> <#f72a4c><distance></#f72a4c>"
+  - "<white>Time since first join:</white> <#f72a4c><since_first_join></#f72a4c>"

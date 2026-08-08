@@ -2,6 +2,6 @@
 drop-chance: 0.03
 
 player-heads:
-  display-name: "<gold><player>'s Head</gold>"
+  display-name: "<#f72a4c><player>'s Head</#f72a4c>"
   lore:
-    - "<gray>Requested by <requester></gray>"
+    - "<white>Requested by <requester></white>"

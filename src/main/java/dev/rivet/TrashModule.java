@@ -19,16 +19,16 @@ final class TrashModule implements Listener {
 
     boolean command(Player player, String[] args) {
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<red>Usage: /trash"));
+            player.sendMessage(MM.deserialize("<white>Usage: /trash"));
             return true;
         }
         int rows = Math.max(1, Math.min(6, plugin.settings("trash").getInt("rows", 6)));
         TrashHolder holder = new TrashHolder();
         holder.inventory = plugin.getServer().createInventory(holder, rows * 9,
-            MM.deserialize(plugin.settings("trash").getString("title", "<dark_red>Trash — items are destroyed")));
+            MM.deserialize(plugin.settings("trash").getString("title", "<#f72a4c>Trash — items are destroyed")));
         player.openInventory(holder.inventory);
         player.sendMessage(MM.deserialize(plugin.settings("trash").getString("warning",
-            "<red>Items left in the trash when it closes cannot be recovered.")));
+            "<white>Items left in the trash when it closes cannot be recovered.")));
         return true;
     }
 

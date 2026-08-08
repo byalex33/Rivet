@@ -1,1 +1,41 @@
-# Egg capture currently uses gameplay-preserving built-in defaults.
+messages:
+  cannot-capture: "<white>That creature cannot be captured.</white>"
+
+captured-egg:
+  name: "<white>Captured <#f72a4c><mob></#f72a4c></white>"
+  lore:
+    - "<white>Contains the original creature.</white>"
+
+effects:
+  start-sound:
+    enabled: true
+    name: block_trial_spawner_ominous_activate
+    volume: 0.8
+    pitch: 1.35
+  completion-sound:
+    enabled: true
+    name: entity_firework_rocket_large_blast
+    volume: 1.0
+    pitch: 0.8
+  received-sound:
+    enabled: true
+    name: entity_allay_item_given
+    volume: 0.8
+    pitch: 1.3
+  particles:
+    enabled: true
+    vortex-enabled: true
+    vortex-first-color: "#55FFFF"
+    vortex-second-color: "#BE55FF"
+    vortex-size: 1.25
+    portal-enabled: true
+    portal-name: reverse_portal
+    portal-count: 8
+    completion-flash-enabled: true
+    completion-flash-count: 1
+    completion-explosion-enabled: true
+    completion-explosion-count: 4
+    completion-sparks-enabled: true
+    completion-sparks-count: 45
+    completion-portals-enabled: true
+    completion-portals-count: 70

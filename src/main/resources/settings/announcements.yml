@@ -10,7 +10,7 @@ sound:
 announcements:
   discord:
     enabled: true
-    message: "<gray>Join our Discord at <aqua>discord.example.com</aqua>"
+    message: "<white>Join our Discord at <#f72a4c>discord.example.com</#f72a4c>"
   homes:
     enabled: true
-    message: "<yellow>Remember to use <white>/sethome</white>!</yellow>"
+    message: "<white>Remember to use <#f72a4c>/sethome</#f72a4c>!</white>"

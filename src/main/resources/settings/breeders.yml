@@ -1,2 +1,31 @@
-# Auto breeders currently use gameplay-preserving built-in defaults.
 # Saved breeders and their counters are stored in ../data/breeders.yml.
+
+messages:
+  usage: "<white>Usage: /givebreeder <animal> [amount] or /givebreeder <player> <animal> [amount]</white>"
+  player-not-online: "<white>That player is not online.</white>"
+  unsupported-animal: "<white>Choose a supported animal type.</white>"
+  invalid-amount: "<white>Amount must be a whole number from 1 to 2304.</white>"
+  given: "<white>Gave <#f72a4c><description></#f72a4c> to <#f72a4c><player></#f72a4c>.</white>"
+  received: "<white>You received <#f72a4c><description></#f72a4c>.</white>"
+
+display:
+  item-name: "<#f72a4c><animal> Auto Breeder</#f72a4c>"
+  item-lore:
+    - "<white>Stores <food> and breeds nearby <animal>.</white>"
+  inventory-title: "<animal> Auto Breeder"
+  hologram: "<#f72a4c><animal> Auto Breeder</#f72a4c><newline><white><food>: <#f72a4c><amount></#f72a4c></white><newline><white>Animals bred: <#f72a4c><bred></#f72a4c></white>"
+
+effects:
+  activation:
+    sound:
+      enabled: true
+      name: block_beacon_power_select
+      volume: 0.7
+      pitch: 1.5
+    particles:
+      enabled: true
+      spiral-enabled: true
+      connection-enabled: true
+      first-color: "#FFD166"
+      second-color: "#55FFAA"
+      dust-size: 0.8

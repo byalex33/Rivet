@@ -2,6 +2,6 @@
 allowed-worlds: []
 
 messages:
-  enabled: "<green>Pose enabled. Move or run the command again to leave it.</green>"
-  disabled: "<yellow>Pose disabled.</yellow>"
-  not-allowed: "<red>Poses are not allowed in this world.</red>"
+  enabled: "<white>Pose enabled. Move, dismount, or run the command again to leave it.</white>"
+  disabled: "<white>Pose disabled.</white>"
+  not-allowed: "<white>Poses are not allowed in this world.</white>"

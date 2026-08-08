@@ -33,7 +33,7 @@ final class HelpModule {
         int pages = pageCount(commands.size(), pageSize);
         Integer requested = requestedPage(args);
         if (requested == null) {
-            sender.sendMessage(MM.deserialize("<red>Usage: /help [page]</red>"));
+            sender.sendMessage(MM.deserialize("<white>Usage: /help [page]</white>"));
             return true;
         }
         int page = clampPage(requested, pages);
@@ -53,12 +53,12 @@ final class HelpModule {
     private void show(CommandSender sender, List<CommandEntry> commands, int page,
                       int pages, int pageSize) {
         sender.sendMessage(Component.empty());
-        sender.sendMessage(Component.text("━━━━━━━━━━ ", NamedTextColor.DARK_GRAY)
+        sender.sendMessage(Component.text("━━━━━━━━━━ ", RivetPalette.SECONDARY)
             .append(MM.deserialize(plugin.settings("help").getString("title",
-                "<gradient:#f7c948:#f59e0b><bold>RIVET HELP</bold></gradient>")))
-            .append(Component.text(" ━━━━━━━━━━", NamedTextColor.DARK_GRAY)));
+                "<#f72a4c><bold>RIVET HELP</bold></#f72a4c>")))
+            .append(Component.text(" ━━━━━━━━━━", RivetPalette.SECONDARY)));
         sender.sendMessage(MM.deserialize(plugin.settings("help").getString("subtitle",
-                "<gray><commands> available commands <dark_gray>•</dark_gray> Page <page>/<pages></gray>"),
+                "<white><commands> available commands <#f72a4c>•</#f72a4c> Page <page>/<pages></white>"),
             Placeholder.unparsed("commands", Integer.toString(commands.size())),
             Placeholder.unparsed("page", Integer.toString(page)),
             Placeholder.unparsed("pages", Integer.toString(pages))));
@@ -67,22 +67,22 @@ final class HelpModule {
         int start = (page - 1) * pageSize;
         int end = Math.min(start + pageSize, commands.size());
         for (CommandEntry entry : commands.subList(start, end)) {
-            Component command = Component.text(entry.usage(), NamedTextColor.GOLD)
+            Component command = Component.text(entry.usage(), RivetPalette.SECONDARY)
                 .decorate(TextDecoration.BOLD)
                 .clickEvent(ClickEvent.suggestCommand("/" + entry.name() + " "))
                 .hoverEvent(HoverEvent.showText(Component.text("Click to put this command in chat",
-                    NamedTextColor.YELLOW)));
-            sender.sendMessage(Component.text("  • ", NamedTextColor.DARK_GRAY).append(command));
-            sender.sendMessage(Component.text("    " + entry.description(), NamedTextColor.GRAY));
+                    RivetPalette.PRIMARY)));
+            sender.sendMessage(Component.text("  • ", RivetPalette.SECONDARY).append(command));
+            sender.sendMessage(Component.text("    " + entry.description(), RivetPalette.PRIMARY));
         }
 
         if (commands.isEmpty()) {
             sender.sendMessage(Component.text("  No commands are currently available to you.",
-                NamedTextColor.GRAY));
+                RivetPalette.PRIMARY));
         }
         sender.sendMessage(Component.empty());
         sender.sendMessage(navigation(page, pages));
-        sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY));
+        sender.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━", RivetPalette.SECONDARY));
     }
 
     static Component navigation(int page, int pages) {
@@ -90,7 +90,7 @@ final class HelpModule {
         footer.append(button("« First", 1, page > 1));
         footer.append(Component.space());
         footer.append(button("‹ Previous", page - 1, page > 1));
-        footer.append(Component.text("  " + page + "/" + pages + "  ", NamedTextColor.GRAY));
+        footer.append(Component.text("  " + page + "/" + pages + "  ", RivetPalette.PRIMARY));
         footer.append(button("Next ›", page + 1, page < pages));
         footer.append(Component.space());
         footer.append(button("Last »", pages, page < pages));
@@ -99,13 +99,13 @@ final class HelpModule {
 
     private static Component button(String label, int page, boolean enabled) {
         if (!enabled) {
-            return Component.text("[" + label + "]", NamedTextColor.DARK_GRAY);
+            return Component.text("[" + label + "]", RivetPalette.PRIMARY);
         }
-        return Component.text("[" + label + "]", NamedTextColor.GOLD)
+        return Component.text("[" + label + "]", RivetPalette.SECONDARY)
             .decorate(TextDecoration.BOLD)
             .clickEvent(ClickEvent.runCommand("/rivethelp " + page))
             .hoverEvent(HoverEvent.showText(Component.text("Open page " + page,
-                NamedTextColor.YELLOW)));
+                RivetPalette.PRIMARY)));
     }
 
     private List<CommandEntry> commands(CommandSender sender) {

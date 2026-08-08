@@ -1,7 +1,8 @@
 package dev.rivet;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -20,6 +21,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SpawnEggMeta;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -29,15 +31,16 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 final class EggCapture implements Listener {
+    private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final int ANIMATION_TICKS = 28;
-    private static final Particle.DustTransition VORTEX_DUST = new Particle.DustTransition(
-        Color.fromRGB(85, 255, 255), Color.fromRGB(190, 85, 255), 1.25f);
 
     private final RivetPlugin plugin;
+    private final YamlConfiguration settings;
     private final Map<UUID, Capture> captures = new HashMap<>();
 
     EggCapture(RivetPlugin plugin) {
         this.plugin = plugin;
+        settings = plugin.settings("egg-capture");
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -54,7 +57,8 @@ final class EggCapture implements Listener {
         Material material = Bukkit.getItemFactory().getSpawnEgg(mob.getType());
         AttributeInstance scale = mob.getAttribute(Attribute.SCALE);
         if (snapshot == null || material == null || scale == null) {
-            player.sendActionBar(Component.text("That creature cannot be captured.", NamedTextColor.RED));
+            player.sendActionBar(MM.deserialize(settings.getString("messages.cannot-capture",
+                "<white>That creature cannot be captured.</white>")));
             return;
         }
 
@@ -63,8 +67,14 @@ final class EggCapture implements Listener {
             return;
         }
         meta.setSpawnedEntity(snapshot);
-        meta.displayName(Component.text("Captured ", NamedTextColor.LIGHT_PURPLE).append(mob.name()));
-        meta.lore(java.util.List.of(Component.text("Contains the original creature.", NamedTextColor.GRAY)));
+        meta.displayName(MM.deserialize(settings.getString("captured-egg.name",
+                "<white>Captured <#f72a4c><mob></#f72a4c></white>"),
+            Placeholder.component("mob", mob.name())));
+        java.util.List<String> lore = settings.getStringList("captured-egg.lore");
+        if (lore.isEmpty()) {
+            lore = java.util.List.of("<white>Contains the original creature.</white>");
+        }
+        meta.lore(lore.stream().map(MM::deserialize).toList());
         capturedEgg.setItemMeta(meta);
 
         event.setCancelled(true);
@@ -90,8 +100,14 @@ final class EggCapture implements Listener {
 
     private void animate(Capture capture) {
         Mob mob = capture.mob;
-        mob.getWorld().playSound(mob.getLocation(), Sound.BLOCK_TRIAL_SPAWNER_OMINOUS_ACTIVATE,
-            .8f, 1.35f);
+        playSound(mob.getLocation(), "effects.start-sound",
+            Sound.BLOCK_TRIAL_SPAWNER_OMINOUS_ACTIVATE, .8f, 1.35f);
+        Particle.DustTransition vortexDust = new Particle.DustTransition(
+            ConfiguredEffect.color(plugin, settings,
+                "effects.particles.vortex-first-color", 0x55FFFF),
+            ConfiguredEffect.color(plugin, settings,
+                "effects.particles.vortex-second-color", 0xBE55FF),
+            (float) Math.max(.01, settings.getDouble("effects.particles.vortex-size", 1.25)));
         new BukkitRunnable() {
             private int tick;
 
@@ -113,14 +129,23 @@ final class EggCapture implements Listener {
                     capture.scale.setBaseValue(captureScale(capture.originalScale, progress));
                     Location center = mob.getLocation().add(0, Math.min(mob.getHeight() / 2, 4), 0);
                     double radius = .65 + progress * 1.5;
-                    for (int point = 0; point < 4; point++) {
-                        double angle = tick * .55 + point * Math.PI / 2;
-                        Location ring = center.clone().add(Math.cos(angle) * radius,
-                            Math.sin(tick * .35 + point) * .45, Math.sin(angle) * radius);
-                        mob.getWorld().spawnParticle(Particle.DUST_COLOR_TRANSITION, ring, 1, VORTEX_DUST);
+                    if (settings.getBoolean("effects.particles.enabled", true)
+                        && settings.getBoolean("effects.particles.vortex-enabled", true)) {
+                        for (int point = 0; point < 4; point++) {
+                            double angle = tick * .55 + point * Math.PI / 2;
+                            Location ring = center.clone().add(Math.cos(angle) * radius,
+                                Math.sin(tick * .35 + point) * .45, Math.sin(angle) * radius);
+                            mob.getWorld().spawnParticle(
+                                Particle.DUST_COLOR_TRANSITION, ring, 1, vortexDust);
+                        }
                     }
-                    mob.getWorld().spawnParticle(Particle.REVERSE_PORTAL, center, 8,
-                        radius, Math.max(1, mob.getHeight() / 3), radius, .15);
+                    if (settings.getBoolean("effects.particles.enabled", true)
+                        && settings.getBoolean("effects.particles.portal-enabled", true)) {
+                        mob.getWorld().spawnParticle(ConfiguredEffect.particle(plugin, settings,
+                                "effects.particles.portal-name", Particle.REVERSE_PORTAL), center,
+                            Math.max(0, settings.getInt("effects.particles.portal-count", 8)),
+                            radius, Math.max(1, mob.getHeight() / 3), radius, .15);
+                    }
                     tick++;
                 } catch (RuntimeException exception) {
                     plugin.getLogger().log(Level.WARNING, "Capture animation failed for "
@@ -139,11 +164,29 @@ final class EggCapture implements Listener {
         World world = drop.getWorld();
         capture.mob.remove();
         give(capture.player, capture.egg, drop);
-        world.spawnParticle(Particle.FLASH, center, 1);
-        world.spawnParticle(Particle.EXPLOSION, center, 4, .5, .5, .5, 0);
-        world.spawnParticle(Particle.ELECTRIC_SPARK, center, 45, 1.5, 1.5, 1.5, .3);
-        world.spawnParticle(Particle.REVERSE_PORTAL, center, 70, 1.5, 1.5, 1.5, .4);
-        world.playSound(center, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1, .8f);
+        if (settings.getBoolean("effects.particles.enabled", true)) {
+            if (settings.getBoolean("effects.particles.completion-flash-enabled", true)) {
+                world.spawnParticle(Particle.FLASH, center,
+                    Math.max(0, settings.getInt("effects.particles.completion-flash-count", 1)));
+            }
+            if (settings.getBoolean("effects.particles.completion-explosion-enabled", true)) {
+                world.spawnParticle(Particle.EXPLOSION, center,
+                    Math.max(0, settings.getInt("effects.particles.completion-explosion-count", 4)),
+                    .5, .5, .5, 0);
+            }
+            if (settings.getBoolean("effects.particles.completion-sparks-enabled", true)) {
+                world.spawnParticle(Particle.ELECTRIC_SPARK, center,
+                    Math.max(0, settings.getInt("effects.particles.completion-sparks-count", 45)),
+                    1.5, 1.5, 1.5, .3);
+            }
+            if (settings.getBoolean("effects.particles.completion-portals-enabled", true)) {
+                world.spawnParticle(Particle.REVERSE_PORTAL, center,
+                    Math.max(0, settings.getInt("effects.particles.completion-portals-count", 70)),
+                    1.5, 1.5, 1.5, .4);
+            }
+        }
+        playSound(center, "effects.completion-sound",
+            Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1, .8f);
     }
 
     private static void restore(Capture capture) {
@@ -157,14 +200,26 @@ final class EggCapture implements Listener {
         capture.mob.setGlowing(capture.glowing);
     }
 
-    private static void give(Player player, ItemStack item, Location fallback) {
+    private void give(Player player, ItemStack item, Location fallback) {
         if (!player.isOnline()) {
             fallback.getWorld().dropItemNaturally(fallback, item);
             return;
         }
         player.getInventory().addItem(item).values()
             .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover));
-        player.playSound(player.getLocation(), Sound.ENTITY_ALLAY_ITEM_GIVEN, .8f, 1.3f);
+        playSound(player.getLocation(), "effects.received-sound",
+            Sound.ENTITY_ALLAY_ITEM_GIVEN, .8f, 1.3f);
+    }
+
+    private void playSound(Location location, String path, Sound fallback,
+                           float defaultVolume, float defaultPitch) {
+        if (!settings.getBoolean(path + ".enabled", true)) {
+            return;
+        }
+        location.getWorld().playSound(location,
+            ConfiguredEffect.sound(plugin, settings, path + ".name", fallback),
+            (float) settings.getDouble(path + ".volume", defaultVolume),
+            (float) settings.getDouble(path + ".pitch", defaultPitch));
     }
 
     static double captureScale(double original, double progress) {

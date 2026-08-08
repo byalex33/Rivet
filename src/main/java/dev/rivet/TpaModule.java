@@ -69,23 +69,23 @@ final class TpaModule implements Listener {
 
     private boolean request(Player requester, String[] args, boolean here) {
         if (args.length != 1) {
-            send(requester, "usage-request", "<red>Usage: /" + (here ? "tpahere" : "tpa") + " <player>");
+            send(requester, "usage-request", "<white>Usage: /" + (here ? "tpahere" : "tpa") + " <player>");
             return true;
         }
         Player target = plugin.getServer().getPlayerExact(args[0]);
         if (target == null || !requester.canSee(target)) {
-            send(requester, "not-online", "<red>That player is not online.");
+            send(requester, "not-online", "<white>That player is not online.");
             return true;
         }
         if (target.equals(requester)) {
-            send(requester, "self", "<red>You cannot send a teleport request to yourself.");
+            send(requester, "self", "<white>You cannot send a teleport request to yourself.");
             return true;
         }
         long now = System.currentTimeMillis();
         long remaining = cooldownRemaining(cooldowns.getOrDefault(requester.getUniqueId(), 0L),
             setting("cooldown-seconds", 30), now);
         if (remaining > 0) {
-            send(requester, "cooldown", "<red>Wait <seconds> seconds before sending another request.",
+            send(requester, "cooldown", "<white>Wait <seconds> seconds before sending another request.",
                 Placeholder.unparsed("seconds", Long.toString(remaining)));
             return true;
         }
@@ -94,18 +94,18 @@ final class TpaModule implements Listener {
         incoming.removeIf(request -> request.requester.equals(requester));
         incoming.add(new Request(requester, target, here, now));
         cooldowns.put(requester.getUniqueId(), now);
-        send(requester, "sent", "<green>Teleport request sent to <white><player></white>.", player(target));
+        send(requester, "sent", "<white>Teleport request sent to <#f72a4c><player></#f72a4c>.", player(target));
         send(target, here ? "received-here" : "received",
             here
-                ? "<yellow><player> wants you to teleport to them. Use <white>/tpaccept <player></white>."
-                : "<yellow><player> wants to teleport to you. Use <white>/tpaccept <player></white>.",
+                ? "<white><player> wants you to teleport to them. Use <#f72a4c>/tpaccept <player></#f72a4c>."
+                : "<white><player> wants to teleport to you. Use <#f72a4c>/tpaccept <player></#f72a4c>.",
             player(requester));
         return true;
     }
 
     private boolean answer(Player target, String[] args, boolean accept) {
         if (args.length > 1) {
-            send(target, "usage-answer", "<red>Usage: /" + (accept ? "tpaccept" : "tpdeny") + " [player]");
+            send(target, "usage-answer", "<white>Usage: /" + (accept ? "tpaccept" : "tpdeny") + " [player]");
             return true;
         }
         prune(System.currentTimeMillis(), true);
@@ -117,13 +117,13 @@ final class TpaModule implements Listener {
         } else if (incoming.size() == 1) {
             request = incoming.getFirst();
         } else if (incoming.size() > 1) {
-            send(target, "multiple", "<yellow>You have multiple requests: <white><players></white>. Specify a player.",
+            send(target, "multiple", "<white>You have multiple requests: <#f72a4c><players></#f72a4c>. Specify a player.",
                 Placeholder.unparsed("players", incoming.stream().map(candidate -> candidate.requester.getName())
                     .distinct().sorted().collect(java.util.stream.Collectors.joining(", "))));
             return true;
         }
         if (request == null) {
-            send(target, "none", "<red>No matching teleport request was found.");
+            send(target, "none", "<white>No matching teleport request was found.");
             return true;
         }
         incoming.remove(request);
@@ -131,23 +131,23 @@ final class TpaModule implements Listener {
             requests.remove(target.getUniqueId());
         }
         if (!accept) {
-            send(target, "denied", "<yellow>Denied <white><player></white>'s request.", player(request.requester));
-            send(request.requester, "denied-requester", "<red><player> denied your teleport request.", player(target));
+            send(target, "denied", "<white>Denied <#f72a4c><player></#f72a4c>'s request.", player(request.requester));
+            send(request.requester, "denied-requester", "<white><player> denied your teleport request.", player(target));
             return true;
         }
         Player moving = request.here ? target : request.requester;
         Player destinationPlayer = request.here ? request.requester : target;
         Location destination = destinationPlayer.getLocation().clone();
         int delay = setting("teleport-delay-seconds", 3);
-        send(target, "accepted", "<green>Accepted <white><player></white>'s request.", player(request.requester));
-        send(request.requester, "accepted-requester", "<green><player> accepted your teleport request.", player(target));
+        send(target, "accepted", "<white>Accepted <#f72a4c><player></#f72a4c>'s request.", player(request.requester));
+        send(request.requester, "accepted-requester", "<white><player> accepted your teleport request.", player(target));
         teleports.start(moving, destination, delay,
             plugin.settings("tpa").getBoolean("cancel-on-move", true),
-            MM.deserialize(message("wait", "<yellow>Teleporting in <white><seconds></white> seconds. Do not move."),
+            MM.deserialize(message("wait", "<white>Teleporting in <#f72a4c><seconds></#f72a4c> seconds. Do not move."),
                 Placeholder.unparsed("seconds", Integer.toString(delay))),
-            MM.deserialize(message("cancelled", "<red>Teleport cancelled because you moved.")),
+            MM.deserialize(message("cancelled", "<white>Teleport cancelled because you moved.")),
             () -> {
-                send(moving, "teleported", "<green>Teleport complete.");
+                send(moving, "teleported", "<white>Teleport complete.");
                 plugin.teleportFeedback(moving, "Teleport");
             });
         return true;
@@ -160,7 +160,7 @@ final class TpaModule implements Listener {
                 return false;
             }
             if (notify) {
-                send(request.requester, "expired", "<gray>Your teleport request to <white><player></white> expired.",
+                send(request.requester, "expired", "<white>Your teleport request to <#f72a4c><player></#f72a4c> expired.",
                     player(request.target));
             }
             return true;

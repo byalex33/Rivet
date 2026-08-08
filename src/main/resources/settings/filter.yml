@@ -9,8 +9,8 @@ feedback:
   sound: ""
 
 gui:
-  title: "<dark_green>Item Filter"
+  title: "<white>Item Filter"
 
 messages:
-  blocked-pickup: "<yellow>Pickup blocked: <white><item></white>"
-  list: "<gold>Filtered items:</gold> <white><items></white>"
+  blocked-pickup: "<white>Pickup blocked: <#f72a4c><item></#f72a4c>"
+  list: "<#f72a4c>Filtered items:</#f72a4c> <#f72a4c><items></#f72a4c>"

@@ -1,6 +1,8 @@
 package dev.rivet;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Axis;
@@ -13,6 +15,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.block.data.type.Leaves;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -31,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 final class TreeFeller implements Listener {
+    private static final MiniMessage MM = MiniMessage.miniMessage();
     // ponytail: hard caps protect one server tick; batch larger custom trees/veins if they become a real use case.
     private static final int MAX_LOGS = 96;
     private static final int MAX_LEAVES = 512;
@@ -40,11 +44,13 @@ final class TreeFeller implements Listener {
     private static final int MAX_HORIZONTAL_LOG_RUN = 6;
 
     private final RivetPlugin plugin;
+    private final YamlConfiguration settings;
     private final Set<Block> activeBlocks = new HashSet<>();
     private boolean checkingProtection;
 
     TreeFeller(RivetPlugin plugin) {
         this.plugin = plugin;
+        settings = plugin.settings("tree-feller");
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
@@ -64,10 +70,12 @@ final class TreeFeller implements Listener {
             return;
         }
 
-        if (isAxe(tool.getType()) && Tag.LOGS.isTagged(base.getType())
+        if (settings.getBoolean("tree-feller.enabled", true)
+            && isAxe(tool.getType()) && Tag.LOGS.isTagged(base.getType())
             && !Tag.LOGS.isTagged(base.getRelative(0, -1, 0).getType())) {
             fellTree(event, player, base, tool);
-        } else if (isPickaxe(tool.getType()) && oreKey(base.getType()) != null
+        } else if (settings.getBoolean("veinminer.enabled", true)
+            && isPickaxe(tool.getType()) && oreKey(base.getType()) != null
             && !base.getDrops(tool, player).isEmpty()) {
             mineVein(event, player, base, tool);
         }
@@ -88,7 +96,8 @@ final class TreeFeller implements Listener {
                 }
             }
         }
-        if (!validStructure(logs.size(), leaves.size(), longestHorizontalRun(logs), vertical, horizontal)) {
+        if (!validConfiguredStructure(logs.size(), leaves.size(),
+            longestHorizontalRun(logs), vertical, horizontal)) {
             return;
         }
         Set<Block> tree = new HashSet<>(logs);
@@ -101,10 +110,10 @@ final class TreeFeller implements Listener {
         ItemStack dropTool = axe.clone();
         player.getInventory().setItemInMainHand(axe.damage(logs.size(), player));
         animate(tree, dropTool, player);
-        player.sendActionBar(Component.text("Felled ", NamedTextColor.GRAY)
-            .append(Component.text(logs.size(), NamedTextColor.WHITE))
-            .append(Component.text(" × ", NamedTextColor.GRAY))
-            .append(Component.translatable(wood.translationKey()).color(woodColor(wood))));
+        player.sendActionBar(MM.deserialize(settings.getString("tree-feller.message",
+                "<white>Felled <#f72a4c><count></#f72a4c> × <#f72a4c><material></#f72a4c></white>"),
+            Placeholder.unparsed("count", Integer.toString(logs.size())),
+            Placeholder.component("material", Component.translatable(wood.translationKey()))));
     }
 
     private void mineVein(BlockBreakEvent event, Player player, Block base, ItemStack pickaxe) {
@@ -122,10 +131,11 @@ final class TreeFeller implements Listener {
             player.getInventory().setItemInMainHand(pickaxe.damage(vein.size(), player));
             vein.forEach(ore -> ore.breakNaturally(dropTool, true, true));
         }
-        player.sendActionBar(Component.text("Mined ", NamedTextColor.GRAY)
-            .append(Component.text(vein.size(), NamedTextColor.WHITE))
-            .append(Component.text(" of ", NamedTextColor.GRAY))
-            .append(Component.translatable(mined.translationKey()).color(oreColor(mined))));
+        player.sendActionBar(MM.deserialize(settings.getString("veinminer.message",
+                "<white>Mined <#f72a4c><count></#f72a4c> of <#f72a4c><material></#f72a4c></white>"),
+            Placeholder.unparsed("count", Integer.toString(vein.size())),
+            Placeholder.component("material", Component.translatable(mined.translationKey()))));
+        veinEffect(player, base);
     }
 
     private Set<Block> connectedLogs(Block base) {
@@ -138,7 +148,7 @@ final class TreeFeller implements Listener {
             if (block.getY() < base.getY() || block.getType() != base.getType() || !logs.add(block)) {
                 continue;
             }
-            if (logs.size() > MAX_LOGS) {
+            if (logs.size() > positiveSetting("tree-feller.maximum-logs", MAX_LOGS)) {
                 return Set.of();
             }
             for (int x = -1; x <= 1; x++) {
@@ -169,7 +179,8 @@ final class TreeFeller implements Listener {
             }
         }
 
-        while (!queue.isEmpty() && leaves.size() < MAX_LEAVES) {
+        while (!queue.isEmpty()
+            && leaves.size() < positiveSetting("tree-feller.maximum-leaves", MAX_LEAVES)) {
             LeafCandidate candidate = queue.removeFirst();
             Block block = candidate.block();
             if (!(block.getBlockData() instanceof Leaves data) || data.isPersistent()
@@ -222,7 +233,7 @@ final class TreeFeller implements Listener {
             if (!key.equals(oreKey(block.getType())) || !ores.add(block)) {
                 continue;
             }
-            if (ores.size() > MAX_ORES) {
+            if (ores.size() > positiveSetting("veinminer.maximum-ores", MAX_ORES)) {
                 return Set.of();
             }
             for (int x = -1; x <= 1; x++) {
@@ -275,12 +286,17 @@ final class TreeFeller implements Listener {
                 }
                 List<Piece> layer = animation.next();
                 layer.forEach(piece -> breakPiece(piece, player));
-                if (plugin.getConfig().getBoolean("effects.sounds") && !layer.isEmpty()) {
+                if (plugin.getConfig().getBoolean("effects.sounds")
+                    && settings.getBoolean("tree-feller.sound.enabled", true) && !layer.isEmpty()) {
                     layer.getFirst().block().getWorld().playSound(
-                        layer.getFirst().block().getLocation(), Sound.BLOCK_WOOD_BREAK, .8f, 1.1f);
+                        layer.getFirst().block().getLocation(),
+                        ConfiguredEffect.sound(plugin, settings,
+                            "tree-feller.sound.name", Sound.BLOCK_WOOD_BREAK),
+                        (float) settings.getDouble("tree-feller.sound.volume", .8),
+                        (float) settings.getDouble("tree-feller.sound.pitch", 1.1));
                 }
             }
-        }.runTaskTimer(plugin, 0, 2);
+        }.runTaskTimer(plugin, 0, positiveSetting("tree-feller.ticks-per-layer", 2));
     }
 
     private void breakPiece(Piece piece, Player player) {
@@ -292,10 +308,43 @@ final class TreeFeller implements Listener {
         block.setType(Material.AIR, false);
         piece.drops().forEach(drop -> player.getInventory().addItem(drop).values()
             .forEach(leftover -> block.getWorld().dropItemNaturally(block.getLocation(), leftover)));
-        if (plugin.getConfig().getBoolean("effects.particles")) {
+        if (plugin.getConfig().getBoolean("effects.particles")
+            && settings.getBoolean("tree-feller.particles.enabled", true)) {
             block.getWorld().spawnParticle(Particle.BLOCK_CRUMBLE,
-                block.getLocation().add(.5, .5, .5), 8, .3, .3, .3, piece.data());
+                block.getLocation().add(.5, .5, .5),
+                Math.max(0, settings.getInt("tree-feller.particles.count", 8)),
+                .3, .3, .3, piece.data());
         }
+    }
+
+    private void veinEffect(Player player, Block block) {
+        if (plugin.getConfig().getBoolean("effects.sounds")
+            && settings.getBoolean("veinminer.sound.enabled", false)) {
+            player.playSound(block.getLocation(), ConfiguredEffect.sound(plugin, settings,
+                    "veinminer.sound.name", Sound.BLOCK_STONE_BREAK),
+                (float) settings.getDouble("veinminer.sound.volume", .8),
+                (float) settings.getDouble("veinminer.sound.pitch", 1.1));
+        }
+        if (plugin.getConfig().getBoolean("effects.particles")
+            && settings.getBoolean("veinminer.particles.enabled", false)) {
+            block.getWorld().spawnParticle(ConfiguredEffect.particle(plugin, settings,
+                    "veinminer.particles.name", Particle.CRIT),
+                block.getLocation().add(.5, .5, .5),
+                Math.max(0, settings.getInt("veinminer.particles.count", 8)), .3, .3, .3, 0);
+        }
+    }
+
+    private boolean validConfiguredStructure(int logs, int leaves, int horizontalRun,
+                                             int vertical, int horizontal) {
+        return logs >= positiveSetting("tree-feller.minimum-logs", MIN_LOGS)
+            && leaves >= positiveSetting("tree-feller.minimum-leaves", MIN_LEAVES)
+            && horizontalRun <= positiveSetting(
+                "tree-feller.maximum-horizontal-log-run", MAX_HORIZONTAL_LOG_RUN)
+            && (horizontal == 0 || vertical / (double) horizontal >= .5);
+    }
+
+    private int positiveSetting(String path, int fallback) {
+        return Math.max(1, settings.getInt(path, fallback));
     }
 
     void shutdown() {
