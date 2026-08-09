@@ -4,8 +4,77 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Rivet Paper plugin documentation">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0d1117">
   <title>Rivet documentation</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css">
+  <style>
+    :root {
+      --theme-color: #f72a4c;
+    }
+
+    body,
+    .markdown-section,
+    .markdown-section table,
+    .markdown-section tr:nth-child(2n) {
+      background: #0d1117;
+      color: #c9d1d9;
+    }
+
+    .sidebar {
+      background: #010409;
+      border-right: 1px solid #30363d;
+    }
+
+    .sidebar ul li a,
+    .sidebar ul li strong,
+    .search input,
+    .search .matching-post {
+      color: #b1bac4;
+    }
+
+    .sidebar ul li.active > a,
+    .sidebar ul li a:hover,
+    .app-name-link,
+    .markdown-section a {
+      color: #f72a4c;
+    }
+
+    .sidebar ul li.active > a {
+      border-right-color: #f72a4c;
+    }
+
+    .markdown-section h1,
+    .markdown-section h2,
+    .markdown-section h3,
+    .markdown-section h4,
+    .markdown-section strong {
+      color: #f0f6fc;
+    }
+
+    .markdown-section code {
+      background: #161b22;
+      color: #ff7b93;
+    }
+
+    .markdown-section th,
+    .markdown-section td {
+      border-color: #30363d;
+    }
+
+    .search {
+      border-bottom-color: #30363d !important;
+    }
+
+    .search input {
+      background: #0d1117;
+    }
+
+    .github-corner svg {
+      color: #0d1117;
+      fill: #f72a4c;
+    }
+  </style>
 </head>
 <body>
   <div id="app">Loading documentation...</div>
