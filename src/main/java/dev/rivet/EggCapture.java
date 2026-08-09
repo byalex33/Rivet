@@ -31,7 +31,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 final class EggCapture implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private static final int ANIMATION_TICKS = 28;
 
     private final RivetPlugin plugin;
@@ -68,7 +68,7 @@ final class EggCapture implements Listener {
         }
         meta.setSpawnedEntity(snapshot);
         meta.displayName(MM.deserialize(settings.getString("captured-egg.name",
-                "<white>Captured <#f72a4c><mob></#f72a4c></white>"),
+                "<white>Captured <#f72a4c>%mob%</#f72a4c></white>"),
             Placeholder.component("mob", mob.name())));
         java.util.List<String> lore = settings.getStringList("captured-egg.lore");
         if (lore.isEmpty()) {

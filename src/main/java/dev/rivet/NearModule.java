@@ -10,7 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 
 final class NearModule {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final YamlConfiguration settings;
 
     NearModule(RivetPlugin plugin) {
@@ -34,14 +34,14 @@ final class NearModule {
                 other.getLocation().distanceSquared(player.getLocation())))
             .limit(maximum).toList();
         if (nearby.isEmpty()) {
-            send(player, "messages.none", "<white>No visible players are within <#f72a4c><radius></#f72a4c> blocks.",
+            send(player, "messages.none", "<white>No visible players are within <#f72a4c>%radius%</#f72a4c> blocks.",
                 "radius", number(radius));
             return true;
         }
-        send(player, "messages.header", "<#f72a4c>Nearby players within <#f72a4c><radius></#f72a4c> blocks:</#f72a4c>",
+        send(player, "messages.header", "<#f72a4c>Nearby players within <#f72a4c>%radius%</#f72a4c> blocks:</#f72a4c>",
             "radius", number(radius));
         nearby.forEach(other -> player.sendMessage(MM.deserialize(settings.getString("messages.entry",
-                "<#f72a4c><player></#f72a4c> <white>- <distance>m</white>"),
+                "<#f72a4c>%player%</#f72a4c> <white>- %distance%m</white>"),
             Placeholder.unparsed("player", other.getName()),
             Placeholder.unparsed("distance", number(other.getLocation().distance(player.getLocation()))))));
         return true;

@@ -27,9 +27,9 @@ worlds:
 
 messages:
   searching: "<white>Searching for a safe location...</white>"
-  warmup: "<white>Teleporting in <#f72a4c><seconds></#f72a4c> seconds. Do not move.</white>"
+  warmup: "<white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"
   cancelled: "<white>Random teleport cancelled because you moved.</white>"
-  cooldown: "<white>You can use RTP again in <#f72a4c><seconds>s</#f72a4c>."
+  cooldown: "<white>You can use RTP again in <#f72a4c>%seconds%s</#f72a4c>."
   success: "<white>Teleported to a safe random location.</white>"
   failed: "<white>Could not find a safe location. Try again later.</white>"
   world-disabled: "<white>Random teleport is unavailable in that world.</white>"

@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 
 final class FilterModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private static final int PAGE_SIZE = 45;
     private final RivetPlugin plugin;
     private final YamlConfiguration data;
@@ -93,7 +93,7 @@ final class FilterModule implements Listener {
         var settings = plugin.settings("filter");
         if (settings.getBoolean("feedback.action-bar", true)) {
             player.sendActionBar(MM.deserialize(settings.getString("messages.blocked-pickup",
-                    "<white>Pickup blocked: <#f72a4c><item></#f72a4c>"),
+                    "<white>Pickup blocked: <#f72a4c>%item%</#f72a4c>"),
                 Placeholder.unparsed("item", display(event.getItem().getItemStack().getType()))));
         }
         String configuredSound = settings.getString("feedback.sound", "");
@@ -214,7 +214,7 @@ final class FilterModule implements Listener {
         }
         List<Material> materials = sorted(player);
         player.sendMessage(MM.deserialize(plugin.settings("filter").getString("messages.list",
-                "<#f72a4c>Filtered items:</#f72a4c> <#f72a4c><items></#f72a4c>"),
+                "<#f72a4c>Filtered items:</#f72a4c> <#f72a4c>%items%</#f72a4c>"),
             Placeholder.unparsed("items", materials.isEmpty() ? "none"
                 : String.join(", ", materials.stream().map(FilterModule::display).toList()))));
         return true;
@@ -286,6 +286,8 @@ final class FilterModule implements Listener {
         holder.inventory.setItem(51, button(Material.BARRIER, "<white>Shift-click to clear"));
         holder.inventory.setItem(53, button(Material.ARROW, "<white>Next page"));
         player.openInventory(holder.inventory);
+        plugin.guiActions().run(player,
+            plugin.settings("filter").getStringList("gui.open_commands"));
     }
 
     private static ItemStack button(Material material, String name) {

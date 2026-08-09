@@ -10,11 +10,15 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 final class StatisticsModule {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
 
     StatisticsModule(RivetPlugin plugin) {
@@ -60,7 +64,7 @@ final class StatisticsModule {
             Placeholder.unparsed("since_first_join", firstPlayed <= 0 ? "unknown"
                 : duration(System.currentTimeMillis() - firstPlayed)));
         sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString("header",
-            "<#f72a4c><bold><player>'s statistics</bold></#f72a4c>"), placeholders));
+            "<#f72a4c><bold>%player%'s statistics</bold></#f72a4c>"), placeholders));
         plugin.settings("statistics").getStringList("lines")
             .forEach(line -> sender.sendMessage(MM.deserialize(line, placeholders)));
         return true;
@@ -90,9 +94,48 @@ final class StatisticsModule {
             return true;
         }
         sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString("playtime-format",
-                "<#f72a4c><player>'s playtime:</#f72a4c> <#f72a4c><playtime></#f72a4c>"),
+                "<#f72a4c>%player%'s playtime:</#f72a4c> <#f72a4c>%playtime%</#f72a4c>"),
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("playtime", duration(target.getStatistic(Statistic.PLAY_ONE_MINUTE) * 50L))));
+        return true;
+    }
+
+    boolean seen(CommandSender sender, String[] args) {
+        if (args.length != 1) {
+            sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString(
+                "seen.usage", "<white>Usage: /seen &lt;player&gt;</white>")));
+            return true;
+        }
+
+        Player online = plugin.getServer().getPlayerExact(args[0]);
+        if (online != null && sender instanceof Player viewer && !viewer.canSee(online)) {
+            notFound(sender);
+            return true;
+        }
+        OfflinePlayer target = online == null
+            ? plugin.getServer().getOfflinePlayerIfCached(args[0]) : online;
+        if (target == null || target.getName() == null
+            || online == null && !target.hasPlayedBefore()) {
+            notFound(sender);
+            return true;
+        }
+
+        long now = System.currentTimeMillis();
+        long seenAt = online == null ? target.getLastSeen() : target.getLastLogin();
+        if (seenAt <= 0) {
+            seenAt = target.getLastPlayed();
+        }
+        TagResolver placeholders = TagResolver.resolver(
+            Placeholder.unparsed("player", target.getName()),
+            Placeholder.unparsed("duration", seenAt <= 0
+                ? "unknown" : relativeDuration(now - seenAt)),
+            Placeholder.unparsed("timestamp", timestamp(seenAt)));
+        String path = online == null ? "seen.offline" : "seen.online";
+        String fallback = online == null
+            ? "<white><#f72a4c>%player%</#f72a4c> was last seen <#f72a4c>%duration%</#f72a4c> ago (%timestamp%).</white>"
+            : "<white><#f72a4c>%player%</#f72a4c> is currently online (joined <#f72a4c>%duration%</#f72a4c> ago).</white>";
+        sender.sendMessage(MM.deserialize(
+            plugin.settings("statistics").getString(path, fallback), placeholders));
         return true;
     }
 
@@ -108,6 +151,36 @@ final class StatisticsModule {
                 .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
                 .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList()
             : List.of();
+    }
+
+    List<String> seenCompletions(CommandSender sender, String[] args) {
+        return args.length == 1
+            ? plugin.getServer().getOnlinePlayers().stream()
+                .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
+                .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList()
+            : List.of();
+    }
+
+    private void notFound(CommandSender sender) {
+        sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString(
+            "seen.not-found", "<white>That player could not be found.</white>")));
+    }
+
+    private String timestamp(long millis) {
+        if (millis <= 0) {
+            return "unknown";
+        }
+        String pattern = plugin.settings("statistics").getString(
+            "seen.date-format", "d MMM uuuu 'at' HH:mm z");
+        try {
+            return DateTimeFormatter.ofPattern(pattern, Locale.UK)
+                .withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(millis));
+        } catch (IllegalArgumentException exception) {
+            plugin.getLogger().warning("Invalid statistics seen.date-format '" + pattern
+                + "'; using the default format.");
+            return DateTimeFormatter.ofPattern("d MMM uuuu 'at' HH:mm z", Locale.UK)
+                .withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(millis));
+        }
     }
 
     private static int statistic(OfflinePlayer player, Statistic statistic, Material material) {
@@ -126,5 +199,10 @@ final class StatisticsModule {
         return days > 0 ? days + "d " + hours + "h " + minutes + "m"
             : hours > 0 ? hours + "h " + minutes + "m"
             : minutes + "m";
+    }
+
+    static String relativeDuration(long millis) {
+        long safeMillis = Math.max(0, millis);
+        return safeMillis < 60_000 ? safeMillis / 1_000 + "s" : duration(safeMillis);
     }
 }

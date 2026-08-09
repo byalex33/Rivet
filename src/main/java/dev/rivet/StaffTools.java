@@ -15,7 +15,9 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitTask;
@@ -36,7 +38,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 final class StaffTools implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
     private final YamlConfiguration data;
@@ -75,7 +77,7 @@ final class StaffTools implements Listener {
         target.setHealth(attribute == null ? 20 : attribute.getValue());
         target.setFireTicks(0);
         target.setFreezeTicks(0);
-        feedback(actor, target, "heal", "<white>Healed <#f72a4c><target></#f72a4c>.");
+        feedback(actor, target, "heal", "<white>Healed <#f72a4c>%target%</#f72a4c>.");
         return true;
     }
 
@@ -87,7 +89,7 @@ final class StaffTools implements Listener {
         target.setFoodLevel(20);
         target.setSaturation(20);
         target.setExhaustion(0);
-        feedback(actor, target, "feed", "<white>Fed <#f72a4c><target></#f72a4c>.");
+        feedback(actor, target, "feed", "<white>Fed <#f72a4c>%target%</#f72a4c>.");
         return true;
     }
 
@@ -131,8 +133,8 @@ final class StaffTools implements Listener {
         if (parsed.silent()) {
             return true;
         }
-        String fallback = enabled ? "<white>God mode enabled for <#f72a4c><target></#f72a4c>."
-            : "<white>God mode disabled for <#f72a4c><target></#f72a4c>.";
+        String fallback = enabled ? "<white>God mode enabled for <#f72a4c>%target%</#f72a4c>."
+            : "<white>God mode disabled for <#f72a4c>%target%</#f72a4c>.";
         actor.sendMessage(MM.deserialize(settings.getString("messages.god-" +
                 (enabled ? "enabled" : "disabled"), fallback),
             Placeholder.unparsed("target", target.getName())));
@@ -157,7 +159,7 @@ final class StaffTools implements Listener {
             }
             value = args[1];
         } else {
-            actor.sendMessage(MM.deserialize("<white>Usage: /flyspeed [player] <amount>"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /flyspeed [player] &lt;amount&gt;"));
             return true;
         }
         Float speed = parseFlySpeed(value);
@@ -166,18 +168,41 @@ final class StaffTools implements Listener {
             return true;
         }
         target.setFlySpeed(speed);
-        actor.sendMessage(MM.deserialize("<white>Flight speed for <#f72a4c><player></#f72a4c> set to <#f72a4c><speed></#f72a4c>.",
+        actor.sendMessage(MM.deserialize("<white>Flight speed for <#f72a4c>%player%</#f72a4c> set to <#f72a4c>%speed%</#f72a4c>.",
             Placeholder.unparsed("player", target.getName()), Placeholder.unparsed("speed", Float.toString(speed))));
         if (actor != target) {
-            target.sendMessage(MM.deserialize("<white>Your flight speed is now <#f72a4c><speed></#f72a4c>.",
+            target.sendMessage(MM.deserialize("<white>Your flight speed is now <#f72a4c>%speed%</#f72a4c>.",
                 Placeholder.unparsed("speed", Float.toString(speed))));
         }
         return true;
     }
 
+    boolean commandSpy(Player actor, String[] args) {
+        if (args.length != 0) {
+            actor.sendMessage(MM.deserialize("<white>Usage: /commandspy"));
+            return true;
+        }
+        String path = "command-spy." + actor.getUniqueId();
+        boolean previous = data.getBoolean(path);
+        boolean enabled = !previous;
+        data.set(path, enabled);
+        try {
+            plugin.saveData("staff");
+        } catch (IOException exception) {
+            data.set(path, previous);
+            plugin.getLogger().severe("Could not save data/staff.yml: " + exception.getMessage());
+            actor.sendMessage(MM.deserialize("<white>Command spy could not be saved safely.</white>"));
+            return true;
+        }
+        actor.sendMessage(MM.deserialize(settings.getString("messages.command-spy-" +
+            (enabled ? "enabled" : "disabled"), enabled
+            ? "<white>Command spy enabled.</white>" : "<white>Command spy disabled.</white>")));
+        return true;
+    }
+
     boolean bossBar(Player actor, String[] args) {
         if (args.length < 2) {
-            actor.sendMessage(MM.deserialize("<white>Usage: /bossbarmsg <player|all> [-d:seconds] [-c:color] [-s:style] <message>"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /bossbarmsg <player|all> [-d:seconds] [-c:color] [-s:style] &lt;message&gt;"));
             return true;
         }
         BossBarArguments parsed = parseBossBarArguments(Arrays.copyOfRange(args, 1, args.length),
@@ -216,7 +241,7 @@ final class StaffTools implements Listener {
         active.task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> remove(active),
             Math.max(1, (long) Math.ceil(parsed.duration() * 20)));
         bossBars.add(active);
-        actor.sendMessage(MM.deserialize("<white>Boss bar shown to <#f72a4c><count></#f72a4c> player(s).",
+        actor.sendMessage(MM.deserialize("<white>Boss bar shown to <#f72a4c>%count%</#f72a4c> player(s).",
             Placeholder.unparsed("count", Integer.toString(targets.size()))));
         return true;
     }
@@ -224,7 +249,7 @@ final class StaffTools implements Listener {
     boolean note(Player actor, String[] args) {
         NoteArguments parsed = parseNoteArguments(args);
         if (!parsed.valid()) {
-            actor.sendMessage(MM.deserialize("<white>Usage: /note <player> <add <note>|remove <id>|clear [confirm]|list>"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /note &lt;player&gt; <add <note>|remove &lt;id&gt;|clear [confirm]|list>"));
             return true;
         }
         if (parsed.action().equals("add") && !validNoteText(parsed.value(),
@@ -275,7 +300,7 @@ final class StaffTools implements Listener {
                 return player != null && actor.canSee(player);
             });
         actor.sendMessage(MM.deserialize(settings.getString("same-ip.format",
-                "<#f72a4c>Online players sharing <player>'s session address:</#f72a4c> <#f72a4c><matches></#f72a4c>"),
+                "<#f72a4c>Online players sharing %player%'s session address:</#f72a4c> <#f72a4c>%matches%</#f72a4c>"),
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("matches", matches.isEmpty() ? "none" : String.join(", ", matches))));
         actor.sendMessage(MM.deserialize(settings.getString("same-ip.disclaimer",
@@ -285,7 +310,7 @@ final class StaffTools implements Listener {
 
     boolean toast(Player actor, String[] args) {
         if (args.length < 2) {
-            actor.sendMessage(MM.deserialize("<white>Usage: /toast <player|all> i:<icon> t:<title> <message> [type:<type>]"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /toast <player|all> i:<icon> t:<title> &lt;message&gt; [type:<type>]"));
             return true;
         }
         ToastArguments parsed = parseToastArguments(Arrays.copyOfRange(args, 1, args.length),
@@ -353,7 +378,7 @@ final class StaffTools implements Listener {
         var section = notes.getConfigurationSection(base + ".notes");
         List<Integer> ids = section == null ? List.of() : section.getKeys(false).stream()
             .map(StaffTools::positiveInteger).filter(java.util.Objects::nonNull).sorted().toList();
-        actor.sendMessage(MM.deserialize("<#f72a4c><bold>Notes for <player></bold></#f72a4c> <white>(<count>)</white>",
+        actor.sendMessage(MM.deserialize("<#f72a4c><bold>Notes for %player%</bold></#f72a4c> <white>(%count%)</white>",
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("count", Integer.toString(ids.size()))));
         if (ids.isEmpty()) {
@@ -363,7 +388,7 @@ final class StaffTools implements Listener {
         for (int id : ids) {
             String path = base + ".notes." + id;
             long timestamp = notes.getLong(path + ".timestamp");
-            actor.sendMessage(MM.deserialize("<white>#<id></white> <#f72a4c><text></#f72a4c> <#f72a4c>— <staff>, <time></#f72a4c>",
+            actor.sendMessage(MM.deserialize("<white>#%id%</white> <#f72a4c>%text%</#f72a4c> <#f72a4c>— %staff%, %time%</#f72a4c>",
                 Placeholder.unparsed("id", Integer.toString(id)),
                 Placeholder.unparsed("text", notes.getString(path + ".text", "")),
                 Placeholder.unparsed("staff", notes.getString(path + ".staff", "unknown")),
@@ -388,7 +413,7 @@ final class StaffTools implements Listener {
             notes.set(base + ".next-id", previousNextId);
             return;
         }
-        actor.sendMessage(MM.deserialize("<white>Added note <#f72a4c>#<id></#f72a4c> to <#f72a4c><player></#f72a4c>.",
+        actor.sendMessage(MM.deserialize("<white>Added note <#f72a4c>#%id%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.",
             Placeholder.unparsed("id", Integer.toString(id)), Placeholder.unparsed("player", target.getName())));
     }
 
@@ -402,7 +427,7 @@ final class StaffTools implements Listener {
             restore(notes, base + ".notes." + id, previous);
             return;
         }
-        actor.sendMessage(MM.deserialize("<white>Removed note <#f72a4c>#<id></#f72a4c> from <#f72a4c><player></#f72a4c>.",
+        actor.sendMessage(MM.deserialize("<white>Removed note <#f72a4c>#%id%</#f72a4c> from <#f72a4c>%player%</#f72a4c>.",
             Placeholder.unparsed("id", Integer.toString(id)), Placeholder.unparsed("player", target.getName())));
     }
 
@@ -412,7 +437,7 @@ final class StaffTools implements Listener {
             return;
         }
         if (!confirmed) {
-            actor.sendMessage(MM.deserialize("<white>Run <#f72a4c>/note <player> clear confirm</#f72a4c> to remove every note.",
+            actor.sendMessage(MM.deserialize("<white>Run <#f72a4c>/note %player% clear confirm</#f72a4c> to remove every note.",
                 Placeholder.unparsed("player", target.getName())));
             return;
         }
@@ -422,7 +447,7 @@ final class StaffTools implements Listener {
             restore(notes, base + ".notes", previous);
             return;
         }
-        actor.sendMessage(MM.deserialize("<white>Cleared all notes for <#f72a4c><player></#f72a4c>.",
+        actor.sendMessage(MM.deserialize("<white>Cleared all notes for <#f72a4c>%player%</#f72a4c>.",
             Placeholder.unparsed("player", target.getName())));
     }
 
@@ -645,6 +670,20 @@ final class StaffTools implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onCommand(PlayerCommandPreprocessEvent event) {
+        Player sender = event.getPlayer();
+        String format = settings.getString("command-spy.format",
+            "<#f72a4c>[command spy] %player%:</#f72a4c> <white>%command%</white>");
+        plugin.getServer().getOnlinePlayers().stream()
+            .filter(spy -> shouldReceiveCommandSpy(spy.getUniqueId(), sender.getUniqueId(),
+                data.getBoolean("command-spy." + spy.getUniqueId()),
+                spy.hasPermission("rivet.commandspy"), spy.canSee(sender)))
+            .forEach(spy -> spy.sendMessage(MM.deserialize(format,
+                Placeholder.component("player", sender.displayName()),
+                Placeholder.unparsed("command", event.getMessage()))));
+    }
+
     void shutdown() {
         new ArrayList<>(bossBars).forEach(this::remove);
         new HashMap<>(temporaryToasts).forEach((key, toast) ->
@@ -678,7 +717,7 @@ final class StaffTools implements Listener {
             Placeholder.unparsed("target", target.getName())));
         if (actor != target) {
             target.sendMessage(MM.deserialize(settings.getString("messages." + key + "-target",
-                "<white>You were restored by <#f72a4c><player></#f72a4c>."),
+                "<white>You were restored by <#f72a4c>%player%</#f72a4c>."),
                 Placeholder.unparsed("player", actor.getName())));
         }
     }
@@ -716,6 +755,11 @@ final class StaffTools implements Listener {
         } catch (NumberFormatException exception) {
             return null;
         }
+    }
+
+    static boolean shouldReceiveCommandSpy(UUID spy, UUID sender, boolean enabled,
+                                           boolean permitted, boolean visible) {
+        return enabled && permitted && visible && !spy.equals(sender);
     }
 
     static GodArguments parseGodArguments(String[] args) {

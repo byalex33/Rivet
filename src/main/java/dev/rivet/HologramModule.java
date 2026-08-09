@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.UUID;
 
 final class HologramModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private static final List<String> ROOT_COMMANDS =
         List.of("help", "list", "nearby", "create", "remove", "copy", "info", "edit");
     private static final List<String> EDIT_COMMANDS = List.of(

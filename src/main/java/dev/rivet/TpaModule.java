@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 final class TpaModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final DelayedTeleport teleports;
     private final Map<UUID, List<Request>> requests = new HashMap<>();
@@ -69,7 +69,7 @@ final class TpaModule implements Listener {
 
     private boolean request(Player requester, String[] args, boolean here) {
         if (args.length != 1) {
-            send(requester, "usage-request", "<white>Usage: /" + (here ? "tpahere" : "tpa") + " <player>");
+            send(requester, "usage-request", "<white>Usage: /" + (here ? "tpahere" : "tpa") + " &lt;player&gt;");
             return true;
         }
         Player target = plugin.getServer().getPlayerExact(args[0]);
@@ -85,7 +85,7 @@ final class TpaModule implements Listener {
         long remaining = cooldownRemaining(cooldowns.getOrDefault(requester.getUniqueId(), 0L),
             setting("cooldown-seconds", 30), now);
         if (remaining > 0) {
-            send(requester, "cooldown", "<white>Wait <seconds> seconds before sending another request.",
+            send(requester, "cooldown", "<white>Wait %seconds% seconds before sending another request.",
                 Placeholder.unparsed("seconds", Long.toString(remaining)));
             return true;
         }
@@ -94,11 +94,11 @@ final class TpaModule implements Listener {
         incoming.removeIf(request -> request.requester.equals(requester));
         incoming.add(new Request(requester, target, here, now));
         cooldowns.put(requester.getUniqueId(), now);
-        send(requester, "sent", "<white>Teleport request sent to <#f72a4c><player></#f72a4c>.", player(target));
+        send(requester, "sent", "<white>Teleport request sent to <#f72a4c>%player%</#f72a4c>.", player(target));
         send(target, here ? "received-here" : "received",
             here
-                ? "<white><player> wants you to teleport to them. Use <#f72a4c>/tpaccept <player></#f72a4c>."
-                : "<white><player> wants to teleport to you. Use <#f72a4c>/tpaccept <player></#f72a4c>.",
+                ? "<white>%player% wants you to teleport to them. Use <#f72a4c>/tpaccept %player%</#f72a4c>."
+                : "<white>%player% wants to teleport to you. Use <#f72a4c>/tpaccept %player%</#f72a4c>.",
             player(requester));
         return true;
     }
@@ -117,7 +117,7 @@ final class TpaModule implements Listener {
         } else if (incoming.size() == 1) {
             request = incoming.getFirst();
         } else if (incoming.size() > 1) {
-            send(target, "multiple", "<white>You have multiple requests: <#f72a4c><players></#f72a4c>. Specify a player.",
+            send(target, "multiple", "<white>You have multiple requests: <#f72a4c>%players%</#f72a4c>. Specify a player.",
                 Placeholder.unparsed("players", incoming.stream().map(candidate -> candidate.requester.getName())
                     .distinct().sorted().collect(java.util.stream.Collectors.joining(", "))));
             return true;
@@ -131,19 +131,19 @@ final class TpaModule implements Listener {
             requests.remove(target.getUniqueId());
         }
         if (!accept) {
-            send(target, "denied", "<white>Denied <#f72a4c><player></#f72a4c>'s request.", player(request.requester));
-            send(request.requester, "denied-requester", "<white><player> denied your teleport request.", player(target));
+            send(target, "denied", "<white>Denied <#f72a4c>%player%</#f72a4c>'s request.", player(request.requester));
+            send(request.requester, "denied-requester", "<white>%player% denied your teleport request.", player(target));
             return true;
         }
         Player moving = request.here ? target : request.requester;
         Player destinationPlayer = request.here ? request.requester : target;
         Location destination = destinationPlayer.getLocation().clone();
         int delay = setting("teleport-delay-seconds", 3);
-        send(target, "accepted", "<white>Accepted <#f72a4c><player></#f72a4c>'s request.", player(request.requester));
-        send(request.requester, "accepted-requester", "<white><player> accepted your teleport request.", player(target));
+        send(target, "accepted", "<white>Accepted <#f72a4c>%player%</#f72a4c>'s request.", player(request.requester));
+        send(request.requester, "accepted-requester", "<white>%player% accepted your teleport request.", player(target));
         teleports.start(moving, destination, delay,
             plugin.settings("tpa").getBoolean("cancel-on-move", true),
-            MM.deserialize(message("wait", "<white>Teleporting in <#f72a4c><seconds></#f72a4c> seconds. Do not move."),
+            MM.deserialize(message("wait", "<white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move."),
                 Placeholder.unparsed("seconds", Integer.toString(delay))),
             MM.deserialize(message("cancelled", "<white>Teleport cancelled because you moved.")),
             () -> {
@@ -160,7 +160,7 @@ final class TpaModule implements Listener {
                 return false;
             }
             if (notify) {
-                send(request.requester, "expired", "<white>Your teleport request to <#f72a4c><player></#f72a4c> expired.",
+                send(request.requester, "expired", "<white>Your teleport request to <#f72a4c>%player%</#f72a4c> expired.",
                     player(request.target));
             }
             return true;

@@ -19,7 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 
 final class KitsModule {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
     private final YamlConfiguration data;
@@ -34,7 +34,7 @@ final class KitsModule {
         if (args.length == 0) {
             List<String> available = kitNames(player);
             player.sendMessage(MM.deserialize(settings.getString("messages.list",
-                    "<#f72a4c>Available kits:</#f72a4c> <#f72a4c><kits></#f72a4c>"),
+                    "<#f72a4c>Available kits:</#f72a4c> <#f72a4c>%kits%</#f72a4c>"),
                 Placeholder.unparsed("kits", available.isEmpty() ? "none" : String.join(", ", available))));
             return true;
         }
@@ -49,7 +49,7 @@ final class KitsModule {
             return true;
         }
         if (!hasPermission(player, name)) {
-            message(player, "no-permission", "<white>You cannot use the <#f72a4c><kit></#f72a4c> kit.", name);
+            message(player, "no-permission", "<white>You cannot use the <#f72a4c>%kit%</#f72a4c> kit.", name);
             return true;
         }
         long now = System.currentTimeMillis();
@@ -57,7 +57,7 @@ final class KitsModule {
             Math.max(0, kit.getLong("cooldown-seconds")), now);
         if (remaining > 0) {
             player.sendMessage(MM.deserialize(settings.getString("messages.cooldown",
-                    "<white>Kit <#f72a4c><kit></#f72a4c> is available in <seconds> seconds."),
+                    "<white>Kit <#f72a4c>%kit%</#f72a4c> is available in %seconds% seconds."),
                 Placeholder.unparsed("kit", name),
                 Placeholder.unparsed("seconds", Long.toString(remaining))));
             return true;
@@ -92,7 +92,7 @@ final class KitsModule {
         equip(player, player.getInventory().getBoots(), boots, player.getInventory()::setBoots);
         equip(player, player.getInventory().getItemInOffHand(), offhand,
             player.getInventory()::setItemInOffHand);
-        message(player, "received", "<white>Received kit <#f72a4c><kit></#f72a4c>.", name);
+        message(player, "received", "<white>Received kit <#f72a4c>%kit%</#f72a4c>.", name);
         if (plugin.getConfig().getBoolean("effects.sounds")) {
             player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ITEM_PICKUP, .8f, 1.2f);
         }

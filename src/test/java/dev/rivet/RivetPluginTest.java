@@ -88,6 +88,14 @@ public final class RivetPluginTest {
         assertEquals(true, RivetPlugin.dropsMobHead(EntityType.COW, 0));
         assertEquals(true, RivetPlugin.dropsMobHead(EntityType.COW, .49, .5));
         assertEquals(false, RivetPlugin.dropsMobHead(EntityType.COW, .5, .5));
+        assertEquals(false, RivetPlugin.dropsMobHead(EntityType.COW, 0, 1,
+            List.of("cow")));
+        assertEquals(false, RivetPlugin.dropsMobHead(EntityType.GIANT, 0, 1,
+            List.of("zombie-head")));
+        assertEquals(false, RivetPlugin.dropsMobHead(EntityType.COW, 0, 1,
+            List.of("PLAYER_HEAD")));
+        assertEquals(true, RivetPlugin.dropsMobHead(EntityType.COW, 0, 1,
+            List.of("PIG")));
     }
 
     @Test
@@ -109,6 +117,13 @@ public final class RivetPluginTest {
         YamlConfiguration global = YamlConfiguration.loadConfiguration(
             new InputStreamReader(globalResource, StandardCharsets.UTF_8));
         assertEquals(Set.of("effects", "message-palette-version"), global.getKeys(false));
+        YamlConfiguration graves = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/settings/graves.yml"), StandardCharsets.UTF_8));
+        assertEquals(false, graves.getBoolean("tracking-compass.enabled", true));
+        YamlConfiguration worlds = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/settings/worlds.yml"), StandardCharsets.UTF_8));
+        assertEquals(true, worlds.getBoolean("crop-trample-protection", false));
+        assertEquals(true, worlds.getBoolean("water-harvest-replanting", false));
     }
 
     @Test
@@ -116,12 +131,21 @@ public final class RivetPluginTest {
         Map<String, List<String>> required = Map.of(
             "breeders", List.of("messages.given", "display.item-name",
                 "effects.activation.sound.name", "effects.activation.particles.enabled"),
+            "creeper-restoration", List.of("messages.given", "core.name",
+                "restoration.restore-container-contents", "effects.start-sound.name",
+                "effects.particles.enabled"),
             "egg-capture", List.of("messages.cannot-capture", "captured-egg.name",
                 "effects.start-sound.name", "effects.particles.enabled"),
-            "environment", List.of("messages.time-set", "messages.weather-set",
-                "effects.time.sound", "effects.weather.particle"),
+            "environment", List.of("speedUpEffect.enabled", "times.day.commands_when_ran",
+                "times.night.commands_when_ran", "weather.rain.commands_when_ran",
+                "weather.thunder.commands_when_ran", "weather.sun.commands_when_ran"),
             "homes", List.of("messages.set", "messages.teleported",
                 "effects.teleport.sound", "effects.teleport.particle"),
+            "mob-heads", List.of("disallowed-heads", "drop-display.name",
+                "drop-effects.sound.name", "drop-effects.particles.spiral.name",
+                "drop-effects.particles.burst.name"),
+            "statistics", List.of("seen.usage", "seen.online", "seen.offline",
+                "seen.date-format"),
             "tree-feller", List.of("tree-feller.message", "tree-feller.sound.name",
                 "veinminer.message", "veinminer.particles.name"),
             "warps", List.of("messages.set", "messages.teleported",
@@ -137,6 +161,43 @@ public final class RivetPluginTest {
     }
 
     @Test
+    public void fastForwardsWorldTimeAcrossMidnightAndStopsExactlyAtTheTarget() {
+        assertEquals(12_000, RivetPlugin.forwardTimeDistance(1_000, 13_000));
+        assertEquals(2_000, RivetPlugin.forwardTimeDistance(23_000, 1_000));
+        assertEquals(0, RivetPlugin.forwardTimeDistance(13_000, 13_000));
+        assertEquals(23_500, RivetPlugin.transitionedTime(23_000, 2_000, 1, 4));
+        assertEquals(0, RivetPlugin.transitionedTime(23_000, 2_000, 2, 4));
+        assertEquals(1_000, RivetPlugin.transitionedTime(23_000, 2_000, 4, 4));
+    }
+
+    @Test
+    public void mapsWaterHarvestedCropsToTheirPlantingItems() {
+        assertEquals(Material.WHEAT_SEEDS, RivetPlugin.plantingItem(Material.WHEAT));
+        assertEquals(Material.CARROT, RivetPlugin.plantingItem(Material.CARROTS));
+        assertEquals(Material.POTATO, RivetPlugin.plantingItem(Material.POTATOES));
+        assertEquals(Material.BEETROOT_SEEDS, RivetPlugin.plantingItem(Material.BEETROOTS));
+        assertEquals(Material.NETHER_WART, RivetPlugin.plantingItem(Material.NETHER_WART));
+        assertEquals(Material.TORCHFLOWER_SEEDS,
+            RivetPlugin.plantingItem(Material.TORCHFLOWER_CROP));
+        assertNull(RivetPlugin.plantingItem(Material.SUGAR_CANE));
+    }
+
+    @Test
+    public void environmentCommandActionsUseSupportedTags() {
+        YamlConfiguration environment = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/settings/environment.yml"), StandardCharsets.UTF_8));
+        assertEquals(true, environment.getBoolean("speedUpEffect.enabled", false));
+        List.of("times.day", "times.night", "weather.rain", "weather.thunder", "weather.sun")
+            .forEach(path -> {
+                List<GuiActions.Action> actions = environment
+                    .getStringList(path + ".commands_when_ran").stream()
+                    .map(GuiActions::parseAction).toList();
+                assertEquals(path, List.of("actionbar", "sound"),
+                    actions.stream().map(GuiActions.Action::tag).toList());
+            });
+    }
+
+    @Test
     public void migratesLegacyMessageColorsToTheRivetPalette() {
         assertEquals("<white>Saved <#f72a4c>Alex</#f72a4c>.</white>",
             RivetConfig.themeMessage("<green>Saved <white>Alex</white>.</green>"));
@@ -144,17 +205,64 @@ public final class RivetPluginTest {
             RivetConfig.themeMessage("<gradient:red:gold><bold>Rivet</bold></gradient>"));
         assertEquals("<#f72a4c>Accent</#f72a4c>",
             RivetConfig.themeMessage("<#f72a4c>Accent</#f72a4c>"));
-        assertEquals("<#f72a4c><player>:</#f72a4c> <white><message></white>",
+        assertEquals("<#f72a4c>%player%:</#f72a4c> <white>%message%</white>",
             RivetConfig.themeConfiguredMessage("chat", "format",
                 "<gray><player>:</gray> <white><message></white>"));
-        assertEquals("<#f72a4c>* <player></#f72a4c> <white><message></white>",
+        assertEquals("<#f72a4c>* %player%</#f72a4c> <white>%message%</white>",
             RivetConfig.themeConfiguredMessage("chat", "me.format",
                 "<light_purple>* <player> <message></light_purple>"));
-        assertEquals("<#f72a4c>[spy] <sender> → <recipient>:</#f72a4c> <white><message></white>",
+        assertEquals("<#f72a4c>[spy] %sender% → %recipient%:</#f72a4c> <white>%message%</white>",
             RivetConfig.themeConfiguredMessage("chat", "social-spy.format",
                 "<dark_gray>[spy]</dark_gray> <gray><sender> → <recipient>:</gray> <white><message></white>"));
         String themed = "<white>Saved <#f72a4c>Alex</#f72a4c>.</white>";
         assertEquals(themed, RivetConfig.migrateMessage("kits", "messages.saved", themed));
+    }
+
+    @Test
+    public void usesPercentPlaceholdersWithoutTreatingThemAsMiniMessageTags() {
+        assertEquals("<player> has <count> items and 100% luck",
+            RivetMiniMessage.toResolverTags("%player% has %count% items and 100% luck"));
+        assertEquals("<plural>", RivetMiniMessage.toResolverTags("%plural%"));
+        assertEquals("%unknown%", RivetMiniMessage.toResolverTags("%unknown%"));
+        Component rendered = RivetMiniMessage.miniMessage().deserialize(
+            "<white>Hello %player%</white>",
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", "Alex"));
+        assertEquals("Hello Alex", PlainTextComponentSerializer.plainText().serialize(rendered));
+        assertEquals("Welcome %player%", RivetConfig.migratePlaceholders(
+            "join-leave", "join.message", "Welcome <player>"));
+        assertEquals("Usage: /msg <player> <message>", RivetConfig.migratePlaceholders(
+            "chat", "messages.usage", "Usage: /msg <player> <message>"));
+    }
+
+    @Test
+    public void supportsLimeAsABrightGreenMiniMessageAlias() {
+        Component rendered = RivetMiniMessage.miniMessage().deserialize(
+            "<lime>+ <white>%player%</white></lime>",
+            net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", "Alex"));
+
+        assertEquals("<green>+ <white>Alex",
+            net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(rendered));
+    }
+
+    @Test
+    public void packagedSettingsUsePercentSyntaxForRivetPlaceholders() {
+        RivetConfig.MODULES.forEach(module -> {
+            YamlConfiguration settings = YamlConfiguration.loadConfiguration(new InputStreamReader(
+                getClass().getResourceAsStream("/settings/" + module + ".yml"), StandardCharsets.UTF_8));
+            settings.getValues(true).forEach((path, value) -> {
+                if (path.toLowerCase(java.util.Locale.ROOT).contains("usage")) {
+                    return;
+                }
+                if (value instanceof String text) {
+                    assertEquals(module + ": " + path, text,
+                        RivetMiniMessage.toPercentPlaceholders(text));
+                } else if (value instanceof List<?> values) {
+                    values.stream().filter(String.class::isInstance).map(String.class::cast)
+                        .forEach(text -> assertEquals(module + ": " + path, text,
+                            RivetMiniMessage.toPercentPlaceholders(text)));
+                }
+            });
+        });
     }
 
     @Test
@@ -163,7 +271,7 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
-        assertEquals(90, plugin.getConfigurationSection("commands").getKeys(false).size());
+        assertEquals(96, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
             .stream().filter(command -> !command.equals("rivet"))
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
@@ -187,14 +295,28 @@ public final class RivetPluginTest {
         assertEquals("rtp", RivetPlugin.moduleForCommand("rtp"));
         assertEquals("near", RivetPlugin.moduleForCommand("near"));
         assertEquals("breeders", RivetPlugin.moduleForCommand("givebreeder"));
+        assertEquals("breeders", RivetPlugin.moduleForCommand("clearhologram"));
+        assertEquals("creeper-restoration", RivetPlugin.moduleForCommand("restorationcore"));
+        assertEquals("statistics", RivetPlugin.moduleForCommand("seen"));
+        assertEquals("staff", RivetPlugin.moduleForCommand("tppos"));
         assertEquals("filter", RivetPlugin.moduleForCommand("filter"));
         assertEquals("chat", RivetPlugin.moduleForCommand("chatcolor"));
         assertEquals("staff", RivetPlugin.moduleForCommand("bossbarmsg"));
+        assertEquals("staff", RivetPlugin.moduleForCommand("commandspy"));
         assertEquals("inventory", RivetPlugin.moduleForCommand("condense"));
+        assertEquals("inventory", RivetPlugin.moduleForCommand("scan"));
         assertEquals("worlds", RivetPlugin.moduleForCommand("findbiome"));
         assertEquals("help", RivetPlugin.moduleForCommand("help"));
         assertNull(RivetPlugin.moduleForCommand("rivet"));
         assertNull(RivetPlugin.moduleForCommand("unknown"));
+    }
+
+    @Test
+    public void staggersRestorationBlocksAcrossTheConfiguredWindow() {
+        assertEquals(0, CreeperRestoration.startTick(0, 5, 70, 10));
+        assertEquals(30, CreeperRestoration.startTick(2, 5, 70, 10));
+        assertEquals(60, CreeperRestoration.startTick(4, 5, 70, 10));
+        assertEquals(0, CreeperRestoration.startTick(0, 1, 70, 10));
     }
 
     @Test
@@ -210,6 +332,44 @@ public final class RivetPluginTest {
         assertEquals(Arrays.asList("new", null, "hidden-a", "hidden-b"),
             BackpacksModule.mergeContents(List.of("old", "old", "hidden-a", "hidden-b"),
                 Arrays.asList("new", null), 4));
+    }
+
+    @Test
+    public void mapsPositiveAndNegativeRegionHeaderSlotsToChunkCoordinates() {
+        assertEquals(new ScanModule.ChunkPosition(0, 0),
+            ScanModule.chunkPosition(0, 0, 0));
+        assertEquals(new ScanModule.ChunkPosition(31, 31),
+            ScanModule.chunkPosition(0, 0, 1023));
+        assertEquals(new ScanModule.ChunkPosition(-32, 64),
+            ScanModule.chunkPosition(-1, 2, 0));
+        assertEquals(new ScanModule.ChunkPosition(-1, 95),
+            ScanModule.chunkPosition(-1, 2, 1023));
+    }
+
+    @Test
+    public void clearsOnlyTaggedAutoBreederHolograms() {
+        assertEquals(true, AutoBreeder.clearableHologram("world:1,2,3", null));
+        assertEquals(false, AutoBreeder.clearableHologram(null, null));
+        assertEquals(false, AutoBreeder.clearableHologram("world:1,2,3", "shop-title"));
+    }
+
+    @Test
+    public void trashGuiUsesOneBasedSlotsAndInclusiveRanges() {
+        YamlConfiguration item = new YamlConfiguration();
+        item.set("slots", List.of("46-49", 54, "outside", 60));
+        item.set("slot", 50);
+        assertEquals(List.of(49, 45, 46, 47, 48, 53),
+            TrashModule.configuredSlots(item, 54));
+    }
+
+    @Test
+    public void guiActionsParseEverySupportedTagCaseInsensitively() {
+        List<String> tags = List.of("toast", "actionbar", "particle", "title", "bossbar",
+            "lightning", "sound", "message", "close");
+        tags.forEach(tag -> assertEquals(tag,
+            GuiActions.parseAction("[" + tag.toUpperCase() + "] value").tag()));
+        assertEquals("value", GuiActions.parseAction("[message] value").value());
+        assertNull(GuiActions.parseAction("message value"));
     }
 
     @Test
@@ -263,6 +423,17 @@ public final class RivetPluginTest {
         assertEquals(false, ChatModule.shouldReceiveSpy(sender, sender, recipient, true, true));
         assertEquals(false, ChatModule.shouldReceiveSpy(recipient, sender, recipient, true, true));
         assertEquals(false, ChatModule.shouldReceiveSpy(spy, sender, recipient, false, true));
+    }
+
+    @Test
+    public void commandSpyRequiresAnEnabledVisiblePermittedObserver() {
+        UUID sender = UUID.randomUUID();
+        UUID spy = UUID.randomUUID();
+        assertEquals(true, StaffTools.shouldReceiveCommandSpy(spy, sender, true, true, true));
+        assertEquals(false, StaffTools.shouldReceiveCommandSpy(sender, sender, true, true, true));
+        assertEquals(false, StaffTools.shouldReceiveCommandSpy(spy, sender, false, true, true));
+        assertEquals(false, StaffTools.shouldReceiveCommandSpy(spy, sender, true, false, true));
+        assertEquals(false, StaffTools.shouldReceiveCommandSpy(spy, sender, true, true, false));
     }
 
     @Test
@@ -412,6 +583,8 @@ public final class RivetPluginTest {
         assertEquals("12d 4h 32m", StatisticsModule.duration((12L * 24 * 60 + 4 * 60 + 32) * 60_000));
         assertEquals("4h 32m", StatisticsModule.duration((4L * 60 + 32) * 60_000));
         assertEquals("32m", StatisticsModule.duration(32 * 60_000L));
+        assertEquals("32s", StatisticsModule.relativeDuration(32_000));
+        assertEquals("1m", StatisticsModule.relativeDuration(60_000));
     }
 
     @Test
@@ -779,6 +952,18 @@ public final class RivetPluginTest {
     }
 
     @Test
+    public void parsesAbsoluteAndRelativeTeleportCoordinatesWithinWorldLimits() {
+        assertEquals(12.5, RivetPlugin.parseCoordinate("12.5", 100), .0001);
+        assertEquals(100, RivetPlugin.parseCoordinate("~", 100), .0001);
+        assertEquals(90.5, RivetPlugin.parseCoordinate("~-9.5", 100), .0001);
+        assertNull(RivetPlugin.parseCoordinate("nowhere", 100));
+        assertNull(RivetPlugin.parseCoordinate("NaN", 100));
+        assertEquals(true, RivetPlugin.validTeleportPosition(10, 64, -10, -64, 320));
+        assertEquals(false, RivetPlugin.validTeleportPosition(10, 320, -10, -64, 320));
+        assertEquals(false, RivetPlugin.validTeleportPosition(30_000_000, 64, 0, -64, 320));
+    }
+
+    @Test
     public void normalizesOptionalHomeNames() {
         assertEquals("home", RivetPlugin.homeName(new String[0]));
         assertEquals("mine", RivetPlugin.homeName(new String[] {"Mine"}));
@@ -793,7 +978,7 @@ public final class RivetPluginTest {
 
     @Test
     public void formatsChatWithoutParsingPlayerMessagesAsMarkup() {
-        Component formatted = ChatModule.format("<player>: <message>", Component.text("Alex"), Component.text("<red>hello"));
+        Component formatted = ChatModule.format("%player%: %message%", Component.text("Alex"), Component.text("<red>hello"));
         assertEquals("Alex: <red>hello", PlainTextComponentSerializer.plainText().serialize(formatted));
     }
 

@@ -50,7 +50,7 @@ import java.util.UUID;
 
 final class GraveModule implements Listener {
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
 
     private final RivetPlugin plugin;
     private final DelayedTeleport teleports;
@@ -90,7 +90,7 @@ final class GraveModule implements Listener {
             death.getY(), death.getZ(), death.getYaw(), death.getPitch(),
             previous == null ? 0 : previous.lastBack));
         player.sendMessage(MM.deserialize(settings.getString("death-message",
-                "<white>You died at <#f72a4c><x>, <y>, <z></#f72a4c> in <white><world></white>.</white>"),
+                "<white>You died at <#f72a4c>%x%, %y%, %z%</#f72a4c> in <white>%world%</white>.</white>"),
             Placeholder.unparsed("x", Integer.toString(death.getBlockX())),
             Placeholder.unparsed("y", Integer.toString(death.getBlockY())),
             Placeholder.unparsed("z", Integer.toString(death.getBlockZ())),
@@ -133,7 +133,7 @@ final class GraveModule implements Listener {
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
-        if (!settings.getBoolean("tracking-compass.enabled", true)) {
+        if (!settings.getBoolean("tracking-compass.enabled", false)) {
             return;
         }
         Grave grave = graves.values().stream()
@@ -177,7 +177,7 @@ final class GraveModule implements Listener {
             Math.max(0, settings.getLong("back.cooldown-seconds", 30)), now);
         if (remaining > 0) {
             player.sendMessage(MM.deserialize(settings.getString("back.messages.cooldown",
-                    "<white>You can use /back again in <seconds> seconds.</white>"),
+                    "<white>You can use /back again in %seconds% seconds.</white>"),
                 Placeholder.unparsed("seconds", Long.toString(remaining))));
             return true;
         }
@@ -185,7 +185,7 @@ final class GraveModule implements Listener {
         teleports.start(player, destination, delay,
             settings.getBoolean("back.cancel-on-move", true),
             MM.deserialize(settings.getString("back.messages.wait",
-                    "<white>Returning in <#f72a4c><seconds></#f72a4c> seconds. Do not move.</white>"),
+                    "<white>Returning in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"),
                 Placeholder.unparsed("seconds", Integer.toString(delay))),
             MM.deserialize(settings.getString("back.messages.cancelled",
                 "<white>Back teleport cancelled because you moved.</white>")),

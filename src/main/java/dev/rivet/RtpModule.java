@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 final class RtpModule {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private static final Set<Material> DANGEROUS = Set.of(Material.LAVA, Material.FIRE,
         Material.SOUL_FIRE, Material.MAGMA_BLOCK, Material.CACTUS, Material.CAMPFIRE,
         Material.SOUL_CAMPFIRE, Material.SWEET_BERRY_BUSH, Material.POWDER_SNOW,
@@ -56,7 +56,7 @@ final class RtpModule {
             + cooldown - now;
         if (remaining > 0 && !player.hasPermission("rivet.rtp.cooldown.bypass")) {
             player.sendMessage(MM.deserialize(settings.getString("messages.cooldown",
-                    "<white>You can use RTP again in <#f72a4c><seconds>s</#f72a4c>."),
+                    "<white>You can use RTP again in <#f72a4c>%seconds%s</#f72a4c>."),
                 Placeholder.unparsed("seconds", Long.toString((remaining + 999) / 1000))));
             return true;
         }
@@ -126,7 +126,7 @@ final class RtpModule {
                 }
                 int warmup = Math.max(0, settings.getInt("warmup-seconds", 3));
                 Component waiting = MM.deserialize(settings.getString("messages.warmup",
-                        "<white>Teleporting in <#f72a4c><seconds></#f72a4c> seconds. Do not move."),
+                        "<white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move."),
                     Placeholder.unparsed("seconds", Integer.toString(warmup)));
                 Component cancelled = MM.deserialize(settings.getString("messages.cancelled",
                     "<white>Random teleport cancelled because you moved."));

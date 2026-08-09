@@ -1,0 +1,75 @@
+# Creeper craters are kept in memory until restored or the server restarts.
+
+core:
+  material: echo_shard
+  name: "<#f72a4c><bold>Restoration Core</bold></#f72a4c>"
+  lore:
+    - "<white>Right-click to throw.</white>"
+    - "<white>Repairs a nearby creeper crater.</white>"
+  enchanted-glint: true
+  projectile-speed: 1.5
+  throw-cooldown-ticks: 8
+
+activation-radius: 6.0
+
+restoration:
+  # When false, container blocks such as chests are destroyed permanently.
+  restore-containers: true
+  # Only applies when restore-containers is true.
+  restore-container-contents: true
+  # Restores signs, banners, decorated pots, and other non-container block entities.
+  restore-other-block-entity-data: true
+  total-duration-ticks: 70
+  block-flight-ticks: 16
+
+explosion-debris:
+  enabled: true
+  duration-ticks: 24
+  maximum-displays: 128
+  horizontal-speed: 0.16
+  vertical-speed: 0.27
+
+messages:
+  usage: "<white>Usage: /restorationcore [player] [amount]</white>"
+  player-not-online: "<white>That player is not online.</white>"
+  invalid-amount: "<white>Amount must be a whole number from 1 to 2304.</white>"
+  given: "<white>Gave <#f72a4c>%amount% Restoration Core%plural%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.</white>"
+  received: "<white>You received <#f72a4c>%amount% Restoration Core%plural%</#f72a4c>.</white>"
+  no-crater: "<white>No repairable creeper crater was found nearby.</white>"
+  restoring: "<white>Reconstructing <#f72a4c>%blocks%</#f72a4c> blocks.</white>"
+  restored: "<white>Restored <#f72a4c>%blocks%</#f72a4c> blocks.</white>"
+
+effects:
+  throw-sound:
+    enabled: true
+    name: entity_egg_throw
+    volume: 0.8
+    pitch: 0.8
+  miss-sound:
+    enabled: true
+    name: block_amethyst_block_hit
+    volume: 0.7
+    pitch: 0.7
+  start-sound:
+    enabled: true
+    name: block_beacon_activate
+    volume: 1.0
+    pitch: 1.35
+  block-sound:
+    enabled: true
+    name: block_amethyst_block_place
+    volume: 0.25
+    pitch: 1.5
+  completion-sound:
+    enabled: true
+    name: block_beacon_power_select
+    volume: 1.0
+    pitch: 1.65
+  particles:
+    enabled: true
+    trail-name: end_rod
+    trail-count: 2
+    impact-name: electric_spark
+    impact-count: 4
+    completion-name: reverse_portal
+    completion-count: 80

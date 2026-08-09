@@ -70,19 +70,28 @@ commands:
     description: Give an item to every online player
     usage: /giveall <item> [amount]
     permission: rivet.giveall
+  scan:
+    description: Scan saved world containers for an item
+    usage: /scan <item> [world|all]
+    permission: rivet.inventory.scan
   givebreeder:
     aliases: [giveautobreeder]
     description: Give an animal-specific auto breeder
     usage: /givebreeder <animal> [amount] or /givebreeder <player> <animal> [amount]
     permission: rivet.givebreeder
+  restorationcore:
+    aliases: [givecore]
+    description: Give one or more throwable Restoration Cores
+    usage: /restorationcore [player] [amount]
+    permission: rivet.restorationcore.give
   killall:
     description: Remove all mobs from the current world
     permission: rivet.world
   day:
-    description: Set the current world to day
+    description: Fast-forward the current world to day
     permission: rivet.environment
   night:
-    description: Set the current world to night
+    description: Fast-forward the current world to night
     permission: rivet.environment
   noon:
     description: Set the current world to noon
@@ -123,6 +132,10 @@ commands:
     description: Teleport to a player
     usage: /tp <player>
     permission: rivet.teleport
+  tppos:
+    description: Teleport to coordinates in the current world
+    usage: /tppos <x> <y> <z>
+    permission: rivet.tppos
   vanish:
     aliases: [v]
     description: Toggle staff vanish
@@ -135,6 +148,10 @@ commands:
     description: Set your or another player's flight speed
     usage: /flyspeed [player] <amount>
     permission: rivet.flyspeed
+  commandspy:
+    aliases: [cspy]
+    description: Toggle staff command monitoring
+    permission: rivet.commandspy
   heal:
     description: Restore health for yourself or another player
     usage: /heal [player]
@@ -164,6 +181,9 @@ commands:
     description: Manage holograms
     usage: /hologram help
     permission: rivet.holograms
+  clearhologram:
+    description: Clear stale auto-breeder holograms without changing /holo displays
+    permission: rivet.clearhologram
   spawn:
     description: Teleport to the server spawn
     permission: rivet.spawn
@@ -308,6 +328,10 @@ commands:
     description: Show native player playtime
     usage: /playtime [player]
     permission: rivet.playtime
+  seen:
+    description: Show when a player was last online
+    usage: /seen <player>
+    permission: rivet.seen
   ride:
     description: Ride the entity you are looking at
     permission: rivet.ride
@@ -355,6 +379,8 @@ permissions:
     default: op
   rivet.inventory.clear.others:
     default: op
+  rivet.inventory.scan:
+    default: op
   rivet.condense:
     default: true
   rivet.donate:
@@ -362,6 +388,10 @@ permissions:
   rivet.giveall:
     default: op
   rivet.givebreeder:
+    default: op
+  rivet.clearhologram:
+    default: op
+  rivet.restorationcore.give:
     default: op
   rivet.message:
     default: true
@@ -379,6 +409,8 @@ permissions:
     default: op
   rivet.teleport:
     default: op
+  rivet.tppos:
+    default: op
   rivet.vanish:
     default: op
   rivet.vanish.see:
@@ -388,6 +420,8 @@ permissions:
   rivet.flyspeed:
     default: op
   rivet.flyspeed.others:
+    default: op
+  rivet.commandspy:
     default: op
   rivet.heal:
     default: op
@@ -542,6 +576,8 @@ permissions:
     default: true
   rivet.playtime.others:
     default: op
+  rivet.seen:
+    default: true
   rivet.ride:
     default: op
   rivet.sameip:

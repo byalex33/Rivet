@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 final class HelpModule {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private static final int DEFAULT_PAGE_SIZE = 6;
     private static final int MINIMUM_PAGE_SIZE = 3;
     private static final int MAXIMUM_PAGE_SIZE = 10;
@@ -58,7 +58,7 @@ final class HelpModule {
                 "<#f72a4c><bold>RIVET HELP</bold></#f72a4c>")))
             .append(Component.text(" ━━━━━━━━━━", RivetPalette.SECONDARY)));
         sender.sendMessage(MM.deserialize(plugin.settings("help").getString("subtitle",
-                "<white><commands> available commands <#f72a4c>•</#f72a4c> Page <page>/<pages></white>"),
+                "<white>%commands% available commands <#f72a4c>•</#f72a4c> Page %page%/%pages%</white>"),
             Placeholder.unparsed("commands", Integer.toString(commands.size())),
             Placeholder.unparsed("page", Integer.toString(page)),
             Placeholder.unparsed("pages", Integer.toString(pages))));

@@ -1,7 +1,43 @@
 # Chance that a supported mob killed by a player drops its head (0.0 to 1.0).
 drop-chance: 0.03
 
+# Entity types are matched case-insensitively, for example COW or WITHER_SKELETON.
+# Head materials are also accepted: ZOMBIE_HEAD blocks zombies and giants, while
+# PLAYER_HEAD blocks every mob that uses a custom player-head texture.
+disallowed-heads: []
+
+drop-display:
+  name: "<#f72a4c><bold>%mob% Head</bold></#f72a4c>"
+
+drop-effects:
+  enabled: true
+  sound:
+    enabled: true
+    name: entity_turtle_egg_hatch
+    volume: 1.2
+    pitch: 0.85
+  particles:
+    spiral:
+      enabled: true
+      name: end_rod
+      steps: 8
+      points-per-step: 16
+      period-ticks: 2
+      initial-radius: 0.15
+      radius-per-step: 0.08
+      height-per-step: 0.06
+      rotation-per-step: 0.3
+      speed: 0.01
+    burst:
+      enabled: true
+      name: totem_of_undying
+      count: 8
+      offset-x: 0.3
+      offset-y: 0.35
+      offset-z: 0.3
+      speed: 0.08
+
 player-heads:
-  display-name: "<#f72a4c><player>'s Head</#f72a4c>"
+  display-name: "<#f72a4c>%player%'s Head</#f72a4c>"
   lore:
-    - "<white>Requested by <requester></white>"
+    - "<white>Requested by %requester%</white>"

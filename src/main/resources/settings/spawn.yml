@@ -10,6 +10,6 @@ join:
 messages:
   set: "<white>Spawn set to your location.</white>"
   not-set: "<white>The server spawn has not been set.</white>"
-  wait: "<white>Teleporting to spawn in <#f72a4c><seconds></#f72a4c> seconds. Do not move.</white>"
+  wait: "<white>Teleporting to spawn in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"
   cancelled: "<white>Teleport cancelled because you moved.</white>"
   teleported: "<white>Teleported to spawn.</white>"

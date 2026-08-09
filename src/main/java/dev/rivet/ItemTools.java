@@ -19,8 +19,8 @@ import java.util.Locale;
 import java.util.Map;
 
 final class ItemTools {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final MiniMessage FORMATTED = MiniMessage.builder().tags(TagResolver.resolver(
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
+    private static final MiniMessage FORMATTED = RivetMiniMessage.builder().tags(TagResolver.resolver(
         StandardTags.color(), StandardTags.decorations())).build();
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
     private static final Map<Material, Compression> COMPRESSIONS = Map.ofEntries(
@@ -112,7 +112,7 @@ final class ItemTools {
         }
         if (!silent) {
             String material = parsed == null ? "items" : parsed.material().name().toLowerCase(Locale.ROOT);
-            actor.sendMessage(MM.deserialize("<white>Removed <#f72a4c><count> <item></#f72a4c> from <#f72a4c><player></#f72a4c>.",
+            actor.sendMessage(MM.deserialize("<white>Removed <#f72a4c>%count% %item%</#f72a4c> from <#f72a4c>%player%</#f72a4c>.",
                 net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("count", Integer.toString(removed)),
                 net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", material),
                 net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", target.getName())));
@@ -151,14 +151,14 @@ final class ItemTools {
         String summary = String.join(", ", made.entrySet().stream()
             .map(entry -> entry.getValue() + " " + entry.getKey().name().toLowerCase(Locale.ROOT).replace('_', ' '))
             .toList());
-        player.sendMessage(MM.deserialize("<white>Condensed: <#f72a4c><items></#f72a4c>.",
+        player.sendMessage(MM.deserialize("<white>Condensed: <#f72a4c>%items%</#f72a4c>.",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("items", summary)));
         return true;
     }
 
     boolean donate(Player sender, String[] args) {
         if (args.length < 1 || args.length > 2) {
-            sender.sendMessage(MM.deserialize("<white>Usage: /donate <player> [amount]"));
+            sender.sendMessage(MM.deserialize("<white>Usage: /donate &lt;player&gt; [amount]"));
             return true;
         }
         Player receiver = plugin.getServer().getPlayerExact(args[0]);
@@ -189,11 +189,11 @@ final class ItemTools {
         } else {
             held.setAmount(held.getAmount() - amount);
         }
-        sender.sendMessage(MM.deserialize("<white>Donated <#f72a4c><amount> <item></#f72a4c> to <#f72a4c><player></#f72a4c>.",
+        sender.sendMessage(MM.deserialize("<white>Donated <#f72a4c>%amount% %item%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("amount", Integer.toString(amount)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", held.getType().name().toLowerCase(Locale.ROOT)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", receiver.getName())));
-        receiver.sendMessage(MM.deserialize("<white>Received <#f72a4c><amount> <item></#f72a4c> from <#f72a4c><player></#f72a4c>.",
+        receiver.sendMessage(MM.deserialize("<white>Received <#f72a4c>%amount% %item%</#f72a4c> from <#f72a4c>%player%</#f72a4c>.",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("amount", Integer.toString(amount)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", donated.getType().name().toLowerCase(Locale.ROOT)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("player", sender.getName())));
@@ -202,7 +202,7 @@ final class ItemTools {
 
     boolean giveAll(Player actor, String[] args) {
         if (args.length < 1 || args.length > 2) {
-            actor.sendMessage(MM.deserialize("<white>Usage: /giveall <item> [amount]"));
+            actor.sendMessage(MM.deserialize("<white>Usage: /giveall &lt;item&gt; [amount]"));
             return true;
         }
         Material material = Material.matchMaterial(args[0]);
@@ -214,7 +214,7 @@ final class ItemTools {
         plugin.getServer().getOnlinePlayers().forEach(player ->
             player.getInventory().addItem(new ItemStack(material, amount)).values()
                 .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover)));
-        actor.sendMessage(MM.deserialize("<white>Gave <#f72a4c><amount> <item></#f72a4c> to <#f72a4c><count></#f72a4c> player(s).",
+        actor.sendMessage(MM.deserialize("<white>Gave <#f72a4c>%amount% %item%</#f72a4c> to <#f72a4c>%count%</#f72a4c> player(s).",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("amount", Integer.toString(amount)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("item", material.name().toLowerCase(Locale.ROOT)),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed("count",
@@ -267,7 +267,7 @@ final class ItemTools {
             }
         }
         player.sendMessage(MM.deserialize(settings.getString("messages.repair-all",
-                "<white>Repaired <#f72a4c><count></#f72a4c> items."),
+                "<white>Repaired <#f72a4c>%count%</#f72a4c> items."),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed(
                 "count", Integer.toString(repaired))));
         return true;
@@ -389,7 +389,7 @@ final class ItemTools {
 
     private void invalid(Player player, int maximum) {
         player.sendMessage(MM.deserialize(settings.getString("messages.invalid-text",
-                "<white>Text must be 1-<max> visible characters without control characters."),
+                "<white>Text must be 1-%max% visible characters without control characters."),
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed(
                 "max", Integer.toString(maximum))));
     }

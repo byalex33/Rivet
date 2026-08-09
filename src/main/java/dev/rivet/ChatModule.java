@@ -26,10 +26,10 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 final class ChatModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final MiniMessage CHAT_COLORS = MiniMessage.builder().tags(TagResolver.resolver(
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
+    private static final MiniMessage CHAT_COLORS = RivetMiniMessage.builder().tags(TagResolver.resolver(
         StandardTags.color(), StandardTags.gradient(), StandardTags.rainbow())).build();
-    private static final MiniMessage PLAYER_FORMATTING = MiniMessage.builder().tags(TagResolver.resolver(
+    private static final MiniMessage PLAYER_FORMATTING = RivetMiniMessage.builder().tags(TagResolver.resolver(
         StandardTags.color(), StandardTags.decorations(), StandardTags.gradient(),
         StandardTags.rainbow(), StandardTags.reset())).build();
     private static final Pattern ITEM_TOKEN = Pattern.compile("\\[(?:i|item)]",
@@ -65,9 +65,9 @@ final class ChatModule implements Listener {
 
     void reload() {
         YamlConfiguration config = plugin.settings("chat");
-        chatFormat = config.getString("format", "<#f72a4c><player>:</#f72a4c> <white><message></white>");
-        sentFormat = config.getString("private-messages.sent", "<#f72a4c>[you → <player>]</#f72a4c> <white><message></white>");
-        receivedFormat = config.getString("private-messages.received", "<#f72a4c>[<player> → you]</#f72a4c> <white><message></white>");
+        chatFormat = config.getString("format", "<#f72a4c>%player%:</#f72a4c> <white>%message%</white>");
+        sentFormat = config.getString("private-messages.sent", "<#f72a4c>[you → %player%]</#f72a4c> <white>%message%</white>");
+        receivedFormat = config.getString("private-messages.received", "<#f72a4c>[%player% → you]</#f72a4c> <white>%message%</white>");
     }
 
     @EventHandler
@@ -87,7 +87,7 @@ final class ChatModule implements Listener {
 
     boolean message(Player sender, String[] args) {
         if (args.length < 2) {
-            send(sender, "<white>Usage: /msg <player> <message>");
+            send(sender, "<white>Usage: /msg &lt;player&gt; &lt;message&gt;");
             return true;
         }
         Player recipient = plugin.getServer().getPlayerExact(args[0]);
@@ -110,7 +110,7 @@ final class ChatModule implements Listener {
         sender.sendMessage(format(sentFormat, recipient.displayName(), message));
         recipient.sendMessage(format(receivedFormat, sender.displayName(), message));
         String spyFormat = plugin.settings("chat").getString("social-spy.format",
-            "<#f72a4c>[spy] <sender> → <recipient>:</#f72a4c> <white><message></white>");
+            "<#f72a4c>[spy] %sender% → %recipient%:</#f72a4c> <white>%message%</white>");
         plugin.getServer().getOnlinePlayers().stream()
             .filter(spy -> shouldReceiveSpy(spy.getUniqueId(), sender.getUniqueId(),
                 recipient.getUniqueId(), socialData.getBoolean("social-spy." + spy.getUniqueId()),
@@ -129,13 +129,13 @@ final class ChatModule implements Listener {
 
     boolean me(Player sender, String[] args) {
         if (args.length == 0) {
-            send(sender, "<white>Usage: /me <message>");
+            send(sender, "<white>Usage: /me &lt;message&gt;");
             return true;
         }
         String raw = String.join(" ", args);
         Component action = formatMeMessage(raw, sender.hasPermission("rivet.me.format"));
         String configured = plugin.settings("chat").getString("me.format",
-            "<#f72a4c>* <player></#f72a4c> <white><message></white>");
+            "<#f72a4c>* %player%</#f72a4c> <white>%message%</white>");
         plugin.getServer().getOnlinePlayers().stream()
             .filter(viewer -> viewer.canSee(sender) || viewer.equals(sender))
             .filter(viewer -> !ignores(ignoreData, viewer.getUniqueId(), sender.getUniqueId())
@@ -148,7 +148,7 @@ final class ChatModule implements Listener {
 
     boolean reply(Player sender, String[] args) {
         if (args.length == 0) {
-            send(sender, "<white>Usage: /r <message>");
+            send(sender, "<white>Usage: /r &lt;message&gt;");
             return true;
         }
         Player recipient = plugin.getServer().getPlayer(replies.get(sender.getUniqueId()));
@@ -198,7 +198,7 @@ final class ChatModule implements Listener {
                 }
             }).sorted(String.CASE_INSENSITIVE_ORDER).toList();
             player.sendMessage(MM.deserialize(plugin.settings("chat").getString("ignore.messages.list",
-                    "<#f72a4c>Ignored players:</#f72a4c> <#f72a4c><players></#f72a4c>"),
+                    "<#f72a4c>Ignored players:</#f72a4c> <#f72a4c>%players%</#f72a4c>"),
                 Placeholder.unparsed("players", names.isEmpty() ? "none" : String.join(", ", names))));
             return true;
         }
@@ -240,8 +240,8 @@ final class ChatModule implements Listener {
         }
         String key = added ? "added" : "removed";
         player.sendMessage(MM.deserialize(plugin.settings("chat").getString("ignore.messages." + key,
-                added ? "<white>You now ignore <#f72a4c><player></#f72a4c>."
-                    : "<white>You no longer ignore <#f72a4c><player></#f72a4c>."),
+                added ? "<white>You now ignore <#f72a4c>%player%</#f72a4c>."
+                    : "<white>You no longer ignore <#f72a4c>%player%</#f72a4c>."),
             Placeholder.unparsed("player", target.getName())));
         return true;
     }
@@ -288,8 +288,8 @@ final class ChatModule implements Listener {
             return true;
         }
         actor.sendMessage(MM.deserialize(value.equalsIgnoreCase("reset")
-                ? "<white>Chat color reset for <#f72a4c><player></#f72a4c>."
-                : "<white>Chat color set for <#f72a4c><player></#f72a4c>.",
+                ? "<white>Chat color reset for <#f72a4c>%player%</#f72a4c>."
+                : "<white>Chat color set for <#f72a4c>%player%</#f72a4c>.",
             Placeholder.unparsed("player", target.getName())));
         return true;
     }
@@ -359,7 +359,7 @@ final class ChatModule implements Listener {
 
     static Component formatMessage(String color, Component message) {
         return color == null || color.isBlank() ? message
-            : CHAT_COLORS.deserialize(color + "<message>", Placeholder.component("message", message));
+            : CHAT_COLORS.deserialize(color + "%message%", Placeholder.component("message", message));
     }
 
     static Component formatMeMessage(String message, boolean formatting) {

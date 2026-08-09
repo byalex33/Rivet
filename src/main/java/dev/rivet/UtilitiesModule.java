@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 
 final class UtilitiesModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final Set<UUID> riders = new java.util.HashSet<>();
 
@@ -114,7 +114,7 @@ final class UtilitiesModule implements Listener {
             names = Component.text("none");
         }
         String format = plugin.settings("utilities").getString("list.format",
-            "<#f72a4c>Online (<count>/<maximum>):</#f72a4c> <#f72a4c><players></#f72a4c>");
+            "<#f72a4c>Online (%count%/%maximum%):</#f72a4c> <#f72a4c>%players%</#f72a4c>");
         viewer.sendMessage(MM.deserialize(format,
             Placeholder.unparsed("count", Integer.toString(visible.size())),
             Placeholder.unparsed("maximum", Integer.toString(plugin.getServer().getMaxPlayers())),
@@ -136,7 +136,7 @@ final class UtilitiesModule implements Listener {
         int ping = target.getPing();
         String quality = pingQuality(ping);
         actor.sendMessage(MM.deserialize(plugin.settings("utilities").getString("ping.format",
-                "<#f72a4c><player>'s ping:</#f72a4c> <#f72a4c><ping> ms</#f72a4c> <white>(<quality>)</white>"),
+                "<#f72a4c>%player%'s ping:</#f72a4c> <#f72a4c>%ping% ms</#f72a4c> <white>(%quality%)</white>"),
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("ping", Integer.toString(ping)),
             Placeholder.unparsed("quality", quality)));

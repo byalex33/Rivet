@@ -12,7 +12,7 @@ import java.time.Duration;
 import java.util.List;
 
 final class DailyModule {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
     private final YamlConfiguration data;
@@ -35,7 +35,7 @@ final class DailyModule {
         ClaimState state = evaluate(data.getLong(path + ".last-claim"),
             data.getInt(path + ".streak"), period, reset, now);
         if (!state.eligible()) {
-            message(player, "wait", "<white>Your next daily reward is available in <#f72a4c><time></#f72a4c>.",
+            message(player, "wait", "<white>Your next daily reward is available in <#f72a4c>%time%</#f72a4c>.",
                 "time", duration(state.remainingMillis()));
             return true;
         }
@@ -70,7 +70,7 @@ final class DailyModule {
         if (milestone != null) {
             grant(player, milestone);
         }
-        message(player, "claimed", "<white>Daily reward claimed! <white>Streak: <#f72a4c><streak></#f72a4c>",
+        message(player, "claimed", "<white>Daily reward claimed! <white>Streak: <#f72a4c>%streak%</#f72a4c>",
             "streak", Integer.toString(state.streak()));
         return true;
     }
@@ -83,7 +83,8 @@ final class DailyModule {
             player.giveExp(experience);
         }
         reward.getStringList("commands").forEach(command -> plugin.getServer().dispatchCommand(
-            plugin.getServer().getConsoleSender(), command.replace("<player>", player.getName())));
+            plugin.getServer().getConsoleSender(), command.replace("%player%", player.getName())
+                .replace("<player>", player.getName())));
     }
 
     private void give(Player player, ItemStack item) {

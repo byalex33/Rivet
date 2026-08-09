@@ -1,6 +1,6 @@
 # Permissions
 
-Rivet declares 112 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
+Rivet declares 113 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
 
 The command permission is checked by Paper before Rivet handles the command. Additional `.others`, formatting, bypass, row, and wildcard nodes enable narrower capabilities inside a command.
 
@@ -22,6 +22,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.donate` | `true` | [`/donate`](commands.md#donate) |
 | `rivet.giveall` | `op` | [`/giveall`](commands.md#giveall) |
 | `rivet.givebreeder` | `op` | [`/givebreeder`](commands.md#givebreeder) |
+| `rivet.clearhologram` | `op` | [`/clearhologram`](commands.md#clearhologram) |
 | `rivet.restorationcore.give` | `op` | [`/restorationcore`](commands.md#restorationcore) |
 | `rivet.message` | `true` | [`/msg`](commands.md#msg), [`/r`](commands.md#r) |
 | `rivet.socialspy` | `op` | [`/socialspy`](commands.md#socialspy) |

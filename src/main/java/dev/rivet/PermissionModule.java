@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 
 final class PermissionModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final File groupsFile;
     private final File usersFile;

@@ -1,6 +1,6 @@
 # Command reference
 
-Rivet registers 95 commands. Every command below has a stable link used by the documentation sidebar.
+Rivet registers 96 commands. Every command below has a stable link used by the documentation sidebar.
 
 ## Syntax conventions
 
@@ -22,7 +22,7 @@ Rivet registers 95 commands. Every command below has a stable link used by the d
 | Gameplay systems | [`/givebreeder`](#givebreeder), [`/restorationcore`](#restorationcore), [`/kit`](#kit), [`/daily`](#daily), [`/filter`](#filter), [`/head`](#head) |
 | Player information and utilities | [`/stats`](#stats), [`/playtime`](#playtime), [`/seen`](#seen), [`/craft`](#craft), [`/anvil`](#anvil), [`/smithing`](#smithing), [`/stonecutter`](#stonecutter), [`/grindstone`](#grindstone), [`/jump`](#jump), [`/list`](#list), [`/ping`](#ping), [`/ride`](#ride), [`/sit`](#sit), [`/lay`](#lay), [`/crawl`](#crawl) |
 | Staff and moderation | [`/gmc`](#gmc), [`/gms`](#gms), [`/vanish`](#vanish), [`/fly`](#fly), [`/flyspeed`](#flyspeed), [`/commandspy`](#commandspy), [`/heal`](#heal), [`/feed`](#feed), [`/god`](#god), [`/bossbarmsg`](#bossbarmsg), [`/note`](#note), [`/sameip`](#sameip), [`/toast`](#toast) |
-| Server administration | [`/perm`](#perm), [`/group`](#group), [`/hologram`](#hologram), [`/help`](#help), [`/rivet`](#rivet) |
+| Server administration | [`/perm`](#perm), [`/group`](#group), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/help`](#help), [`/rivet`](#rivet) |
 
 ## Homes and warps
 
@@ -1188,6 +1188,17 @@ Supports `set`, `list`, and `info` for Rivet permission groups.
 Manage holograms.
 
 Run `/hologram help` for create, copy, edit, delete, list, nearby, teleport, and visibility operations.
+
+<a id="clearhologram"></a>
+
+### `/clearhologram`
+
+- **Syntax:** `/clearhologram`
+- **Permission:** `rivet.clearhologram`
+- **Default:** `op`
+- **Aliases:** None
+
+Clear loaded auto-breeder holograms and recreate displays for active breeders. Holograms created with `/holo` are not changed.
 
 <a id="help"></a>
 

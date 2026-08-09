@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class NicknameModule implements Listener {
-    private static final MiniMessage FORMATTED = MiniMessage.builder()
+    private static final MiniMessage FORMATTED = RivetMiniMessage.builder()
         .tags(net.kyori.adventure.text.minimessage.tag.resolver.TagResolver.resolver(
             StandardTags.color(), StandardTags.decorations())).build();
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
@@ -43,7 +43,7 @@ final class NicknameModule implements Listener {
             }
             nickname = args[1];
         } else {
-            sender.sendMessage(FORMATTED.deserialize("<white>Usage: /nick <nickname|off> or /nick <player> <nickname|off>"));
+            sender.sendMessage(FORMATTED.deserialize("<white>Usage: /nick <nickname|off> or /nick &lt;player&gt; <nickname|off>"));
             return true;
         }
 
@@ -63,7 +63,7 @@ final class NicknameModule implements Listener {
             int maximum = Math.max(1, settings.getInt("maximum-length", 24));
             if (!validNickname(plain, maximum)) {
                 sender.sendMessage(FORMATTED.deserialize(settings.getString("messages.invalid",
-                    "<white>Nicknames must be 1-<max> visible characters with no control characters.</white>"),
+                    "<white>Nicknames must be 1-%max% visible characters with no control characters.</white>"),
                     net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed(
                         "max", Integer.toString(maximum))));
                 return true;

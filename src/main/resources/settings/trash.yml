@@ -1,4 +1,32 @@
-# Inventory rows, from 1 to 6.
-rows: 6
-title: "<#f72a4c>Trash — items are destroyed</#f72a4c>"
-warning: "<white>Items left in the trash when it closes cannot be recovered.</white>"
+gui:
+  # Inventory rows, from 1 to 6. Slots are numbered from 1.
+  rows: 6
+  title: "<#f72a4c>Trash — items are destroyed</#f72a4c>"
+  # GUI actions support:
+  # [message] <text>
+  # [sound] <sound>
+  # [toast] [i:<item>] [type:task|goal|challenge] <text>
+  # [actionbar] <text>
+  # [particle] <particle> [count]
+  # [title] <title> | <subtitle> | <fade-in ticks> | <stay ticks> | <fade-out ticks>
+  # [bossbar] [-d:seconds] [-c:color] [-s:style] <text>
+  # [lightning] (visual only), and [close]
+  open_commands:
+    - '[sound] block_chest_open'
+    - '[message] <white>The trash has been opened.</white>'
+  items:
+    'fillerItems1':
+      material: GRAY_STAINED_GLASS_PANE
+      slots: 46-49
+      name: ''
+      lore: ''
+    'closeMenu':
+      material: REDSTONE_BLOCK
+      slot: 50
+      name: '<red>Close Menu</red>'
+      lore: '<white>Close the trash menu.</white>'
+    'fillerItems2':
+      material: GRAY_STAINED_GLASS_PANE
+      slots: 51-54
+      name: ''
+      lore: ''

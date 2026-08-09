@@ -61,7 +61,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 final class AutoBreeder implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private static final String CONFIG_PATH = "auto-breeders";
     private static final int RANGE = 8;
     private static final Map<EntityType, Material> ANIMALS = Map.ofEntries(
@@ -96,6 +96,7 @@ final class AutoBreeder implements Listener {
     private final NamespacedKey itemKey;
     private final NamespacedKey animalKey;
     private final NamespacedKey hologramKey;
+    private final NamespacedKey playerHologramKey;
     private final Set<NamespacedKey> recipeKeys = new HashSet<>();
     private final Set<String> breeders = new HashSet<>();
     private final Map<String, Inventory> inventories = new HashMap<>();
@@ -108,6 +109,7 @@ final class AutoBreeder implements Listener {
         itemKey = new NamespacedKey(plugin, "auto_breeder");
         animalKey = new NamespacedKey(plugin, "auto_breeder_animal");
         hologramKey = new NamespacedKey(plugin, "auto_breeder_hologram");
+        playerHologramKey = new NamespacedKey(plugin, "hologram");
         data = plugin.data("breeders");
         settings = plugin.settings("breeders");
         ConfigurationSection saved = data.getConfigurationSection(CONFIG_PATH);
@@ -174,6 +176,7 @@ final class AutoBreeder implements Listener {
         }
         event.setCancelled(true);
         event.getPlayer().openInventory(inventory(key(block)));
+        plugin.guiActions().run(event.getPlayer(), settings.getStringList("gui.open_commands"));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -333,12 +336,12 @@ final class AutoBreeder implements Listener {
         String description = amount + " " + displayName(animal) + " Auto Breeder"
             + (amount == 1 ? "" : "s");
         sender.sendMessage(text("messages.given",
-            "<white>Gave <#f72a4c><description></#f72a4c> to <#f72a4c><player></#f72a4c>.</white>",
+            "<white>Gave <#f72a4c>%description%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.</white>",
             Placeholder.unparsed("description", description),
             Placeholder.unparsed("player", target.getName())));
         if (!sender.equals(target)) {
             target.sendMessage(text("messages.received",
-                "<white>You received <#f72a4c><description></#f72a4c>.</white>",
+                "<white>You received <#f72a4c>%description%</#f72a4c>.</white>",
                 Placeholder.unparsed("description", description)));
         }
         return true;
@@ -366,9 +369,30 @@ final class AutoBreeder implements Listener {
         return List.of();
     }
 
+    boolean clearHolograms(CommandSender sender) {
+        List<Entity> displays = plugin.getServer().getWorlds().stream()
+            .flatMap(world -> world.getEntities().stream())
+            .filter(entity -> entity instanceof Display && clearableHologram(
+                entity.getPersistentDataContainer().get(hologramKey, PersistentDataType.STRING),
+                entity.getPersistentDataContainer().get(playerHologramKey, PersistentDataType.STRING)))
+            .toList();
+        displays.forEach(Entity::remove);
+        ensureLoadedHolograms();
+        sender.sendMessage(MM.deserialize(
+            "<white>Cleared <#f72a4c>%count%</#f72a4c> loaded auto-breeder hologram%plural% "
+                + "and refreshed active breeders. <#f72a4c>/holo</#f72a4c> holograms were not changed.",
+            Placeholder.unparsed("count", Integer.toString(displays.size())),
+            Placeholder.unparsed("plural", displays.size() == 1 ? "" : "s")));
+        return true;
+    }
+
+    static boolean clearableHologram(String breederMarker, String playerMarker) {
+        return breederMarker != null && playerMarker == null;
+    }
+
     private void usage(CommandSender sender) {
-        sender.sendMessage(text("messages.usage", "<white>Usage: /givebreeder <animal> [amount] or "
-            + "/givebreeder <player> <animal> [amount]</white>"));
+        sender.sendMessage(text("messages.usage", "<white>Usage: /givebreeder &lt;animal&gt; [amount] or "
+            + "/givebreeder &lt;player&gt; &lt;animal&gt; [amount]</white>"));
     }
 
     private void registerRecipes() {
@@ -403,11 +427,11 @@ final class AutoBreeder implements Listener {
         ItemStack item = new ItemStack(Material.END_ROD);
         item.editMeta(meta -> {
             TagResolver[] placeholders = displayPlaceholders(animal, food);
-            meta.displayName(text("display.item-name", "<#f72a4c><animal> Auto Breeder</#f72a4c>",
+            meta.displayName(text("display.item-name", "<#f72a4c>%animal% Auto Breeder</#f72a4c>",
                 placeholders));
             List<String> lore = settings.getStringList("display.item-lore");
             if (lore.isEmpty()) {
-                lore = List.of("<white>Stores <food> and breeds nearby <animal>.</white>");
+                lore = List.of("<white>Stores %food% and breeds nearby %animal%.</white>");
             }
             meta.lore(lore.stream().map(line -> MM.deserialize(line, placeholders)).toList());
             meta.getPersistentDataContainer().set(itemKey, PersistentDataType.BYTE, (byte) 1);
@@ -463,7 +487,7 @@ final class AutoBreeder implements Listener {
             BreederHolder holder = new BreederHolder(key);
             EntityType animal = animal(key);
             Inventory inventory = Bukkit.createInventory(holder, 9,
-                MM.deserialize(settings.getString("display.inventory-title", "<animal> Auto Breeder"),
+                MM.deserialize(settings.getString("display.inventory-title", "%animal% Auto Breeder"),
                     Placeholder.unparsed("animal", displayName(animal))));
             holder.inventory = inventory;
             Material food = food(key);
@@ -702,9 +726,9 @@ final class AutoBreeder implements Listener {
     private Component configuredHologram(EntityType animal, int food, int animalsBred) {
         Material material = ANIMALS.get(animal);
         return text("display.hologram",
-            "<#f72a4c><animal> Auto Breeder</#f72a4c><newline><white><food>: "
-                + "<#f72a4c><amount></#f72a4c></white><newline><white>Animals bred: "
-                + "<#f72a4c><bred></#f72a4c></white>",
+            "<#f72a4c>%animal% Auto Breeder</#f72a4c><newline><white>%food%: "
+                + "<#f72a4c>%amount%</#f72a4c></white><newline><white>Animals bred: "
+                + "<#f72a4c>%bred%</#f72a4c></white>",
             Placeholder.unparsed("animal", displayName(animal)),
             Placeholder.unparsed("food", displayName(material)),
             Placeholder.unparsed("amount", Integer.toString(food)),

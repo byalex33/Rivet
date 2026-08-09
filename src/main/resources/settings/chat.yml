@@ -1,11 +1,11 @@
-# MiniMessage formats. <player> and <message> are safe component placeholders.
-format: "<#f72a4c><player>:</#f72a4c> <white><message></white>"
+# MiniMessage formats. %player% and %message% are safe component placeholders.
+format: "<#f72a4c>%player%:</#f72a4c> <white>%message%</white>"
 me:
-  # <player> and <message> are safe component placeholders.
-  format: "<#f72a4c>* <player></#f72a4c> <white><message></white>"
+  # %player% and %message% are safe component placeholders.
+  format: "<#f72a4c>* %player%</#f72a4c> <white>%message%</white>"
 private-messages:
-  sent: "<#f72a4c>[you → <player>]</#f72a4c> <white><message></white>"
-  received: "<#f72a4c>[<player> → you]</#f72a4c> <white><message></white>"
+  sent: "<#f72a4c>[you → %player%]</#f72a4c> <white>%message%</white>"
+  received: "<#f72a4c>[%player% → you]</#f72a4c> <white>%message%</white>"
 
 chat-colors:
   allow-hex: true
@@ -13,16 +13,16 @@ chat-colors:
   allow-rainbow: true
 
 social-spy:
-  format: "<#f72a4c>[spy] <sender> → <recipient>:</#f72a4c> <white><message></white>"
+  format: "<#f72a4c>[spy] %sender% → %recipient%:</#f72a4c> <white>%message%</white>"
   messages:
     enabled: "<white>Social spy enabled.</white>"
     disabled: "<white>Social spy disabled.</white>"
 
 ignore:
   messages:
-    added: "<white>You now ignore <#f72a4c><player></#f72a4c>."
-    removed: "<white>You no longer ignore <#f72a4c><player></#f72a4c>."
-    list: "<#f72a4c>Ignored players:</#f72a4c> <#f72a4c><players></#f72a4c>"
+    added: "<white>You now ignore <#f72a4c>%player%</#f72a4c>."
+    removed: "<white>You no longer ignore <#f72a4c>%player%</#f72a4c>."
+    list: "<#f72a4c>Ignored players:</#f72a4c> <#f72a4c>%players%</#f72a4c>"
     cleared: "<white>Your ignore list was cleared.</white>"
     self: "<white>You cannot ignore yourself.</white>"
     blocked: "<white>That private message could not be delivered.</white>"

@@ -108,6 +108,8 @@ Settings changes apply immediately where supported. Changes to `modules.yml` are
 
 Rivet uses white for primary copy and `#f72a4c` for emphasized names and values by default. Placeholders use `%name%` syntax so angle brackets remain reserved for MiniMessage tags.
 
+Rivet also accepts `<lime>` as an alias for MiniMessage's bright-green `<green>` color.
+
 Commands that accept player-supplied formatting limit which tags can be used. Formatting permissions do not grant click, hover, command, insertion, or other unsafe interactive tags.
 
 ## Upgrading

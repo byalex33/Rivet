@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 final class TreeFeller implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     // ponytail: hard caps protect one server tick; batch larger custom trees/veins if they become a real use case.
     private static final int MAX_LOGS = 96;
     private static final int MAX_LEAVES = 512;
@@ -111,7 +111,7 @@ final class TreeFeller implements Listener {
         player.getInventory().setItemInMainHand(axe.damage(logs.size(), player));
         animate(tree, dropTool, player);
         player.sendActionBar(MM.deserialize(settings.getString("tree-feller.message",
-                "<white>Felled <#f72a4c><count></#f72a4c> × <#f72a4c><material></#f72a4c></white>"),
+                "<white>Felled <#f72a4c>%count%</#f72a4c> × <#f72a4c>%material%</#f72a4c></white>"),
             Placeholder.unparsed("count", Integer.toString(logs.size())),
             Placeholder.component("material", Component.translatable(wood.translationKey()))));
     }
@@ -132,7 +132,7 @@ final class TreeFeller implements Listener {
             vein.forEach(ore -> ore.breakNaturally(dropTool, true, true));
         }
         player.sendActionBar(MM.deserialize(settings.getString("veinminer.message",
-                "<white>Mined <#f72a4c><count></#f72a4c> of <#f72a4c><material></#f72a4c></white>"),
+                "<white>Mined <#f72a4c>%count%</#f72a4c> of <#f72a4c>%material%</#f72a4c></white>"),
             Placeholder.unparsed("count", Integer.toString(vein.size())),
             Placeholder.component("material", Component.translatable(mined.translationKey()))));
         veinEffect(player, base);

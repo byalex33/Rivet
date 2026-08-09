@@ -6,6 +6,7 @@ warps: true
 graves: true
 breeders: true
 egg-capture: true
+creeper-restoration: true
 tree-feller: true
 mob-heads: true
 holograms: true

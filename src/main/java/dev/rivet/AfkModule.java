@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 
 final class AfkModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final Set<UUID> afk = new HashSet<>();
     private final Map<UUID, Long> lastActivity = new HashMap<>();
@@ -42,7 +42,7 @@ final class AfkModule implements Listener {
     boolean command(Player player, String[] args) {
         AfkArguments parsed = parseArguments(args);
         if (!parsed.valid()) {
-            player.sendMessage(MM.deserialize("<white>Usage: /afk [reason] [-p:<player>] [-s]"));
+            player.sendMessage(MM.deserialize("<white>Usage: /afk [reason] [-p:&lt;player&gt;] [-s]"));
             return true;
         }
         if (parsed.silent() && !player.hasPermission("rivet.afk.silent")) {
@@ -65,8 +65,8 @@ final class AfkModule implements Listener {
         set(target, value, parsed.reason(), parsed.silent());
         if (parsed.silent()) {
             player.sendMessage(MM.deserialize(value
-                    ? "<white>AFK enabled for <#f72a4c><player></#f72a4c>."
-                    : "<white>AFK disabled for <#f72a4c><player></#f72a4c>.",
+                    ? "<white>AFK enabled for <#f72a4c>%player%</#f72a4c>."
+                    : "<white>AFK disabled for <#f72a4c>%player%</#f72a4c>.",
                 Placeholder.unparsed("player", target.getName())));
         }
         return true;
@@ -254,11 +254,11 @@ final class AfkModule implements Listener {
             return;
         }
         String path = value ? "messages.afk" : "messages.return";
-        String fallback = value ? "<white><player> is now AFK.</white>"
-            : "<white><player> is no longer AFK.</white>";
+        String fallback = value ? "<white>%player% is now AFK.</white>"
+            : "<white>%player% is no longer AFK.</white>";
         if (value && reason != null) {
             path = "messages.afk-with-reason";
-            fallback = "<white><player> is now AFK: <#f72a4c><reason></#f72a4c></white>";
+            fallback = "<white>%player% is now AFK: <#f72a4c>%reason%</#f72a4c></white>";
         }
         Component message = MM.deserialize(plugin.settings("afk").getString(path, fallback),
             Placeholder.unparsed("player", player.getName()),
@@ -272,8 +272,8 @@ final class AfkModule implements Listener {
         String duration = value ? duration(System.currentTimeMillis()
             - afkSince.getOrDefault(target.getUniqueId(), System.currentTimeMillis())) : "0s";
         viewer.sendMessage(MM.deserialize(value
-                ? "<white><player> is AFK</white> <white>(<duration>)</white><#f72a4c> — <reason></#f72a4c>"
-                : "<white><player> is not AFK.</white>",
+                ? "<white>%player% is AFK</white> <white>(%duration%)</white><#f72a4c> — %reason%</#f72a4c>"
+                : "<white>%player% is not AFK.</white>",
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("duration", duration), Placeholder.unparsed("reason", reason)));
     }

@@ -27,7 +27,7 @@ rewards:
     experience: 300
   7:
     commands:
-      - "give <player> diamond 5"
+      - "give %player% diamond 5"
 
 # Milestones are granted in addition to the scheduled reward.
 milestones:
@@ -37,10 +37,10 @@ milestones:
         amount: 1
   30:
     commands:
-      - "give <player> diamond_block 1"
+      - "give %player% diamond_block 1"
 
 messages:
-  claimed: "<white>Daily reward claimed! <white>Streak: <#f72a4c><streak></#f72a4c>"
-  wait: "<white>Your next daily reward is available in <#f72a4c><time></#f72a4c>."
-  unconfigured: "<white>No reward is configured for streak day <streak>.</white>"
+  claimed: "<white>Daily reward claimed! <white>Streak: <#f72a4c>%streak%</#f72a4c>"
+  wait: "<white>Your next daily reward is available in <#f72a4c>%time%</#f72a4c>."
+  unconfigured: "<white>No reward is configured for streak day %streak%.</white>"
   save-error: "<white>Your reward could not be saved safely. Try again.</white>"

@@ -7,6 +7,6 @@ indicator:
   format: " <white>[AFK]</white>"
 
 messages:
-  afk: "<white><player> is now AFK.</white>"
-  afk-with-reason: "<white><player> is now AFK: <#f72a4c><reason></#f72a4c></white>"
-  return: "<white><player> is no longer AFK.</white>"
+  afk: "<white>%player% is now AFK.</white>"
+  afk-with-reason: "<white>%player% is now AFK: <#f72a4c>%reason%</#f72a4c></white>"
+  return: "<white>%player% is no longer AFK.</white>"

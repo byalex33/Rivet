@@ -25,13 +25,13 @@ final class RivetConfig {
             + "dark_gray|blue|green|aqua|red|light_purple|yellow)|/?gradient(?::[^>]*)?|"
             + "/?rainbow(?::[^>]*)?|/?#(?!f72a4c)[0-9a-f]{6})>");
     static final List<String> MODULES = List.of(
-        "chat", "homes", "warps", "graves", "breeders", "egg-capture", "tree-feller",
+        "chat", "homes", "warps", "graves", "breeders", "egg-capture", "creeper-restoration", "tree-feller",
         "mob-heads", "holograms", "permissions", "worlds", "staff",
         "environment", "inventory", "spawn", "tpa", "kits", "afk", "join-leave",
         "announcements", "nicknames", "statistics", "trash", "utilities", "poses",
         "backpacks", "daily", "rtp", "near", "filter", "help");
     static final Set<String> ENABLED_BY_DEFAULT = Set.of(
-        "chat", "homes", "warps", "graves", "breeders", "egg-capture", "tree-feller",
+        "chat", "homes", "warps", "graves", "breeders", "egg-capture", "creeper-restoration", "tree-feller",
         "mob-heads", "holograms", "environment", "spawn", "afk", "join-leave",
         "nicknames", "statistics", "trash", "utilities", "filter", "help");
 
@@ -66,6 +66,9 @@ final class RivetConfig {
             YamlConfiguration configured = loadChecked(settingsFile(module));
             boolean settingsChanged = mergeBundledDefaults(module, configured);
             if (migrateMessagePalette && migrateMessagePalette(configured, module)) {
+                settingsChanged = true;
+            }
+            if (migratePlaceholderSyntax(configured, module)) {
                 settingsChanged = true;
             }
             if (settingsChanged) {
@@ -292,6 +295,35 @@ final class RivetConfig {
         return changed;
     }
 
+    private static boolean migratePlaceholderSyntax(YamlConfiguration configuration, String module) {
+        boolean changed = false;
+        for (Map.Entry<String, Object> entry
+             : new HashMap<>(configuration.getValues(true)).entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof String message) {
+                String migrated = migratePlaceholders(module, entry.getKey(), message);
+                if (!migrated.equals(message)) {
+                    configuration.set(entry.getKey(), migrated);
+                    changed = true;
+                }
+            } else if (value instanceof List<?> values
+                && values.stream().allMatch(String.class::isInstance)) {
+                List<String> migrated = values.stream().map(String.class::cast)
+                    .map(message -> migratePlaceholders(module, entry.getKey(), message)).toList();
+                if (!migrated.equals(values)) {
+                    configuration.set(entry.getKey(), migrated);
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
+    static String migratePlaceholders(String module, String path, String message) {
+        return path.toLowerCase(java.util.Locale.ROOT).contains("usage")
+            ? message : RivetMiniMessage.toPercentPlaceholders(message);
+    }
+
     static String migrateMessage(String module, String path, String message) {
         return LEGACY_MESSAGE_COLOR.matcher(message).find()
             ? themeConfiguredMessage(module, path, message) : message;
@@ -304,19 +336,19 @@ final class RivetConfig {
         return switch (path) {
             case "format" -> replaceExact(message,
                 "<gray><player>:</gray> <white><message></white>",
-                "<#f72a4c><player>:</#f72a4c> <white><message></white>");
+                "<#f72a4c>%player%:</#f72a4c> <white>%message%</white>");
             case "me.format" -> replaceExact(message,
                 "<light_purple>* <player> <message></light_purple>",
-                "<#f72a4c>* <player></#f72a4c> <white><message></white>");
+                "<#f72a4c>* %player%</#f72a4c> <white>%message%</white>");
             case "private-messages.sent" -> replaceExact(message,
                 "<gray>[you → <player>]</gray> <white><message></white>",
-                "<#f72a4c>[you → <player>]</#f72a4c> <white><message></white>");
+                "<#f72a4c>[you → %player%]</#f72a4c> <white>%message%</white>");
             case "private-messages.received" -> replaceExact(message,
                 "<gray>[<player> → you]</gray> <white><message></white>",
-                "<#f72a4c>[<player> → you]</#f72a4c> <white><message></white>");
+                "<#f72a4c>[%player% → you]</#f72a4c> <white>%message%</white>");
             case "social-spy.format" -> replaceExact(message,
                 "<dark_gray>[spy]</dark_gray> <gray><sender> → <recipient>:</gray> <white><message></white>",
-                "<#f72a4c>[spy] <sender> → <recipient>:</#f72a4c> <white><message></white>");
+                "<#f72a4c>[spy] %sender% → %recipient%:</#f72a4c> <white>%message%</white>");
             default -> themeMessage(message);
         };
     }

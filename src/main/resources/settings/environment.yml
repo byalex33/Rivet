@@ -1,27 +1,33 @@
-messages:
-  time-set: "<white>Time set to <#f72a4c><time></#f72a4c>.</white>"
-  weather-set: "<white>Weather set to <#f72a4c><weather></#f72a4c>.</white>"
+# This file is used to configure the environment commands.
 
-effects:
-  time:
-    enabled: true
-    title: "<white><time></white>"
-    subtitle: "<white>Time changed</white>"
-    titles-enabled: true
-    sound-enabled: true
-    sound: ui_button_click
-    volume: 0.8
-    pitch: 1.1
-    particles-enabled: false
-    particle: end_rod
-  weather:
-    enabled: true
-    title: "<#f72a4c><weather></#f72a4c>"
-    subtitle: "<white>Weather changed</white>"
-    titles-enabled: true
-    sound-enabled: true
-    sound: ui_button_click
-    volume: 0.8
-    pitch: 1.1
-    particles-enabled: false
-    particle: cloud
+# This section is used to configure the speed up effect for time fast-forward smoothly over five seconds
+speedUpEffect:
+  enabled: true
+
+# This section is used to configure the time commands.
+times:
+  day:
+    commands_when_ran:
+      - '[actionbar] <white>Time set to <green>Day</green></white>'
+      - '[sound] ui_button_click'
+
+  night:
+    commands_when_ran:
+      - '[actionbar] <white>Time set to <green>Night</green></white>'
+      - '[sound] ui_button_click'
+
+weather:
+  rain:
+    commands_when_ran:
+      - '[actionbar] <white>Weather set to <green>Rain</green></white>'
+      - '[sound] ui_button_click'
+
+  thunder:
+    commands_when_ran:
+      - '[actionbar] <white>Weather set to <green>Thunder</green></white>'
+      - '[sound] ui_button_click'
+
+  sun:
+    commands_when_ran:
+      - '[actionbar] <white>Weather set to <green>Sun</green></white>'
+      - '[sound] ui_button_click'

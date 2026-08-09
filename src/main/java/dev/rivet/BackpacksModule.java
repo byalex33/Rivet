@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.function.IntPredicate;
 
 final class BackpacksModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
     private final YamlConfiguration data;
@@ -47,6 +47,7 @@ final class BackpacksModule implements Listener {
         }
         Inventory inventory = open.computeIfAbsent(player.getUniqueId(), ignored -> load(player));
         player.openInventory(inventory);
+        plugin.guiActions().run(player, settings.getStringList("gui.open_commands"));
         return true;
     }
 

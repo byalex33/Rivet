@@ -13,7 +13,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import java.io.IOException;
 
 final class SpawnModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final DelayedTeleport teleports;
     private final YamlConfiguration settings;
@@ -75,7 +75,7 @@ final class SpawnModule implements Listener {
         int delay = Math.max(0, settings.getInt("teleport-delay-seconds", 3));
         teleports.start(player, destination, delay, settings.getBoolean("cancel-on-move", true),
             MM.deserialize(settings.getString("messages.wait",
-                    "<white>Teleporting to spawn in <#f72a4c><seconds></#f72a4c> seconds. Do not move.</white>"),
+                    "<white>Teleporting to spawn in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"),
                 Placeholder.unparsed("seconds", Integer.toString(delay))),
             MM.deserialize(settings.getString("messages.cancelled", "<white>Teleport cancelled because you moved.")),
             () -> {

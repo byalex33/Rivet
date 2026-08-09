@@ -1,21 +1,21 @@
 # Saved warps are stored in ../data/warps.yml.
 
 messages:
-  usage-set: "<white>Usage: /setwarp <name></white>"
-  usage-teleport: "<white>Usage: /warp <name></white>"
-  usage-delete: "<white>Usage: /delwarp <name></white>"
-  set: "<white>Warp <#f72a4c><name></#f72a4c> set.</white>"
-  missing: "<white>No <name> is set.</white>"
-  deleted: "<white>Warp <#f72a4c><name></#f72a4c> deleted.</white>"
-  world-unavailable: "<white>The world for <#f72a4c><name></#f72a4c> is unavailable.</white>"
+  usage-set: "<white>Usage: /setwarp &lt;name&gt;</white>"
+  usage-teleport: "<white>Usage: /warp &lt;name&gt;</white>"
+  usage-delete: "<white>Usage: /delwarp &lt;name&gt;</white>"
+  set: "<white>Warp <#f72a4c>%name%</#f72a4c> set.</white>"
+  missing: "<white>No %name% is set.</white>"
+  deleted: "<white>Warp <#f72a4c>%name%</#f72a4c> deleted.</white>"
+  world-unavailable: "<white>The world for <#f72a4c>%name%</#f72a4c> is unavailable.</white>"
   teleport-failed: "<white>Teleport failed.</white>"
-  teleported: "<white>Teleported to <#f72a4c><name></#f72a4c>.</white>"
+  teleported: "<white>Teleported to <#f72a4c>%name%</#f72a4c>.</white>"
   save-failed: "<white>Could not save the change. Check the console.</white>"
 
 effects:
   teleport:
     enabled: true
-    title: "<#f72a4c><name></#f72a4c>"
+    title: "<#f72a4c>%name%</#f72a4c>"
     subtitle: "<white>Teleported</white>"
     titles-enabled: true
     sound-enabled: true
@@ -26,7 +26,7 @@ effects:
     particle: portal
   set:
     enabled: false
-    title: "<#f72a4c><name></#f72a4c>"
+    title: "<#f72a4c>%name%</#f72a4c>"
     subtitle: "<white>Warp set</white>"
     titles-enabled: true
     sound-enabled: true
@@ -37,7 +37,7 @@ effects:
     particle: end_rod
   delete:
     enabled: false
-    title: "<#f72a4c><name></#f72a4c>"
+    title: "<#f72a4c>%name%</#f72a4c>"
     subtitle: "<white>Warp deleted</white>"
     titles-enabled: true
     sound-enabled: true

@@ -9,7 +9,7 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.List;
 
 final class AnnouncementsModule {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
     private List<String> announcements = List.of();

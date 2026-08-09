@@ -1,12 +1,13 @@
 tree-feller:
   enabled: true
+  autoToInventory: true
   maximum-logs: 96
   maximum-leaves: 512
   minimum-logs: 4
   minimum-leaves: 10
   maximum-horizontal-log-run: 6
   ticks-per-layer: 2
-  message: "<white>Felled <#f72a4c><count></#f72a4c> × <#f72a4c><material></#f72a4c></white>"
+  message: "<white>Felled <#f72a4c>%count%</#f72a4c> × <#f72a4c>%material%</#f72a4c></white>"
   sound:
     enabled: true
     name: block_wood_break
@@ -18,8 +19,9 @@ tree-feller:
 
 veinminer:
   enabled: true
+  autoToInventory: true
   maximum-ores: 64
-  message: "<white>Mined <#f72a4c><count></#f72a4c> of <#f72a4c><material></#f72a4c></white>"
+  message: "<white>Mined <#f72a4c>%count%</#f72a4c> of <#f72a4c>%material%</#f72a4c></white>"
   sound:
     enabled: false
     name: block_stone_break

@@ -2,6 +2,9 @@
 default-rows: 3
 title: "<#f72a4c>Backpack"
 
+gui:
+  open_commands: []
+
 # World names are matched case-insensitively. Leave empty to allow every world.
 blocked-worlds: []
 

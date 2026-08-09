@@ -3,4 +3,4 @@ page-size: 6
 
 # MiniMessage formatting is supported for the heading and subtitle.
 title: "<#f72a4c><bold>RIVET HELP</bold></#f72a4c>"
-subtitle: "<white><commands> available commands <#f72a4c>•</#f72a4c> Page <page>/<pages></white>"
+subtitle: "<white>%commands% available commands <#f72a4c>•</#f72a4c> Page %page%/%pages%</white>"

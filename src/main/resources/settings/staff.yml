@@ -14,18 +14,28 @@ toast:
   default-icon: paper
 
 same-ip:
-  format: "<#f72a4c>Online players sharing <player>'s session address:</#f72a4c> <#f72a4c><matches></#f72a4c>"
+  format: "<#f72a4c>Online players sharing %player%'s session address:</#f72a4c> <#f72a4c>%matches%</#f72a4c>"
   disclaimer: "<white>A shared address does not prove that accounts belong to the same person; proxies and shared networks can affect results.</white>"
+
+command-spy:
+  format: "<#f72a4c>[command spy] %player%:</#f72a4c> <white>%command%</white>"
 
 notes:
   maximum-length: 500
 
 messages:
-  heal: "<white>Healed <#f72a4c><target></#f72a4c>.</white>"
-  heal-target: "<white>You were healed by <#f72a4c><player></#f72a4c>.</white>"
-  feed: "<white>Fed <#f72a4c><target></#f72a4c>.</white>"
-  feed-target: "<white>You were fed by <#f72a4c><player></#f72a4c>.</white>"
-  god-enabled: "<white>God mode enabled for <#f72a4c><target></#f72a4c>.</white>"
-  god-disabled: "<white>God mode disabled for <#f72a4c><target></#f72a4c>.</white>"
+  tppos-usage: "<white>Usage: /tppos &lt;x&gt; &lt;y&gt; &lt;z&gt;</white>"
+  tppos-invalid: "<white>Coordinates must be finite numbers or relative values such as ~10.</white>"
+  tppos-out-of-world: "<white>Those coordinates are outside the world's usable limits.</white>"
+  tppos-failed: "<white>Teleport failed.</white>"
+  tppos-teleported: "<white>Teleported to <#f72a4c>%x%, %y%, %z%</#f72a4c>.</white>"
+  command-spy-enabled: "<white>Command spy enabled.</white>"
+  command-spy-disabled: "<white>Command spy disabled.</white>"
+  heal: "<white>Healed <#f72a4c>%target%</#f72a4c>.</white>"
+  heal-target: "<white>You were healed by <#f72a4c>%player%</#f72a4c>.</white>"
+  feed: "<white>Fed <#f72a4c>%target%</#f72a4c>.</white>"
+  feed-target: "<white>You were fed by <#f72a4c>%player%</#f72a4c>.</white>"
+  god-enabled: "<white>God mode enabled for <#f72a4c>%target%</#f72a4c>.</white>"
+  god-disabled: "<white>God mode disabled for <#f72a4c>%target%</#f72a4c>.</white>"
   god-target-enabled: "<white>God mode was enabled.</white>"
   god-target-disabled: "<white>God mode was disabled.</white>"

@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 final class PosesModule implements Listener {
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final Map<UUID, ActivePose> active = new HashMap<>();
 

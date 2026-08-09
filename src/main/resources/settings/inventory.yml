@@ -9,10 +9,17 @@ item-editing:
   # Material enum names, for example BEDROCK or COMMAND_BLOCK.
   blocked-materials: []
 
+scan:
+  # Caps chat output only; completion totals still include every match.
+  maximum-results: 100
+  # A small asynchronous pipeline avoids loading the entire map at once.
+  concurrent-chunk-loads: 2
+  progress-interval-chunks: 500
+
 messages:
   repair-invalid: "<white>Hold a damaged repairable item.</white>"
   repair-success: "<white>Repaired the item in your hand.</white>"
-  repair-all: "<white>Repaired <#f72a4c><count></#f72a4c> items.</white>"
+  repair-all: "<white>Repaired <#f72a4c>%count%</#f72a4c> items.</white>"
   empty-hand: "<white>Hold an item first.</white>"
   blocked-item: "<white>That material cannot be edited.</white>"
   rename-success: "<white>Item renamed.</white>"
@@ -21,4 +28,4 @@ messages:
   lore-cleared: "<white>Item lore cleared.</white>"
   lore-line-invalid: "<white>That lore line does not exist.</white>"
   hat-success: "<white>Equipped the item as your hat.</white>"
-  invalid-text: "<white>Text must be 1-<max> visible characters without control characters.</white>"
+  invalid-text: "<white>Text must be 1-%max% visible characters without control characters.</white>"

@@ -22,8 +22,8 @@ kits:
       amount: 16
 
 messages:
-  list: "<#f72a4c>Available kits:</#f72a4c> <#f72a4c><kits></#f72a4c>"
+  list: "<#f72a4c>Available kits:</#f72a4c> <#f72a4c>%kits%</#f72a4c>"
   unknown: "<white>That kit does not exist.</white>"
-  no-permission: "<white>You cannot use the <#f72a4c><kit></#f72a4c> kit.</white>"
-  cooldown: "<white>Kit <#f72a4c><kit></#f72a4c> is available in <seconds> seconds.</white>"
-  received: "<white>Received kit <#f72a4c><kit></#f72a4c>.</white>"
+  no-permission: "<white>You cannot use the <#f72a4c>%kit%</#f72a4c> kit.</white>"
+  cooldown: "<white>Kit <#f72a4c>%kit%</#f72a4c> is available in %seconds% seconds.</white>"
+  received: "<white>Received kit <#f72a4c>%kit%</#f72a4c>.</white>"

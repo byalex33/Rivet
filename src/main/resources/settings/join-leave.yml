@@ -1,20 +1,20 @@
 join:
   enabled: true
-  message: "<white><player> joined the server.</white>"
+  message: "<white>%player% joined the server.</white>"
 leave:
   enabled: true
-  message: "<white><player> left the server.</white>"
+  message: "<white>%player% left the server.</white>"
 first-join:
   enabled: true
-  message: "<#f72a4c>Welcome <#f72a4c><player></#f72a4c> to the server for the first time!</#f72a4c>"
+  message: "<#f72a4c>Welcome <#f72a4c>%player%</#f72a4c> to the server for the first time!</#f72a4c>"
 
 welcome-title:
   enabled: true
-  title: "<#f72a4c>Welcome, <player>!</#f72a4c>"
+  title: "<#f72a4c>Welcome, %player%!</#f72a4c>"
   subtitle: "<white>Enjoy your stay.</white>"
 welcome-chat:
   enabled: false
-  message: "<white>Welcome to the server, <#f72a4c><player></#f72a4c>!</white>"
+  message: "<white>Welcome to the server, <#f72a4c>%player%</#f72a4c>!</white>"
 motd:
   enabled: false
   lines:
