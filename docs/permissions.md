@@ -1,6 +1,6 @@
 # Permissions
 
-Rivet declares 113 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
+Rivet declares 114 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
 
 The command permission is checked by Paper before Rivet handles the command. Additional `.others`, formatting, bypass, row, and wildcard nodes enable narrower capabilities inside a command.
 
@@ -50,6 +50,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.holograms` | `op` | [`/hologram`](commands.md#hologram) |
 | `rivet.holograms.view.*` | `false` | Wildcard parent for the related permission family. |
 | `rivet.eggcapture` | `true` | Additional capability used by the related feature. |
+| `rivet.villager-reroll` | `true` | Allows using the reroll offer in eligible villagers' normal trade screens. |
 | `rivet.spawn` | `true` | [`/spawn`](commands.md#spawn) |
 | `rivet.spawn.set` | `op` | [`/setspawn`](commands.md#setspawn) |
 | `rivet.tpa` | `true` | [`/tpa`](commands.md#tpa), [`/tpahere`](commands.md#tpahere), [`/tpaccept`](commands.md#tpaccept), [`/tpdeny`](commands.md#tpdeny) |

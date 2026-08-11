@@ -7,6 +7,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Axis;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -16,13 +17,17 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.block.data.type.Leaves;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -47,6 +52,7 @@ final class TreeFeller implements Listener {
     private final YamlConfiguration settings;
     private final Set<Block> activeBlocks = new HashSet<>();
     private boolean checkingProtection;
+    private VeinDropCollector activeVein;
 
     TreeFeller(RivetPlugin plugin) {
         this.plugin = plugin;
@@ -78,6 +84,23 @@ final class TreeFeller implements Listener {
             && isPickaxe(tool.getType()) && oreKey(base.getType()) != null
             && !base.getDrops(tool, player).isEmpty()) {
             mineVein(event, player, base, tool);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onItemSpawn(ItemSpawnEvent event) {
+        if (activeVein != null && activeVein.captures(event.getLocation())) {
+            activeVein.drops().add(event.getEntity().getItemStack().clone());
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onExperienceSpawn(EntitySpawnEvent event) {
+        if (activeVein != null && event.getEntity() instanceof ExperienceOrb orb
+            && activeVein.captures(event.getLocation())) {
+            activeVein.addExperience(orb.getExperience());
+            event.setCancelled(true);
         }
     }
 
@@ -129,13 +152,35 @@ final class TreeFeller implements Listener {
             event.setCancelled(true);
             ItemStack dropTool = pickaxe.clone();
             player.getInventory().setItemInMainHand(pickaxe.damage(vein.size(), player));
-            vein.forEach(ore -> ore.breakNaturally(dropTool, true, true));
+            VeinDropCollector collector = new VeinDropCollector(base.getLocation().add(.5, .5, .5));
+            activeVein = collector;
+            try {
+                for (Block ore : vein) {
+                    collector.captureFrom(ore);
+                    ore.breakNaturally(dropTool, true, true);
+                }
+            } finally {
+                activeVein = null;
+                dropVeinClump(collector);
+            }
         }
         player.sendActionBar(MM.deserialize(settings.getString("veinminer.message",
                 "<white>Mined <#f72a4c>%count%</#f72a4c> of <#f72a4c>%material%</#f72a4c></white>"),
             Placeholder.unparsed("count", Integer.toString(vein.size())),
             Placeholder.component("material", Component.translatable(mined.translationKey()))));
         veinEffect(player, base);
+    }
+
+    private void dropVeinClump(VeinDropCollector collector) {
+        mergeDrops(collector.drops()).forEach(drop ->
+            collector.location().getWorld().dropItem(collector.location(), drop,
+                item -> item.setVelocity(new Vector())));
+        if (collector.experience() > 0) {
+            collector.location().getWorld().spawn(collector.location(), ExperienceOrb.class, orb -> {
+                orb.setExperience(collector.experience());
+                orb.setVelocity(new Vector());
+            });
+        }
     }
 
     private Set<Block> connectedLogs(Block base) {
@@ -401,6 +446,35 @@ final class TreeFeller implements Listener {
             .map(Map.Entry::getValue).toList();
     }
 
+    private static List<ItemStack> mergeDrops(List<ItemStack> drops) {
+        List<ItemStack> merged = new ArrayList<>();
+        for (ItemStack source : drops) {
+            if (source == null || source.getType().isAir() || source.getAmount() < 1) {
+                continue;
+            }
+            ItemStack remaining = source.clone();
+            for (ItemStack existing : merged) {
+                if (!existing.isSimilar(remaining) || existing.getAmount() >= existing.getMaxStackSize()) {
+                    continue;
+                }
+                int moved = Math.min(remaining.getAmount(),
+                    existing.getMaxStackSize() - existing.getAmount());
+                existing.setAmount(existing.getAmount() + moved);
+                remaining.setAmount(remaining.getAmount() - moved);
+                if (remaining.getAmount() == 0) {
+                    break;
+                }
+            }
+            while (remaining.getAmount() > 0) {
+                ItemStack stack = remaining.clone();
+                stack.setAmount(Math.min(remaining.getAmount(), remaining.getMaxStackSize()));
+                merged.add(stack);
+                remaining.setAmount(remaining.getAmount() - stack.getAmount());
+            }
+        }
+        return merged;
+    }
+
     static boolean validStructure(int logs, int leaves, int horizontalRun, int vertical, int horizontal) {
         return logs >= MIN_LOGS && leaves >= MIN_LEAVES && horizontalRun <= MAX_HORIZONTAL_LOG_RUN
             && (horizontal == 0 || vertical / (double) horizontal >= .5);
@@ -410,5 +484,43 @@ final class TreeFeller implements Listener {
     }
 
     private record LeafCandidate(Block block, int previousDistance) {
+    }
+
+    private static final class VeinDropCollector {
+        private final Location location;
+        private final List<ItemStack> drops = new ArrayList<>();
+        private Block source;
+        private int experience;
+
+        private VeinDropCollector(Location location) {
+            this.location = location;
+        }
+
+        private Location location() {
+            return location;
+        }
+
+        private List<ItemStack> drops() {
+            return drops;
+        }
+
+        private int experience() {
+            return experience;
+        }
+
+        private void captureFrom(Block block) {
+            source = block;
+        }
+
+        private boolean captures(Location spawned) {
+            return source != null && source.getWorld().equals(spawned.getWorld())
+                && source.getX() == spawned.getBlockX()
+                && source.getY() == spawned.getBlockY()
+                && source.getZ() == spawned.getBlockZ();
+        }
+
+        private void addExperience(int amount) {
+            experience += Math.max(0, amount);
+        }
     }
 }

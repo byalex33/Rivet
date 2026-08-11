@@ -737,7 +737,7 @@ Start a thunderstorm in the current world.
 
 Give an animal-specific auto breeder.
 
-The first form gives a breeder to yourself. The second form targets another online player. Supported animals are available through tab completion.
+The first form gives a breeder to yourself. The second form targets another online player. Supported animals are available through tab completion. Each placed breeder's hologram includes a live countdown to the next breeding check.
 
 <a id="restorationcore"></a>
 
@@ -1198,7 +1198,7 @@ Run `/hologram help` for create, copy, edit, delete, list, nearby, teleport, and
 - **Default:** `op`
 - **Aliases:** None
 
-Clear loaded auto-breeder holograms and recreate displays for active breeders. Holograms created with `/holo` are not changed.
+Clear loaded auto-breeder holograms and recreate displays for active breeders. This includes displays using Rivet's former `core:` tags and legacy invisible ArmorStand hologram stacks. Holograms created with `/holo` are not changed.
 
 <a id="help"></a>
 

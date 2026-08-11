@@ -1,0 +1,48 @@
+# Adds a safe reroll entry to the normal villager trading screen.
+permission: rivet.villager-reroll
+
+# Vanilla locks a villager's profession and offers after the first trade. Keep this
+# false to protect traded villagers. Enabling it deliberately allows all offers at
+# the villager's current level to be regenerated.
+allow-after-trading: false
+
+# Require the villager to remember a job-site block, matching normal workstation
+# rerolling and preventing professions from being rerolled away from their station.
+require-workstation: true
+
+trade:
+  ingredient:
+    material: EMERALD
+    amount: 1
+  result:
+    material: NETHER_STAR
+    name: '<#f72a4c><bold>↻ Reroll trades</bold></#f72a4c>'
+    lore:
+      - '<white>Generate fresh vanilla trades.</white>'
+      - '<white>The emerald is not consumed.</white>'
+
+messages:
+  rerolled:
+    enabled: true
+    text: '<white>Villager trades <#f72a4c>rerolled</#f72a4c>.</white>'
+  trades-locked:
+    enabled: true
+    text: '<white>This villager has already been traded with, so its trades are locked.</white>'
+  no-workstation:
+    enabled: true
+    text: '<white>This villager needs its workstation before its trades can be rerolled.</white>'
+  busy:
+    enabled: true
+    text: '<white>That villager is already rerolling its trades.</white>'
+  no-permission:
+    enabled: true
+    text: '<white>You do not have permission to reroll villager trades.</white>'
+  failed:
+    enabled: true
+    text: '<white>The villager''s trades could not be rerolled.</white>'
+
+effects:
+  sound:
+    name: entity.villager.work_librarian
+    volume: 0.8
+    pitch: 1.2

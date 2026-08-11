@@ -1,6 +1,14 @@
 # Chance that a supported mob killed by a player drops its head (0.0 to 1.0).
 drop-chance: 0.03
 
+# Extra drop chance added for each Looting level on the killer's held weapon.
+looting-bonus-per-level: 0.01
+
+# Wither Skeleton skulls already use Minecraft's vanilla Looting-aware drop logic.
+# Keep this false to leave them entirely to vanilla. Enabling it adds Rivet's
+# independent configured roll on top of the vanilla chance.
+custom-wither-skeleton-drops: false
+
 # Entity types are matched case-insensitively, for example COW or WITHER_SKELETON.
 # Head materials are also accepted: ZOMBIE_HEAD blocks zombies and giants, while
 # PLAYER_HEAD blocks every mob that uses a custom player-head texture.

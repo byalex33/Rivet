@@ -9,6 +9,7 @@ egg-capture: true
 creeper-restoration: true
 tree-feller: true
 mob-heads: true
+villager-reroll: true
 holograms: true
 permissions: false
 worlds: false

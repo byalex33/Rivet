@@ -26,13 +26,13 @@ final class RivetConfig {
             + "/?rainbow(?::[^>]*)?|/?#(?!f72a4c)[0-9a-f]{6})>");
     static final List<String> MODULES = List.of(
         "chat", "homes", "warps", "graves", "breeders", "egg-capture", "creeper-restoration", "tree-feller",
-        "mob-heads", "holograms", "permissions", "worlds", "staff",
+        "mob-heads", "villager-reroll", "holograms", "permissions", "worlds", "staff",
         "environment", "inventory", "spawn", "tpa", "kits", "afk", "join-leave",
         "announcements", "nicknames", "statistics", "trash", "utilities", "poses",
         "backpacks", "daily", "rtp", "near", "filter", "help");
     static final Set<String> ENABLED_BY_DEFAULT = Set.of(
         "chat", "homes", "warps", "graves", "breeders", "egg-capture", "creeper-restoration", "tree-feller",
-        "mob-heads", "holograms", "environment", "spawn", "afk", "join-leave",
+        "mob-heads", "villager-reroll", "holograms", "environment", "spawn", "afk", "join-leave",
         "nicknames", "statistics", "trash", "utilities", "filter", "help");
 
     private final RivetPlugin plugin;

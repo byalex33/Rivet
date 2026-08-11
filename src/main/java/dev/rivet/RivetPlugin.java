@@ -29,6 +29,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -80,6 +81,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private static final String LEGACY_WORLD_MARKER = ".rivet-test-world";
     private static final long MINECRAFT_DAY_TICKS = 24_000;
     private static final double DEFAULT_MOB_HEAD_CHANCE = .03;
+    private static final double DEFAULT_MOB_HEAD_LOOTING_BONUS = .01;
     private static final Map<EntityType, String> MOB_HEAD_TEXTURES = loadMobHeadTextures();
     private static final ChunkGenerator VOID_GENERATOR = new ChunkGenerator() {
         @Override
@@ -96,6 +98,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private ChatModule chat;
     private AutoBreeder autoBreeder;
     private EggCapture eggCapture;
+    private VillagerRerollModule villagerReroll;
     private CreeperRestoration creeperRestoration;
     private GraveModule graves;
     private HologramModule holograms;
@@ -155,6 +158,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("egg-capture")) {
             eggCapture = new EggCapture(this);
             getServer().getPluginManager().registerEvents(eggCapture, this);
+        }
+        if (moduleEnabled("villager-reroll")) {
+            villagerReroll = new VillagerRerollModule(this);
+            getServer().getPluginManager().registerEvents(villagerReroll, this);
         }
         if (moduleEnabled("creeper-restoration")) {
             creeperRestoration = new CreeperRestoration(this);
@@ -278,6 +285,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (eggCapture != null) {
             eggCapture.shutdown();
         }
+        if (villagerReroll != null) {
+            villagerReroll.shutdown();
+        }
         if (creeperRestoration != null) {
             creeperRestoration.shutdown();
         }
@@ -355,9 +365,14 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
-        if (!moduleEnabled("mob-heads") || event.getEntity().getKiller() == null
+        Player killer = event.getEntity().getKiller();
+        if (!moduleEnabled("mob-heads") || killer == null
+            || !usesCustomMobHeadDrop(event.getEntityType(), settings("mob-heads")
+                .getBoolean("custom-wither-skeleton-drops", false))
             || !dropsMobHead(event.getEntityType(), ThreadLocalRandom.current().nextDouble(),
-                mobHeadChance(), settings("mob-heads").getStringList("disallowed-heads"))) {
+                mobHeadChance(killer.getInventory().getItemInMainHand()
+                    .getEnchantmentLevel(Enchantment.LOOTING)),
+                settings("mob-heads").getStringList("disallowed-heads"))) {
             return;
         }
         ItemStack head = createMobHead(event.getEntityType());
@@ -1535,9 +1550,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         return (float) finiteDouble(configured, fallback, minimum, maximum);
     }
 
-    private double mobHeadChance() {
-        double chance = settings("mob-heads").getDouble("drop-chance", DEFAULT_MOB_HEAD_CHANCE);
-        return Double.isFinite(chance) ? Math.max(0, Math.min(1, chance)) : DEFAULT_MOB_HEAD_CHANCE;
+    private double mobHeadChance(int lootingLevel) {
+        YamlConfiguration configured = settings("mob-heads");
+        return mobHeadChance(configured.getDouble("drop-chance", DEFAULT_MOB_HEAD_CHANCE),
+            lootingLevel, configured.getDouble("looting-bonus-per-level",
+                DEFAULT_MOB_HEAD_LOOTING_BONUS));
     }
 
     private ItemStack createMobHead(EntityType type) {
@@ -2066,6 +2083,18 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     static boolean hasNaturalFlight(GameMode gameMode) {
         return gameMode == GameMode.CREATIVE || gameMode == GameMode.SPECTATOR;
+    }
+
+    static double mobHeadChance(double baseChance, int lootingLevel, double lootingBonus) {
+        double safeBaseChance = Double.isFinite(baseChance)
+            ? Math.max(0, Math.min(1, baseChance)) : DEFAULT_MOB_HEAD_CHANCE;
+        double safeLootingBonus = Double.isFinite(lootingBonus)
+            ? Math.max(0, Math.min(1, lootingBonus)) : DEFAULT_MOB_HEAD_LOOTING_BONUS;
+        return Math.min(1, safeBaseChance + Math.max(0, lootingLevel) * safeLootingBonus);
+    }
+
+    static boolean usesCustomMobHeadDrop(EntityType type, boolean customWitherSkeletonDrops) {
+        return type != EntityType.WITHER_SKELETON || customWitherSkeletonDrops;
     }
 
     static boolean dropsMobHead(EntityType type, double roll) {

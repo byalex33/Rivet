@@ -66,9 +66,14 @@ public final class RivetPluginTest {
                 assertEquals(type.name() + "_SPAWN_EGG",
                     Material.valueOf(type.name() + "_SPAWN_EGG").name());
             });
-        assertEquals("Pig Auto Breeder\nCarrot: 128\nAnimals bred: 42",
+        assertEquals("Pig Auto Breeder\nCarrot: 128\nAnimals bred: 42\nNext breed in: 3s",
             PlainTextComponentSerializer.plainText().serialize(
-                AutoBreeder.hologram(EntityType.PIG, 128, 42)));
+                AutoBreeder.hologram(EntityType.PIG, 128, 42, 3)));
+        assertEquals(4, AutoBreeder.collectableOutput(60, 10, 64));
+        assertEquals(0, AutoBreeder.collectableOutput(64, 10, 64));
+        assertEquals(10, AutoBreeder.collectableOutput(0, 10, 64));
+        assertEquals(Integer.MAX_VALUE,
+            AutoBreeder.saturatedAdd(Integer.MAX_VALUE - 5, 10));
     }
 
     @Test
@@ -83,6 +88,13 @@ public final class RivetPluginTest {
         assertEquals(Material.CREEPER_HEAD, RivetPlugin.mobHeadFor(EntityType.CREEPER));
         assertEquals(Material.WITHER_SKELETON_SKULL,
             RivetPlugin.mobHeadFor(EntityType.WITHER_SKELETON));
+        assertEquals(.03, RivetPlugin.mobHeadChance(.03, 0, .01), .0001);
+        assertEquals(.06, RivetPlugin.mobHeadChance(.03, 3, .01), .0001);
+        assertEquals(1, RivetPlugin.mobHeadChance(.99, 3, .01), .0001);
+        assertEquals(.03, RivetPlugin.mobHeadChance(.03, -1, .01), .0001);
+        assertEquals(false, RivetPlugin.usesCustomMobHeadDrop(EntityType.WITHER_SKELETON, false));
+        assertEquals(true, RivetPlugin.usesCustomMobHeadDrop(EntityType.WITHER_SKELETON, true));
+        assertEquals(true, RivetPlugin.usesCustomMobHeadDrop(EntityType.COW, false));
         assertEquals(true, RivetPlugin.dropsMobHead(EntityType.ZOMBIE, .0299));
         assertEquals(false, RivetPlugin.dropsMobHead(EntityType.ZOMBIE, .03));
         assertEquals(true, RivetPlugin.dropsMobHead(EntityType.COW, 0));
@@ -96,6 +108,19 @@ public final class RivetPluginTest {
             List.of("PLAYER_HEAD")));
         assertEquals(true, RivetPlugin.dropsMobHead(EntityType.COW, 0, 1,
             List.of("PIG")));
+    }
+
+    @Test
+    public void protectsTradedVillagersAndRegeneratesOffersForTheirLevel() {
+        assertEquals(false, VillagerRerollModule.hasBeenTraded(1, 0, 0, 0));
+        assertEquals(true, VillagerRerollModule.hasBeenTraded(1, 1, 0, 0));
+        assertEquals(true, VillagerRerollModule.hasBeenTraded(1, 0, 0, 1));
+        assertEquals(true, VillagerRerollModule.hasBeenTraded(2, 0, 0, 0));
+        assertEquals(0, VillagerRerollModule.extraTradesForLevel(1));
+        assertEquals(4, VillagerRerollModule.extraTradesForLevel(3));
+        assertEquals(8, VillagerRerollModule.extraTradesForLevel(5));
+        assertEquals(Material.NETHER_STAR,
+            VillagerRerollModule.configuredMaterial("not_a_material", Material.NETHER_STAR));
     }
 
     @Test
@@ -129,8 +154,10 @@ public final class RivetPluginTest {
     @Test
     public void packagesConfigurableMessagesSoundsAndParticlesForInteractiveModules() {
         Map<String, List<String>> required = Map.of(
-            "breeders", List.of("messages.given", "display.item-name",
-                "effects.activation.sound.name", "effects.activation.particles.enabled"),
+            "breeders", List.of("messages.given", "messages.experience-collected",
+                "collection.experience", "collection.chicken-eggs", "display.item-name",
+                "display.next-breed", "gui.experience-item.name", "effects.activation.sound.name",
+                "effects.activation.particles.enabled"),
             "creeper-restoration", List.of("messages.given", "core.name",
                 "restoration.restore-container-contents", "effects.start-sound.name",
                 "effects.particles.enabled"),
@@ -141,13 +168,18 @@ public final class RivetPluginTest {
                 "weather.thunder.commands_when_ran", "weather.sun.commands_when_ran"),
             "homes", List.of("messages.set", "messages.teleported",
                 "effects.teleport.sound", "effects.teleport.particle"),
-            "mob-heads", List.of("disallowed-heads", "drop-display.name",
+            "mob-heads", List.of("disallowed-heads", "looting-bonus-per-level",
+                "custom-wither-skeleton-drops", "drop-display.name",
                 "drop-effects.sound.name", "drop-effects.particles.spiral.name",
                 "drop-effects.particles.burst.name"),
             "statistics", List.of("seen.usage", "seen.online", "seen.offline",
                 "seen.date-format"),
             "tree-feller", List.of("tree-feller.message", "tree-feller.sound.name",
                 "veinminer.message", "veinminer.particles.name"),
+            "villager-reroll", List.of("permission", "allow-after-trading",
+                "require-workstation", "trade.ingredient.material", "trade.result.material",
+                "trade.result.name", "messages.rerolled.text", "messages.trades-locked.text",
+                "messages.no-workstation.text", "effects.sound.name"),
             "warps", List.of("messages.set", "messages.teleported",
                 "effects.teleport.sound", "effects.teleport.particle"));
         required.forEach((module, paths) -> {
@@ -348,9 +380,23 @@ public final class RivetPluginTest {
 
     @Test
     public void clearsOnlyTaggedAutoBreederHolograms() {
-        assertEquals(true, AutoBreeder.clearableHologram("world:1,2,3", null));
-        assertEquals(false, AutoBreeder.clearableHologram(null, null));
-        assertEquals(false, AutoBreeder.clearableHologram("world:1,2,3", "shop-title"));
+        assertEquals(true, AutoBreeder.clearableHologram("world:1,2,3", null, null, null));
+        assertEquals(true, AutoBreeder.clearableHologram(null, "world:1,2,3", null, null));
+        assertEquals(false, AutoBreeder.clearableHologram(null, null, null, null));
+        assertEquals(false,
+            AutoBreeder.clearableHologram("world:1,2,3", null, "shop-title", null));
+        assertEquals(false,
+            AutoBreeder.clearableHologram(null, "world:1,2,3", null, "shop-title"));
+        assertEquals(true, AutoBreeder.notPlayerHologram(null, null));
+        assertEquals(false, AutoBreeder.notPlayerHologram("shop-title", null));
+        assertEquals(false, AutoBreeder.notPlayerHologram(null, "shop-title"));
+        assertEquals(true, AutoBreeder.legacyAutoBreederLine("Pig Auto Breeder"));
+        assertEquals(true, AutoBreeder.legacyAutoBreederLine("Animals bred: 42"));
+        assertEquals(false, AutoBreeder.legacyAutoBreederLine("Welcome to spawn"));
+        assertEquals(true,
+            AutoBreeder.legacyHologramNeighbor(10, 64, 10, 10.2, 65.5, 9.8));
+        assertEquals(false,
+            AutoBreeder.legacyHologramNeighbor(10, 64, 10, 11, 64, 10));
     }
 
     @Test

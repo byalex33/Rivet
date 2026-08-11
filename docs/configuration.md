@@ -37,6 +37,7 @@ plugins/Rivet/
 |   |-- trash.yml
 |   |-- tree-feller.yml
 |   |-- utilities.yml
+|   |-- villager-reroll.yml
 |   |-- warps.yml
 |   `-- worlds.yml
 `-- data/
@@ -83,6 +84,7 @@ This file contains feature switches only. Every value must be `true` or `false`.
 | `trash` | Enabled |
 | `tree-feller` | Enabled |
 | `utilities` | Enabled |
+| `villager-reroll` | Enabled |
 | `warps` | Enabled |
 | `worlds` | Disabled |
 

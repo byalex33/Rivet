@@ -26,11 +26,12 @@
 
 | Feature | Module | Default | Description |
 |---|---|---:|---|
-| Auto breeders | `breeders` | Enabled | Persistent, species-specific automated breeders. |
+| Auto breeders | `breeders` | Enabled | Persistent, species-specific automated breeders with a live next-breed hologram countdown, stored breeding XP, and chicken-egg collection. |
 | Egg capture | `egg-capture` | Enabled | Capture supported mobs with thrown eggs and animated effects. |
 | Creeper restoration | `creeper-restoration` | Enabled | Visual creeper debris and throwable Restoration Cores that reconstruct saved craters. |
-| Tree felling | `tree-feller` | Enabled | Whole-tree cutting and connected ore vein mining. |
-| Mob heads | `mob-heads` | Enabled | Configurable mob-head drops and cached player heads. |
+| Tree felling | `tree-feller` | Enabled | Whole-tree cutting and connected ore vein mining with drops and XP clumped at the initially mined block. |
+| Mob heads | `mob-heads` | Enabled | Configurable, Looting-aware mob-head drops and cached player heads, with vanilla Wither Skeleton skull drops preserved by default. |
+| Villager reroll | `villager-reroll` | Enabled | Adds a non-consuming reroll offer to the vanilla trade screen using Paper's native trade generation. Untraded villagers with workstations are eligible by default. |
 | Environment | `environment` | Enabled | Animated time changes and weather controls. |
 | Worlds | `worlds` | Disabled | Tracked flat and void test worlds, biome search, world tools, and spawn controls. |
 | Inventory tools | `inventory` | Disabled | Inventory administration, item creation, repair, editing, donation, and scanning. |

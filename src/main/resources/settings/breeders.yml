@@ -7,6 +7,13 @@ messages:
   invalid-amount: "<white>Amount must be a whole number from 1 to 2304.</white>"
   given: "<white>Gave <#f72a4c>%description%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.</white>"
   received: "<white>You received <#f72a4c>%description%</#f72a4c>.</white>"
+  experience-collected: "<white>Collected <#f72a4c>%amount% XP</#f72a4c>.</white>"
+
+# XP produced by automatic breeding is stored in every breeder. Chicken breeders
+# also collect eggs naturally laid by chickens within their breeding range.
+collection:
+  experience: true
+  chicken-eggs: true
 
 display:
   item-name: "<#f72a4c>%animal% Auto Breeder</#f72a4c>"
@@ -14,9 +21,17 @@ display:
     - "<white>Stores %food% and breeds nearby %animal%.</white>"
   inventory-title: "%animal% Auto Breeder"
   hologram: "<#f72a4c>%animal% Auto Breeder</#f72a4c><newline><white>%food%: <#f72a4c>%amount%</#f72a4c></white><newline><white>Animals bred: <#f72a4c>%bred%</#f72a4c></white>"
+  # Set to an empty string to hide the live countdown line.
+  next-breed: "<white>Next breed in: <#f72a4c>%seconds%s</#f72a4c></white>"
 
 gui:
   open_commands: []
+  # Top row: breeding food. Middle row: collected chicken eggs.
+  # Click the experience bottle in the bottom row to claim stored XP.
+  experience-item:
+    name: "<#f72a4c>Stored XP: %amount%</#f72a4c>"
+    lore:
+      - "<white>Click to collect stored experience.</white>"
 
 effects:
   activation:

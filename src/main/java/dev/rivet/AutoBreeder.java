@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.GameMode;
@@ -18,13 +19,17 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Animals;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Chicken;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
@@ -32,6 +37,8 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityBreedEvent;
+import org.bukkit.event.entity.EntityDropItemEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -56,14 +63,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 final class AutoBreeder implements Listener {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
+    private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
     private static final String CONFIG_PATH = "auto-breeders";
     private static final int RANGE = 8;
+    private static final int GUI_SIZE = 27;
+    private static final int INPUT_END = 9;
+    private static final int EGG_START = 9;
+    private static final int EGG_END = 18;
+    private static final int EXPERIENCE_SLOT = 22;
+    private static final int BREED_INTERVAL_SECONDS = 5;
+    private static final long PENDING_BREED_MILLIS = 35_000;
     private static final Map<EntityType, Material> ANIMALS = Map.ofEntries(
         Map.entry(EntityType.ARMADILLO, Material.SPIDER_EYE),
         Map.entry(EntityType.AXOLOTL, Material.TROPICAL_FISH_BUCKET),
@@ -97,12 +113,17 @@ final class AutoBreeder implements Listener {
     private final NamespacedKey animalKey;
     private final NamespacedKey hologramKey;
     private final NamespacedKey playerHologramKey;
+    private final NamespacedKey legacyHologramKey;
+    private final NamespacedKey legacyPlayerHologramKey;
+    private final NamespacedKey experienceButtonKey;
     private final Set<NamespacedKey> recipeKeys = new HashSet<>();
     private final Set<String> breeders = new HashSet<>();
     private final Map<String, Inventory> inventories = new HashMap<>();
+    private final Map<UUID, PendingBreed> pendingBreeds = new HashMap<>();
     private final YamlConfiguration data;
     private final YamlConfiguration settings;
     private final BukkitTask task;
+    private int secondsUntilBreed = BREED_INTERVAL_SECONDS;
 
     AutoBreeder(RivetPlugin plugin) {
         this.plugin = plugin;
@@ -110,6 +131,10 @@ final class AutoBreeder implements Listener {
         animalKey = new NamespacedKey(plugin, "auto_breeder_animal");
         hologramKey = new NamespacedKey(plugin, "auto_breeder_hologram");
         playerHologramKey = new NamespacedKey(plugin, "hologram");
+        legacyHologramKey = Objects.requireNonNull(
+            NamespacedKey.fromString("core:auto_breeder_hologram"));
+        legacyPlayerHologramKey = Objects.requireNonNull(NamespacedKey.fromString("core:hologram"));
+        experienceButtonKey = new NamespacedKey(plugin, "auto_breeder_experience");
         data = plugin.data("breeders");
         settings = plugin.settings("breeders");
         ConfigurationSection saved = data.getConfigurationSection(CONFIG_PATH);
@@ -144,7 +169,7 @@ final class AutoBreeder implements Listener {
         registerRecipes();
         plugin.getServer().getOnlinePlayers().forEach(player -> player.discoverRecipes(recipeKeys));
         plugin.getServer().getScheduler().runTask(plugin, this::ensureLoadedHolograms);
-        task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::breed, 100, 100);
+        task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickBreeders, 20, 20);
     }
 
     @EventHandler
@@ -226,6 +251,41 @@ final class AutoBreeder implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBreed(EntityBreedEvent event) {
+        PendingBreed mother = pendingBreeds.remove(event.getMother().getUniqueId());
+        PendingBreed father = pendingBreeds.remove(event.getFather().getUniqueId());
+        if (!settings.getBoolean("collection.experience", true)
+            || mother == null || father == null || !mother.key.equals(father.key)
+            || mother.expiresAt < System.currentTimeMillis() || !breeders.contains(mother.key)
+            || event.getExperience() <= 0) {
+            return;
+        }
+        int experience = event.getExperience();
+        event.setExperience(0);
+        addExperience(mother.key, experience);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onChickenEgg(EntityDropItemEvent event) {
+        ItemStack drop = event.getItemDrop().getItemStack();
+        if (!settings.getBoolean("collection.chicken-eggs", true)
+            || !(event.getEntity() instanceof Chicken) || drop.getType() != Material.EGG) {
+            return;
+        }
+        String key = nearestBreeder(event.getEntity().getLocation(), EntityType.CHICKEN);
+        if (key == null) {
+            return;
+        }
+        int collected = addEggs(key, drop.getAmount());
+        if (collected == drop.getAmount()) {
+            event.setCancelled(true);
+        } else if (collected > 0) {
+            drop.setAmount(drop.getAmount() - collected);
+            event.getItemDrop().setItemStack(drop);
+        }
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
         Inventory top = event.getView().getTopInventory();
@@ -233,25 +293,40 @@ final class AutoBreeder implements Listener {
             return;
         }
 
-        boolean insertingIntoTop = event.getClickedInventory() == top
-            && switch (event.getAction()) {
-                case PLACE_ALL, PLACE_ONE, PLACE_SOME, SWAP_WITH_CURSOR ->
-                    event.getCursor().getType() != food(holder.key);
-                case HOTBAR_SWAP, HOTBAR_MOVE_AND_READD -> {
-                    int slot = event.getHotbarButton();
-                    ItemStack item = slot >= 0 ? event.getWhoClicked().getInventory().getItem(slot)
-                        : event.getWhoClicked().getInventory().getItemInOffHand();
-                    yield item != null && !item.getType().isAir()
-                        && item.getType() != food(holder.key);
-                }
-                default -> false;
-            };
-        boolean shiftInserting = event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY
-            && event.getClickedInventory() != top && event.getCurrentItem() != null
-            && event.getCurrentItem().getType() != food(holder.key);
-        if (insertingIntoTop || shiftInserting) {
+        int rawSlot = event.getRawSlot();
+        if (rawSlot == EXPERIENCE_SLOT && event.getClickedInventory() == top) {
             event.setCancelled(true);
+            if (event.getWhoClicked() instanceof Player player) {
+                claimExperience(holder.key, player, top);
+            }
             return;
+        }
+
+        if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY
+            && event.getClickedInventory() != top) {
+            event.setCancelled(true);
+            ItemStack item = event.getCurrentItem();
+            if (item != null && item.getType() == food(holder.key)) {
+                int moved = addToInput(top, item);
+                if (moved == item.getAmount()) {
+                    event.getClickedInventory().setItem(event.getSlot(), null);
+                } else if (moved > 0) {
+                    item.setAmount(item.getAmount() - moved);
+                }
+                persist(holder.key, top);
+            }
+            return;
+        }
+
+        if (event.getClickedInventory() == top) {
+            if (!inputSlot(rawSlot) && insertionAction(event.getAction())) {
+                event.setCancelled(true);
+                return;
+            }
+            if (inputSlot(rawSlot) && !validInput(event, food(holder.key))) {
+                event.setCancelled(true);
+                return;
+            }
         }
         plugin.getServer().getScheduler().runTask(plugin, () -> persist(holder.key, top));
     }
@@ -262,8 +337,10 @@ final class AutoBreeder implements Listener {
         if (!(top.getHolder() instanceof BreederHolder holder)) {
             return;
         }
-        if (event.getRawSlots().stream().anyMatch(slot -> slot < top.getSize())
-            && event.getOldCursor().getType() != food(holder.key)) {
+        Set<Integer> topSlots = event.getRawSlots().stream()
+            .filter(slot -> slot < top.getSize()).collect(Collectors.toSet());
+        if (!topSlots.isEmpty() && (topSlots.stream().anyMatch(slot -> !inputSlot(slot))
+            || event.getOldCursor().getType() != food(holder.key))) {
             event.setCancelled(true);
             return;
         }
@@ -370,24 +447,69 @@ final class AutoBreeder implements Listener {
     }
 
     boolean clearHolograms(CommandSender sender) {
-        List<Entity> displays = plugin.getServer().getWorlds().stream()
-            .flatMap(world -> world.getEntities().stream())
-            .filter(entity -> entity instanceof Display && clearableHologram(
-                entity.getPersistentDataContainer().get(hologramKey, PersistentDataType.STRING),
-                entity.getPersistentDataContainer().get(playerHologramKey, PersistentDataType.STRING)))
-            .toList();
-        displays.forEach(Entity::remove);
+        Set<Entity> holograms = new HashSet<>();
+        for (World world : plugin.getServer().getWorlds()) {
+            List<Entity> entities = world.getEntities();
+            entities.stream().filter(entity -> entity instanceof Display && clearableHologram(
+                    entity.getPersistentDataContainer().get(hologramKey, PersistentDataType.STRING),
+                    entity.getPersistentDataContainer().get(legacyHologramKey, PersistentDataType.STRING),
+                    entity.getPersistentDataContainer().get(playerHologramKey, PersistentDataType.STRING),
+                    entity.getPersistentDataContainer().get(
+                        legacyPlayerHologramKey, PersistentDataType.STRING)))
+                .forEach(holograms::add);
+
+            List<ArmorStand> legacyStands = entities.stream()
+                .filter(ArmorStand.class::isInstance).map(ArmorStand.class::cast)
+                .filter(AutoBreeder::legacyHologramArmorStand)
+                .filter(stand -> notPlayerHologram(
+                    stand.getPersistentDataContainer().get(
+                        playerHologramKey, PersistentDataType.STRING),
+                    stand.getPersistentDataContainer().get(
+                        legacyPlayerHologramKey, PersistentDataType.STRING)))
+                .toList();
+            List<ArmorStand> anchors = legacyStands.stream()
+                .filter(stand -> legacyAutoBreederLine(PLAIN.serialize(stand.customName())))
+                .toList();
+            legacyStands.stream().filter(stand -> anchors.stream().anyMatch(anchor ->
+                    legacyHologramNeighbor(anchor.getX(), anchor.getY(), anchor.getZ(),
+                        stand.getX(), stand.getY(), stand.getZ())))
+                .forEach(holograms::add);
+        }
+        holograms.forEach(Entity::remove);
         ensureLoadedHolograms();
         sender.sendMessage(MM.deserialize(
             "<white>Cleared <#f72a4c>%count%</#f72a4c> loaded auto-breeder hologram%plural% "
                 + "and refreshed active breeders. <#f72a4c>/holo</#f72a4c> holograms were not changed.",
-            Placeholder.unparsed("count", Integer.toString(displays.size())),
-            Placeholder.unparsed("plural", displays.size() == 1 ? "" : "s")));
+            Placeholder.unparsed("count", Integer.toString(holograms.size())),
+            Placeholder.unparsed("plural", holograms.size() == 1 ? "" : "s")));
         return true;
     }
 
-    static boolean clearableHologram(String breederMarker, String playerMarker) {
-        return breederMarker != null && playerMarker == null;
+    static boolean clearableHologram(String breederMarker, String legacyBreederMarker,
+                                     String playerMarker, String legacyPlayerMarker) {
+        return (breederMarker != null || legacyBreederMarker != null)
+            && playerMarker == null && legacyPlayerMarker == null;
+    }
+
+    private static boolean legacyHologramArmorStand(ArmorStand stand) {
+        return stand.isInvisible() && stand.isMarker() && !stand.hasGravity()
+            && stand.isCustomNameVisible() && stand.customName() != null;
+    }
+
+    static boolean notPlayerHologram(String playerMarker, String legacyPlayerMarker) {
+        return playerMarker == null && legacyPlayerMarker == null;
+    }
+
+    static boolean legacyAutoBreederLine(String text) {
+        String normalized = text == null ? "" : text.strip().toLowerCase(Locale.ROOT);
+        return normalized.endsWith(" auto breeder") || normalized.startsWith("animals bred:")
+            || normalized.startsWith("cows bred:");
+    }
+
+    static boolean legacyHologramNeighbor(double firstX, double firstY, double firstZ,
+                                           double secondX, double secondY, double secondZ) {
+        return Math.abs(firstX - secondX) <= .5 && Math.abs(firstY - secondY) <= 2
+            && Math.abs(firstZ - secondZ) <= .5;
     }
 
     private void usage(CommandSender sender) {
@@ -486,22 +608,30 @@ final class AutoBreeder implements Listener {
         return inventories.computeIfAbsent(key, ignored -> {
             BreederHolder holder = new BreederHolder(key);
             EntityType animal = animal(key);
-            Inventory inventory = Bukkit.createInventory(holder, 9,
+            Inventory inventory = Bukkit.createInventory(holder, GUI_SIZE,
                 MM.deserialize(settings.getString("display.inventory-title", "%animal% Auto Breeder"),
                     Placeholder.unparsed("animal", displayName(animal))));
             holder.inventory = inventory;
-            Material food = food(key);
-            int amount = data.getInt(path(key) + ".food");
-            while (amount > 0) {
-                int stack = Math.min(amount, food.getMaxStackSize());
-                inventory.addItem(new ItemStack(food, stack));
-                amount -= stack;
-            }
+            fill(inventory, food(key), Math.max(0, data.getInt(path(key) + ".food")),
+                0, INPUT_END);
+            renderEggs(inventory, Math.max(0, data.getInt(path(key) + ".eggs")));
+            renderExperience(inventory, storedExperience(key));
             return inventory;
         });
     }
 
+    private void tickBreeders() {
+        secondsUntilBreed--;
+        if (secondsUntilBreed <= 0) {
+            secondsUntilBreed = BREED_INTERVAL_SECONDS;
+            breed();
+        }
+        ensureLoadedHolograms();
+    }
+
     private void breed() {
+        long now = System.currentTimeMillis();
+        pendingBreeds.values().removeIf(pending -> pending.expiresAt < now);
         for (String key : List.copyOf(breeders)) {
             Location location = location(key);
             if (location == null) {
@@ -539,6 +669,9 @@ final class AutoBreeder implements Listener {
             }
             pair[0].setLoveModeTicks(600);
             pair[1].setLoveModeTicks(600);
+            PendingBreed pending = new PendingBreed(key, now + PENDING_BREED_MILLIS);
+            pendingBreeds.put(pair[0].getUniqueId(), pending);
+            pendingBreeds.put(pair[1].getUniqueId(), pending);
             activate(location, pair);
             data.set(path(key) + ".animals-bred", animalsBred(key) + pair.length);
             persist(key, inventory);
@@ -628,7 +761,11 @@ final class AutoBreeder implements Listener {
         Material food = ANIMALS.get(animal);
         int amount = inventory == null
             ? data.getInt(path(key) + ".food") : food(inventory, food);
+        int eggs = inventory == null
+            ? data.getInt(path(key) + ".eggs") : eggs(inventory);
+        int experience = storedExperience(key);
         breeders.remove(key);
+        pendingBreeds.entrySet().removeIf(entry -> entry.getValue().key.equals(key));
         data.set(path(key), null);
         removeHologram(key, location);
         if (inventory != null) {
@@ -638,6 +775,15 @@ final class AutoBreeder implements Listener {
             int stack = Math.min(amount, food.getMaxStackSize());
             location.getWorld().dropItemNaturally(location, new ItemStack(food, stack));
             amount -= stack;
+        }
+        while (eggs > 0) {
+            int stack = Math.min(eggs, Material.EGG.getMaxStackSize());
+            location.getWorld().dropItemNaturally(location, new ItemStack(Material.EGG, stack));
+            eggs -= stack;
+        }
+        if (experience > 0) {
+            location.getWorld().spawn(location.clone().add(.5, .5, .5), ExperienceOrb.class,
+                orb -> orb.setExperience(experience));
         }
         if (dropBlock) {
             location.getWorld().dropItemNaturally(location, item(animal));
@@ -650,6 +796,7 @@ final class AutoBreeder implements Listener {
             return;
         }
         data.set(path(key) + ".food", food(inventory, food(key)));
+        data.set(path(key) + ".eggs", eggs(inventory));
         save();
         ensureHologram(key);
     }
@@ -713,19 +860,22 @@ final class AutoBreeder implements Listener {
         }
     }
 
-    static Component hologram(EntityType animal, int food, int animalsBred) {
+    static Component hologram(EntityType animal, int food, int animalsBred, int secondsUntilBreed) {
         return Component.text(displayName(animal) + " Auto Breeder", RivetPalette.SECONDARY)
             .append(Component.newline())
             .append(Component.text(displayName(ANIMALS.get(animal)) + ": ", RivetPalette.PRIMARY))
             .append(Component.text(Integer.toString(food), RivetPalette.SECONDARY))
             .append(Component.newline())
             .append(Component.text("Animals bred: ", RivetPalette.PRIMARY))
-            .append(Component.text(Integer.toString(animalsBred), RivetPalette.SECONDARY));
+            .append(Component.text(Integer.toString(animalsBred), RivetPalette.SECONDARY))
+            .append(Component.newline())
+            .append(Component.text("Next breed in: ", RivetPalette.PRIMARY))
+            .append(Component.text(secondsUntilBreed + "s", RivetPalette.SECONDARY));
     }
 
     private Component configuredHologram(EntityType animal, int food, int animalsBred) {
         Material material = ANIMALS.get(animal);
-        return text("display.hologram",
+        Component hologram = text("display.hologram",
             "<#f72a4c>%animal% Auto Breeder</#f72a4c><newline><white>%food%: "
                 + "<#f72a4c>%amount%</#f72a4c></white><newline><white>Animals bred: "
                 + "<#f72a4c>%bred%</#f72a4c></white>",
@@ -733,6 +883,13 @@ final class AutoBreeder implements Listener {
             Placeholder.unparsed("food", displayName(material)),
             Placeholder.unparsed("amount", Integer.toString(food)),
             Placeholder.unparsed("bred", Integer.toString(animalsBred)));
+        String countdown = settings.getString("display.next-breed",
+            "<white>Next breed in: <#f72a4c>%seconds%s</#f72a4c></white>");
+        if (countdown == null || countdown.isBlank()) {
+            return hologram;
+        }
+        return hologram.append(Component.newline()).append(MM.deserialize(countdown,
+            Placeholder.unparsed("seconds", Integer.toString(secondsUntilBreed))));
     }
 
     private TagResolver[] displayPlaceholders(EntityType animal, Material food) {
@@ -746,10 +903,170 @@ final class AutoBreeder implements Listener {
         return MM.deserialize(settings.getString(path, fallback), placeholders);
     }
 
+    private String nearestBreeder(Location source, EntityType animal) {
+        return breeders.stream().filter(key -> animal(key) == animal).filter(key -> {
+            Location location = location(key);
+            return location != null && location.getWorld().equals(source.getWorld())
+                && isBreeder(location.getBlock()) && location.distanceSquared(source) <= RANGE * RANGE;
+        }).min(java.util.Comparator.comparingDouble(key -> location(key).distanceSquared(source)))
+            .orElse(null);
+    }
+
+    private int addEggs(String key, int amount) {
+        Inventory inventory = inventories.get(key);
+        int stored = inventory == null
+            ? Math.max(0, data.getInt(path(key) + ".eggs")) : eggs(inventory);
+        int collected = collectableOutput(stored, amount,
+            (EGG_END - EGG_START) * Material.EGG.getMaxStackSize());
+        if (collected == 0) {
+            return 0;
+        }
+        int total = stored + collected;
+        data.set(path(key) + ".eggs", total);
+        if (inventory != null) {
+            renderEggs(inventory, total);
+        }
+        save();
+        return collected;
+    }
+
+    private void addExperience(String key, int amount) {
+        int total = saturatedAdd(storedExperience(key), amount);
+        data.set(path(key) + ".experience", total);
+        Inventory inventory = inventories.get(key);
+        if (inventory != null) {
+            renderExperience(inventory, total);
+        }
+        save();
+    }
+
+    private void claimExperience(String key, Player player, Inventory inventory) {
+        int experience = storedExperience(key);
+        if (experience <= 0) {
+            return;
+        }
+        data.set(path(key) + ".experience", 0);
+        renderExperience(inventory, 0);
+        save();
+        player.giveExp(experience);
+        player.sendActionBar(text("messages.experience-collected",
+            "<white>Collected <#f72a4c>%amount% XP</#f72a4c>.</white>",
+            Placeholder.unparsed("amount", Integer.toString(experience))));
+    }
+
+    private int storedExperience(String key) {
+        return Math.max(0, data.getInt(path(key) + ".experience"));
+    }
+
+    private void renderExperience(Inventory inventory, int amount) {
+        ItemStack button = new ItemStack(Material.EXPERIENCE_BOTTLE);
+        button.editMeta(meta -> {
+            TagResolver placeholder = Placeholder.unparsed("amount", Integer.toString(amount));
+            meta.displayName(text("gui.experience-item.name",
+                "<#f72a4c>Stored XP: %amount%</#f72a4c>", placeholder));
+            List<String> lore = settings.getStringList("gui.experience-item.lore");
+            if (lore.isEmpty()) {
+                lore = List.of("<white>Click to collect stored experience.</white>");
+            }
+            meta.lore(lore.stream().map(line -> MM.deserialize(line, placeholder)).toList());
+            meta.getPersistentDataContainer().set(
+                experienceButtonKey, PersistentDataType.BYTE, (byte) 1);
+        });
+        inventory.setItem(EXPERIENCE_SLOT, button);
+    }
+
+    private static void renderEggs(Inventory inventory, int amount) {
+        for (int slot = EGG_START; slot < EGG_END; slot++) {
+            inventory.setItem(slot, null);
+        }
+        fill(inventory, Material.EGG, amount, EGG_START, EGG_END);
+    }
+
+    private static void fill(Inventory inventory, Material material, int amount,
+                             int firstSlot, int endSlot) {
+        for (int slot = firstSlot; slot < endSlot && amount > 0; slot++) {
+            int stack = Math.min(amount, material.getMaxStackSize());
+            inventory.setItem(slot, new ItemStack(material, stack));
+            amount -= stack;
+        }
+    }
+
+    private static int addToInput(Inventory inventory, ItemStack item) {
+        int remaining = item.getAmount();
+        for (int slot = 0; slot < INPUT_END && remaining > 0; slot++) {
+            ItemStack stored = inventory.getItem(slot);
+            if (stored == null || !stored.isSimilar(item)
+                || stored.getAmount() >= stored.getMaxStackSize()) {
+                continue;
+            }
+            int added = Math.min(remaining, stored.getMaxStackSize() - stored.getAmount());
+            stored.add(added);
+            remaining -= added;
+        }
+        for (int slot = 0; slot < INPUT_END && remaining > 0; slot++) {
+            ItemStack stored = inventory.getItem(slot);
+            if (stored != null && !stored.getType().isAir()) {
+                continue;
+            }
+            int added = Math.min(remaining, item.getMaxStackSize());
+            ItemStack inserted = item.clone();
+            inserted.setAmount(added);
+            inventory.setItem(slot, inserted);
+            remaining -= added;
+        }
+        return item.getAmount() - remaining;
+    }
+
+    private static boolean inputSlot(int slot) {
+        return slot >= 0 && slot < INPUT_END;
+    }
+
+    private static boolean insertionAction(InventoryAction action) {
+        return switch (action) {
+            case PLACE_ALL, PLACE_ONE, PLACE_SOME, SWAP_WITH_CURSOR,
+                 HOTBAR_SWAP, HOTBAR_MOVE_AND_READD -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean validInput(InventoryClickEvent event, Material food) {
+        return switch (event.getAction()) {
+            case PLACE_ALL, PLACE_ONE, PLACE_SOME, SWAP_WITH_CURSOR ->
+                event.getCursor().getType().isAir() || event.getCursor().getType() == food;
+            case HOTBAR_SWAP, HOTBAR_MOVE_AND_READD -> {
+                int slot = event.getHotbarButton();
+                ItemStack item = slot >= 0 ? event.getWhoClicked().getInventory().getItem(slot)
+                    : event.getWhoClicked().getInventory().getItemInOffHand();
+                yield item == null || item.getType().isAir() || item.getType() == food;
+            }
+            default -> true;
+        };
+    }
+
+    static int collectableOutput(int stored, int incoming, int capacity) {
+        return Math.max(0, Math.min(Math.max(0, incoming), Math.max(0, capacity - stored)));
+    }
+
+    static int saturatedAdd(int current, int addition) {
+        return (int) Math.min(Integer.MAX_VALUE,
+            Math.max(0L, current) + Math.max(0L, addition));
+    }
+
     private static int food(Inventory inventory, Material food) {
         int amount = 0;
         for (ItemStack item : inventory.getContents()) {
             if (item != null && item.getType() == food) {
+                amount += item.getAmount();
+            }
+        }
+        return amount;
+    }
+
+    private static int eggs(Inventory inventory) {
+        int amount = 0;
+        for (int slot = EGG_START; slot < EGG_END; slot++) {
+            ItemStack item = inventory.getItem(slot);
+            if (item != null && item.getType() == Material.EGG) {
                 amount += item.getAmount();
             }
         }
@@ -796,6 +1113,9 @@ final class AutoBreeder implements Listener {
 
     static boolean readyToBreed(boolean canBreed, int loveModeTicks) {
         return canBreed && loveModeTicks == 0;
+    }
+
+    private record PendingBreed(String key, long expiresAt) {
     }
 
     private static final class BreederHolder implements InventoryHolder {

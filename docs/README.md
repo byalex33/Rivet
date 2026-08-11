@@ -23,6 +23,6 @@ Rivet is built specifically against the Paper API. Spigot and Bukkit-only server
 
 ## Current scope
 
-Rivet contains 95 registered commands and 32 independently switchable modules. The plugin includes homes, warps, graves, chat, permissions, holograms, backpacks, kits, random teleportation, staff tooling, creeper-crater restoration, and other server utilities.
+Rivet contains 95 registered commands and 33 independently switchable modules. The plugin includes homes, warps, graves, chat, permissions, holograms, backpacks, kits, villager trade rerolling, random teleportation, staff tooling, creeper-crater restoration, and other server utilities.
 
 Use the [command reference](commands.md) for command syntax and the [configuration guide](configuration.md) for module and settings files.

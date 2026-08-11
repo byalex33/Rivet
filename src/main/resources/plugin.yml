@@ -445,6 +445,8 @@ permissions:
     default: false
   rivet.eggcapture:
     default: true
+  rivet.villager-reroll:
+    default: true
   rivet.spawn:
     default: true
   rivet.spawn.set:
