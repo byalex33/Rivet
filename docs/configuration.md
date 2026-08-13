@@ -35,6 +35,7 @@ plugins/Rivet/
 |   |-- poses.yml
 |   |-- rtp.yml
 |   |-- spawn.yml
+|   |-- snapshots.yml
 |   |-- staff.yml
 |   |-- statistics.yml
 |   |-- tpa.yml
@@ -47,7 +48,8 @@ plugins/Rivet/
 |   `-- worlds.yml
 |-- data/
 |   `-- generated runtime state
-`-- logs.db
+|-- logs.db
+`-- snapshots.db
 ```
 
 ## `config.yml`
@@ -86,6 +88,7 @@ This file contains feature switches only. Every value must be `true` or `false`.
 | `permissions` | Disabled |
 | `poses` | Disabled |
 | `rtp` | Disabled |
+| `snapshots` | Enabled |
 | `spawn` | Enabled |
 | `staff` | Disabled |
 | `statistics` | Enabled |
@@ -150,6 +153,19 @@ show `unknown` for fields that have not yet been observed by Seen v2.
 
 High-volume entries are written asynchronously in batches to `plugins/Rivet/logs.db`. SQLite WAL mode and location, player, action, and time indexes keep gameplay writes and inspector queries lightweight. Records include before/after data and item metadata so rollback and restore can be added later without changing the basic schema; those operations are not currently exposed.
 
+### Inventory snapshots
+
+`settings/snapshots.yml` controls per-player maximums, retention, binary-payload
+deduplication, death capture, restore confirmation, `PRE_RESTORE` safety snapshots,
+creation auditing, and all command messages. Defaults keep 10 snapshots per player for 30
+days, deduplicate identical state, save only on death, and require both confirmation and a
+successful safety snapshot before restore.
+
+Snapshot rows and compressed binary payloads live in `plugins/Rivet/snapshots.db`; no
+inventory contents are stored in YAML or copied into `logs.db`. Database serialization,
+writes, reads, and cleanup run on one dedicated worker. Bukkit state is captured and
+restored on the server thread.
+
 ### Built-in permissions
 
 When the `permissions` module is enabled, `settings/permissions.yml` stores human-readable group definitions with integer weights, `parents` lists, boolean permission maps, and MiniMessage `prefix`/`suffix` metadata. `data/permissions.yml` stores UUID-keyed user `groups` lists and direct boolean permission maps. A missing permission key means unset and therefore inherited or handled by Paper's default.
@@ -158,7 +174,7 @@ Sound and particle fields accept Minecraft registry keys with or without the `mi
 
 ## Runtime data
 
-Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, not YAML.
+Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, and inventory snapshots use `snapshots.db`; neither uses YAML for payload data.
 
 Do not hand-edit runtime data while the server is running. Rivet may overwrite an external change the next time it saves that module.
 
@@ -171,6 +187,10 @@ Settings changes apply immediately where supported. Changes to `modules.yml` are
 Use [`/lagg reload`](commands.md#lagg) to reload only `settings/lagg.yml` and restart its warning schedule. `/rivet reload` also refreshes the active cleanup schedule.
 
 Use [`/log reload`](commands.md#log) to validate and reload only `settings/logs.yml`. Exclusions and event switches apply to new records immediately; lowering retention also schedules an immediate purge.
+
+`/rivet reload` refreshes `settings/snapshots.yml` immediately. Lower retention or maximum
+values schedule cleanup on the snapshot storage worker. The `snapshots` switch in
+`modules.yml` still requires a server restart.
 
 `settings/gameplay.yml` includes the `iron-golem-poppy-drops` switch. It is enabled by default to preserve vanilla behavior; set it to `false` and run `/rivet reload` to stop Iron Golems from dropping poppies (formerly roses). Iron ingot drops are unaffected.
 

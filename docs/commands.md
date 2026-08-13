@@ -1,6 +1,6 @@
 # Command reference
 
-Rivet registers 98 commands. Every command below has a stable link used by the documentation sidebar.
+Rivet registers 99 commands. Every command below has a stable link used by the documentation sidebar.
 
 ## Syntax conventions
 
@@ -22,7 +22,7 @@ Rivet registers 98 commands. Every command below has a stable link used by the d
 | Gameplay systems | [`/givebreeder`](#givebreeder), [`/restorationcore`](#restorationcore), [`/kit`](#kit), [`/daily`](#daily), [`/filter`](#filter), [`/head`](#head) |
 | Player information and utilities | [`/stats`](#stats), [`/playtime`](#playtime), [`/seen`](#seen), [`/craft`](#craft), [`/anvil`](#anvil), [`/smithing`](#smithing), [`/stonecutter`](#stonecutter), [`/grindstone`](#grindstone), [`/jump`](#jump), [`/list`](#list), [`/ping`](#ping), [`/ride`](#ride), [`/sit`](#sit), [`/lay`](#lay), [`/crawl`](#crawl) |
 | Staff and moderation | [`/gmc`](#gmc), [`/gms`](#gms), [`/vanish`](#vanish), [`/fly`](#fly), [`/flyspeed`](#flyspeed), [`/commandspy`](#commandspy), [`/heal`](#heal), [`/feed`](#feed), [`/god`](#god), [`/bossbarmsg`](#bossbarmsg), [`/note`](#note), [`/sameip`](#sameip), [`/toast`](#toast) |
-| Server administration | [`/perm`](#perm), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/lagg`](#lagg), [`/log`](#log), [`/help`](#help), [`/rivet`](#rivet) |
+| Server administration | [`/perm`](#perm), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/lagg`](#lagg), [`/log`](#log), [`/snapshot`](#snapshot), [`/help`](#help), [`/rivet`](#rivet) |
 
 ## Homes and warps
 
@@ -1274,6 +1274,27 @@ Inspect and search Rivet's SQLite gameplay audit history.
 `/log inspect` toggles inspector mode. Left- or right-click a block for its recent history; clicking a container shows inventory additions and removals. Inspector and lookup output is newest-first. Times use compact values such as `30m`, `2h`, `7d`, or `1w`; radius is limited to 1,000 blocks and is centered on the viewer.
 
 A bare player lookup covers the configured default time globally. A bare `/log lookup` uses the configured default time and radius around the player. Previous and next controls run `/log page`, and coordinates show the exact world and position on hover. With `rivet.logs.teleport`, clicking coordinates teleports the viewer to that location. `/log reload` validates only `settings/logs.yml`.
+
+<a id="snapshot"></a>
+
+### `/snapshot`
+
+- **Syntax:** `/snapshot <player>`
+- **Permissions:** `rivet.snapshots.view`; `rivet.snapshots.others` for another player
+- **Default:** `op`
+- **Aliases:** None
+
+Browse a player's recent inventory snapshots newest first.
+
+Death snapshots include their reason, relative and exact time, death cause, world,
+coordinates, and snapshot ID. Clicking an entry opens a read-only preview with the exact
+saved storage-slot layout, armour, offhand, health, hunger, saturation, XP, and location.
+The GUI cancels all clicks and drags so saved items cannot be taken.
+
+`rivet.snapshots.teleport` enables the location button. `rivet.snapshots.restore` enables
+restore for an online, visible target. Restore replaces the target's inventory and state
+instead of merging; the default confirmation screen warns about replacement and creates a
+`PRE_RESTORE` safety snapshot before any change is applied.
 
 <a id="help"></a>
 

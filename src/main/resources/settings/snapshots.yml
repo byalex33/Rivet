@@ -1,0 +1,35 @@
+# Inventory snapshots use plugins/Rivet/snapshots.db, not YAML runtime data.
+max-per-player: 10
+retention-days: 30
+deduplicate: true
+
+save-on:
+  death: true
+
+restore:
+  create-safety-snapshot: true
+  require-confirmation: true
+
+audit:
+  # Records only snapshot metadata in logs.db when the logs module is available.
+  record-creations: true
+
+# MiniMessage and the shared %tag% component are supported.
+messages:
+  denied: { enabled: true, actions: ['[message] <white>%tag% You do not have permission to do that.</white>'] }
+  denied-others: { enabled: true, actions: ["[message] <white>%tag% You cannot view another player's snapshots.</white>"] }
+  denied-restore: { enabled: true, actions: ['[message] <white>%tag% You do not have permission to restore snapshots.</white>'] }
+  denied-teleport: { enabled: true, actions: ['[message] <white>%tag% You do not have permission to teleport to snapshots.</white>'] }
+  player-only: { enabled: true, actions: ['[message] <white>%tag% This command is only available to players.</white>'] }
+  usage: { enabled: true, actions: ['[message] <white>%tag% Usage: /snapshot &lt;player&gt;</white>'] }
+  loading: { enabled: true, actions: ['[message] <white>%tag% Loading snapshots...</white>'] }
+  not-found: { enabled: true, actions: ['[message] <white>%tag% That player could not be found.</white>'] }
+  none: { enabled: true, actions: ['[message] <white>%tag% No snapshots were found for <#f72a4c>%player%</#f72a4c>.</white>'] }
+  load-failed: { enabled: true, actions: ['[message] <white>%tag% Snapshots could not be loaded. Check the console.</white>'] }
+  target-offline: { enabled: true, actions: ['[message] <white>%tag% The target player must be online and visible.</white>'] }
+  busy: { enabled: true, actions: ['[message] <white>%tag% A restore is already running for that player.</white>'] }
+  safety-failed: { enabled: true, actions: ['[message] <white>%tag% The safety snapshot failed, so nothing was restored.</white>'] }
+  restored: { enabled: true, actions: ['[message] <white>%tag% Restored snapshot <#f72a4c>#%id%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.</white>'] }
+  restored-target: { enabled: true, actions: ['[message] <white>%tag% Your inventory and state were restored from snapshot <#f72a4c>#%id%</#f72a4c>.</white>'] }
+  restore-failed: { enabled: true, actions: ['[message] <white>%tag% The snapshot could not be restored. Check the console.</white>'] }
+  world-unavailable: { enabled: true, actions: ['[message] <white>%tag% The snapshot world is not loaded.</white>'] }

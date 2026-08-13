@@ -14,6 +14,8 @@ enum AuditAction {
     CREEPER_DAMAGE,
     FIRE_DAMAGE,
     BLOCK_INTERACT,
+    SNAPSHOT_CREATE,
+    SNAPSHOT_RESTORE,
     COMMAND;
 
     boolean command() {

@@ -11,6 +11,8 @@ logging:
   explosions: true
   fire: true
   interactions: true
+  # Stores only actor/target/snapshot metadata, never inventory contents.
+  snapshots: true
   # Chat and private-message commands are never recorded, even when enabled.
   commands: false
 

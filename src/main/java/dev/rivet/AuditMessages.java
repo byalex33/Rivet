@@ -159,6 +159,8 @@ final class AuditMessages {
             case ENTITY_KILL, PLAYER_DEATH, EXPLOSION, CREEPER_DAMAGE, FIRE_DAMAGE ->
                 Component.text("×", NamedTextColor.RED);
             case SIGN_EDIT, BLOCK_INTERACT -> Component.text("•", ACCENT);
+            case SNAPSHOT_CREATE -> Component.text("◇", ACCENT);
+            case SNAPSHOT_RESTORE -> Component.text("↺", NamedTextColor.GREEN);
             case COMMAND -> Component.text(">", ACCENT);
         };
     }
@@ -187,6 +189,8 @@ final class AuditMessages {
             case CREEPER_DAMAGE -> "creeper damaged";
             case FIRE_DAMAGE -> "burned";
             case BLOCK_INTERACT -> "used";
+            case SNAPSHOT_CREATE -> "created";
+            case SNAPSHOT_RESTORE -> "restored";
             case COMMAND -> "ran";
         };
     }

@@ -129,6 +129,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private LaggModule lagg;
     private AuditModule audit;
     private DeathMessagesModule deathMessages;
+    private SnapshotModule snapshots;
     private GuiActions guiActions;
     private MessageActions messageActions;
     private RivetConfig files;
@@ -233,6 +234,17 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 return;
             }
         }
+        if (moduleEnabled("snapshots")) {
+            try {
+                snapshots = new SnapshotModule(this);
+                getServer().getPluginManager().registerEvents(snapshots, this);
+            } catch (java.sql.SQLException exception) {
+                getLogger().log(java.util.logging.Level.SEVERE,
+                    "Could not open Rivet's inventory snapshot storage", exception);
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+        }
         if (moduleEnabled("death-messages")) {
             deathMessages = new DeathMessagesModule(this);
             getServer().getPluginManager().registerEvents(deathMessages, this);
@@ -331,6 +343,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (lagg != null) {
             lagg.shutdown();
+        }
+        if (snapshots != null) {
+            snapshots.shutdown();
         }
         if (audit != null) {
             audit.shutdown();
@@ -570,6 +585,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (name.equals("log")) {
             return audit.command(sender, args);
         }
+        if (name.equals("snapshot")) {
+            return snapshots.command(sender, args);
+        }
         if (name.equals("perm")) {
             return permissions.command(sender, args);
         }
@@ -769,6 +787,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "lore" -> args.length == 1 ? List.of("add", "set", "remove", "clear") : List.of();
                 case "lagg" -> args.length == 1 ? List.of("clear", "reload") : List.of();
                 case "log" -> audit.completions(sender, args);
+                case "snapshot" -> snapshots.completions(sender, args);
                 case "rivet" -> args.length == 1 ? List.of("reload") : List.of();
                 default -> List.of();
             };
@@ -2020,6 +2039,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             if (audit != null) {
                 audit.reload();
             }
+            if (snapshots != null) {
+                snapshots.reload();
+            }
             if (graves != null) {
                 graves.reload();
             }
@@ -2115,8 +2137,16 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "help" -> "help";
             case "lagg" -> "lagg";
             case "log" -> "logs";
+            case "snapshot" -> "snapshots";
             default -> null;
         };
+    }
+
+    void recordSnapshotAudit(AuditAction action, UUID actorUuid, String actorName,
+                             SnapshotRecord snapshot) {
+        if (audit != null) {
+            audit.recordSnapshot(action, actorUuid, actorName, snapshot);
+        }
     }
 
     static boolean commandDisabled(String command, java.util.function.Predicate<String> enabled) {

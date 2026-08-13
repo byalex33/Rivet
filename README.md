@@ -18,7 +18,7 @@ Rivet includes:
 
 - Homes, public warps, spawn management, teleport requests, graves, and safe random teleportation.
 - Formatted chat, modern configurable death messages, friendly colors and gradients, cosmetic tags, mentions, private messages, social spy, ignore lists, nicknames, AFK state, playtime, statistics, and last-seen information.
-- Kits, backpacks, daily rewards, pickup filters, trash inventories, portable workstations, and native player poses.
+- Kits, backpacks, daily rewards, pickup filters, trash inventories, portable workstations, native player poses, and SQLite inventory snapshots with safe restores.
 - Auto breeders, faster hoppers, ground-item cleanup, egg capture, villager trade rerolling, tree felling, vein mining, mob heads, holograms, and creeper-crater restoration.
 - Test worlds, biome search, time and weather controls, inventory scanning, and world administration.
 - Vanish, flight, coordinate teleportation, god mode, healing, moderation notes, boss bars, toasts, and optional local permissions.
@@ -38,7 +38,7 @@ Rivet creates `plugins/Rivet/` with global configuration, module switches, modul
 
 ## Command documentation
 
-Rivet registers 98 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
+Rivet registers 99 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
 
 Common starting points:
 
@@ -47,6 +47,7 @@ Common starting points:
 - [`/setwarp`](docs/commands.md#setwarp) creates a public warp.
 - [`/setspawn`](docs/commands.md#setspawn) sets the server spawn.
 - [`/seen`](docs/commands.md#seen) shows a compact join, login, logout, and playtime summary.
+- [`/snapshot`](docs/commands.md#snapshot) previews and safely restores recent inventory snapshots.
 - [`/tppos`](docs/commands.md#tppos) teleports to absolute or relative coordinates.
 - [`/restorationcore`](docs/commands.md#restorationcore) gives throwable crater-repair items.
 - [`/log inspect`](docs/commands.md#log) toggles interactive block and container history.

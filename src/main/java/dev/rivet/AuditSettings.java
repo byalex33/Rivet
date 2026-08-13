@@ -46,6 +46,7 @@ final class AuditSettings {
             case EXPLOSION, CREEPER_DAMAGE -> "explosions";
             case FIRE_DAMAGE -> "fire";
             case BLOCK_INTERACT -> "interactions";
+            case SNAPSHOT_CREATE, SNAPSHOT_RESTORE -> "snapshots";
             case COMMAND -> "commands";
         }, action != AuditAction.COMMAND);
     }

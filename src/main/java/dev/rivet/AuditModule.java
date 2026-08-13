@@ -173,6 +173,23 @@ final class AuditModule implements Listener {
         ignoredBlockBreakChecks.remove(blockKey(player, block));
     }
 
+    void recordSnapshot(AuditAction action, UUID actorUuid, String actorName,
+                        SnapshotRecord snapshot) {
+        if (!settings.enabled(action)) {
+            return;
+        }
+        storage.append(new AuditEntry(System.currentTimeMillis(), actorUuid, actorName,
+            action, snapshot.world(), (int) Math.floor(snapshot.x()),
+            (int) Math.floor(snapshot.y()), (int) Math.floor(snapshot.z()),
+            "snapshot #" + snapshot.id() + " → " + snapshot.playerName(), 1,
+            null, null, snapshotMetadata(snapshot)));
+    }
+
+    static String snapshotMetadata(SnapshotRecord snapshot) {
+        return "snapshot_id=" + snapshot.id() + ";target_uuid=" + snapshot.playerUuid()
+            + ";target_name=" + snapshot.playerName() + ";reason=" + snapshot.reason();
+    }
+
     private boolean inspect(CommandSender sender, String[] args) {
         if (!sender.hasPermission("rivet.logs.inspect")) {
             denied(sender);
