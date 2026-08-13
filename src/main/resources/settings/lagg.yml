@@ -15,6 +15,40 @@ ignore:
   custom-names: true
   # Protect dropped items or ItemStacks carrying PersistentDataContainer data.
   persistent-data: true
+  # Protect the crop harvests listed below from scheduled and manual cleanup.
+  crops: true
+
+# Materials treated as crop drops when ignore.crops is enabled.
+crop-materials:
+  - WHEAT
+  - WHEAT_SEEDS
+  - CARROT
+  - POTATO
+  - POISONOUS_POTATO
+  - BEETROOT
+  - BEETROOT_SEEDS
+  - NETHER_WART
+  - COCOA_BEANS
+  - MELON
+  - MELON_SLICE
+  - MELON_SEEDS
+  - PUMPKIN
+  - PUMPKIN_SEEDS
+  - SWEET_BERRIES
+  - GLOW_BERRIES
+  - TORCHFLOWER
+  - TORCHFLOWER_SEEDS
+  - PITCHER_PLANT
+  - PITCHER_POD
+  - SUGAR_CANE
+  - CACTUS
+  - BAMBOO
+  - KELP
+  - DRIED_KELP
+  - BROWN_MUSHROOM
+  - RED_MUSHROOM
+  - CHORUS_FRUIT
+  - CHORUS_FLOWER
 
 # MiniMessage tags are supported. Available placeholders vary by message:
 # warning: %seconds%, %plural%

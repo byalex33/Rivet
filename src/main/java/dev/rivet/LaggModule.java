@@ -22,11 +22,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 final class LaggModule {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private static final long DEFAULT_INTERVAL_SECONDS = 300;
     private static final long MAX_INTERVAL_SECONDS = Long.MAX_VALUE / 20;
+    private static final Set<Material> DEFAULT_CROP_DROPS = Set.of(
+        Material.WHEAT, Material.WHEAT_SEEDS, Material.CARROT, Material.POTATO,
+        Material.POISONOUS_POTATO, Material.BEETROOT, Material.BEETROOT_SEEDS,
+        Material.NETHER_WART, Material.COCOA_BEANS, Material.MELON, Material.MELON_SLICE,
+        Material.MELON_SEEDS, Material.PUMPKIN, Material.PUMPKIN_SEEDS,
+        Material.SWEET_BERRIES, Material.GLOW_BERRIES, Material.TORCHFLOWER,
+        Material.TORCHFLOWER_SEEDS, Material.PITCHER_PLANT, Material.PITCHER_POD,
+        Material.SUGAR_CANE, Material.CACTUS, Material.BAMBOO, Material.KELP,
+        Material.DRIED_KELP, Material.BROWN_MUSHROOM, Material.RED_MUSHROOM,
+        Material.CHORUS_FRUIT, Material.CHORUS_FLOWER);
 
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
@@ -102,6 +113,8 @@ final class LaggModule {
     private CleanupResult clearGroundItems() {
         boolean ignoreCustomNames = settings.getBoolean("ignore.custom-names", true);
         boolean ignorePersistentData = settings.getBoolean("ignore.persistent-data", true);
+        boolean ignoreCrops = settings.getBoolean("ignore.crops", true);
+        Set<Material> crops = cropMaterials(settings.getStringList("crop-materials"));
         Map<Material, RemovedItem> removed = new LinkedHashMap<>();
         int entityCount = 0;
         long itemCount = 0;
@@ -112,8 +125,8 @@ final class LaggModule {
                 boolean customName = item.customName() != null || meta.hasCustomName();
                 boolean persistentData = !item.getPersistentDataContainer().isEmpty()
                     || !meta.getPersistentDataContainer().isEmpty();
-                if (protectedItem(ignoreCustomNames, ignorePersistentData,
-                    customName, persistentData)) {
+                if (protectedItem(ignoreCustomNames, ignorePersistentData, ignoreCrops,
+                    customName, persistentData, stack.getType(), crops)) {
                     continue;
                 }
                 int amount = Math.max(0, stack.getAmount());
@@ -183,8 +196,21 @@ final class LaggModule {
     }
 
     static boolean protectedItem(boolean ignoreCustomNames, boolean ignorePersistentData,
-                                 boolean customName, boolean persistentData) {
-        return (ignoreCustomNames && customName) || (ignorePersistentData && persistentData);
+                                 boolean ignoreCrops, boolean customName,
+                                 boolean persistentData, Material material,
+                                 Set<Material> crops) {
+        return (ignoreCustomNames && customName) || (ignorePersistentData && persistentData)
+            || (ignoreCrops && crops.contains(material));
+    }
+
+    static Set<Material> cropMaterials(List<String> configured) {
+        if (configured.isEmpty()) {
+            return DEFAULT_CROP_DROPS;
+        }
+        java.util.EnumSet<Material> materials = java.util.EnumSet.noneOf(Material.class);
+        configured.stream().map(Material::matchMaterial).filter(java.util.Objects::nonNull)
+            .forEach(materials::add);
+        return Set.copyOf(materials);
     }
 
     static void recordRemoval(Map<Material, RemovedItem> removed, Material material, int amount) {

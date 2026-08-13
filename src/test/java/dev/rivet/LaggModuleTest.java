@@ -9,9 +9,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public final class LaggModuleTest {
     @Test
@@ -25,6 +27,9 @@ public final class LaggModuleTest {
         assertEquals(List.of(60, 30, 10), settings.getIntegerList("warning-seconds"));
         assertEquals(true, settings.getBoolean("ignore.custom-names"));
         assertEquals(true, settings.getBoolean("ignore.persistent-data"));
+        assertEquals(true, settings.getBoolean("ignore.crops"));
+        assertTrue(settings.getStringList("crop-materials").contains("WHEAT"));
+        assertTrue(settings.getStringList("crop-materials").contains("NETHER_WART"));
         List.of("messages.warning.actions", "messages.cleanup.actions",
             "messages.reloaded.actions", "messages.reload-failed.actions",
             "messages.usage.actions")
@@ -46,11 +51,31 @@ public final class LaggModuleTest {
 
     @Test
     public void protectsNamedAndPersistentItemsByConfiguration() {
-        assertEquals(true, LaggModule.protectedItem(true, true, true, false));
-        assertEquals(true, LaggModule.protectedItem(true, true, false, true));
-        assertEquals(false, LaggModule.protectedItem(false, true, true, false));
-        assertEquals(false, LaggModule.protectedItem(true, false, false, true));
-        assertEquals(false, LaggModule.protectedItem(true, true, false, false));
+        Set<Material> crops = LaggModule.cropMaterials(List.of());
+        assertEquals(true, LaggModule.protectedItem(true, true, true,
+            true, false, Material.COBBLESTONE, crops));
+        assertEquals(true, LaggModule.protectedItem(true, true, true,
+            false, true, Material.COBBLESTONE, crops));
+        assertEquals(true, LaggModule.protectedItem(true, true, true,
+            false, false, Material.WHEAT, crops));
+        assertEquals(false, LaggModule.protectedItem(false, true, false,
+            true, false, Material.COBBLESTONE, crops));
+        assertEquals(false, LaggModule.protectedItem(true, false, false,
+            false, true, Material.COBBLESTONE, crops));
+        assertEquals(false, LaggModule.protectedItem(true, true, false,
+            false, false, Material.WHEAT, crops));
+        assertEquals(false, LaggModule.protectedItem(true, true, true,
+            false, false, Material.COBBLESTONE, crops));
+    }
+
+    @Test
+    public void protectsConfiguredCropDropsAndAllowsCustomCropLists() {
+        Set<Material> defaults = LaggModule.cropMaterials(List.of());
+        assertTrue(defaults.containsAll(Set.of(Material.WHEAT, Material.CARROT,
+            Material.POTATO, Material.BEETROOT, Material.NETHER_WART, Material.SUGAR_CANE,
+            Material.CACTUS, Material.BAMBOO, Material.KELP)));
+        assertEquals(Set.of(Material.WHEAT, Material.CARROT),
+            LaggModule.cropMaterials(List.of("wheat", "minecraft:carrot", "invalid")));
     }
 
     @Test

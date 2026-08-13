@@ -36,7 +36,7 @@ Templates support `%player%`, `%killer%`, `%mob%`, `%weapon%`, and `%world%`. Na
 | Auto breeders | `breeders` | Enabled | Persistent, species-specific automated breeders with a live next-breed hologram countdown, stored breeding XP, and chicken-egg collection. |
 | Egg capture | `egg-capture` | Enabled | Capture supported mobs with thrown eggs and animated effects. |
 | Creeper restoration | `creeper-restoration` | Enabled | Visual creeper debris and throwable Restoration Cores that reconstruct saved craters. |
-| Ground-item cleanup | `lagg` | Enabled | Periodically removes eligible dropped item entities from loaded worlds, with configurable warnings, protected named or plugin-tagged items, and hoverable removal details. |
+| Ground-item cleanup | `lagg` | Enabled | Periodically removes eligible dropped item entities from loaded worlds, with configurable warnings, protected named, plugin-tagged, or crop items, and hoverable removal details. |
 | Faster hoppers | Core gameplay | Enabled | Shortens block-hopper transfer cooldowns from vanilla's 8 ticks to a configurable 2 ticks by default. |
 | Tree felling | `tree-feller` | Enabled | Whole-tree cutting and connected ore or Glowstone vein mining with drops and XP clumped at the initially mined block. |
 | Mob heads | `mob-heads` | Enabled | Configurable, Looting-aware mob-head drops and cached player heads, with vanilla Wither Skeleton skull drops preserved by default. |

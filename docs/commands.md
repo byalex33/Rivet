@@ -1251,7 +1251,7 @@ Clear loaded auto-breeder holograms and recreate displays for active breeders. T
 
 Clear eligible dropped item entities or reload `settings/lagg.yml`.
 
-`/lagg clear` scans loaded worlds immediately and resets the automatic cleanup countdown. It never targets mobs, minecarts, armor stands, projectiles, or any entity other than dropped `Item` entities. `/lagg reload` validates and reloads only this module's settings while keeping the current configuration active if loading fails.
+`/lagg clear` scans loaded worlds immediately and resets the automatic cleanup countdown. It never targets mobs, minecarts, armor stands, projectiles, or any entity other than dropped `Item` entities. Named items, plugin-tagged items, and configured crop harvests are protected by default. `/lagg reload` validates and reloads only this module's settings while keeping the current configuration active if loading fails.
 
 <a id="log"></a>
 
