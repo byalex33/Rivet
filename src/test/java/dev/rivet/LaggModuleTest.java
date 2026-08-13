@@ -30,10 +30,12 @@ public final class LaggModuleTest {
         assertEquals(true, settings.getBoolean("ignore.crops"));
         assertTrue(settings.getStringList("crop-materials").contains("WHEAT"));
         assertTrue(settings.getStringList("crop-materials").contains("NETHER_WART"));
-        List.of("messages.warning.actions", "messages.cleanup.actions",
-            "messages.reloaded.actions", "messages.reload-failed.actions",
-            "messages.usage.actions")
+        List.of("messages.warning.actions", "messages.cleanup.actions", "messages.usage.actions")
             .forEach(path -> assertEquals(path, true, settings.isList(path)));
+        assertEquals(false, settings.contains("messages.reloaded"));
+        assertEquals(false, settings.contains("messages.reload-failed"));
+        assertEquals("[message] <white>Usage: /lagg clear</white>",
+            settings.getStringList("messages.usage.actions").getFirst());
         List.of("messages.hover-label", "messages.hover-header", "messages.hover-entry",
             "messages.hover-empty")
             .forEach(path -> assertEquals(path, true, settings.isString(path)));

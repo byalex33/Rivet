@@ -7,14 +7,12 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
@@ -51,7 +49,7 @@ final class LaggModule {
 
     boolean command(CommandSender sender, String[] args) {
         if (args.length != 1) {
-            message(sender, "messages.usage", "<white>Usage: /lagg <clear|reload></white>");
+            message(sender, "messages.usage", "<white>Usage: /lagg clear</white>");
             return true;
         }
         if (args[0].equalsIgnoreCase("clear")) {
@@ -60,28 +58,8 @@ final class LaggModule {
             reload();
             return true;
         }
-        if (args[0].equalsIgnoreCase("reload")) {
-            try {
-                reloadFromDisk();
-                message(sender, "messages.reloaded",
-                    "<white>Ground-item cleanup configuration reloaded.</white>");
-            } catch (IOException | InvalidConfigurationException exception) {
-                plugin.getLogger().warning("Could not reload settings/lagg.yml: "
-                    + exception.getMessage());
-                message(sender, "messages.reload-failed",
-                    "<white>Could not reload settings/lagg.yml. Check the console.</white>");
-            }
-            return true;
-        }
-        message(sender, "messages.usage", "<white>Usage: /lagg <clear|reload></white>");
+        message(sender, "messages.usage", "<white>Usage: /lagg clear</white>");
         return true;
-    }
-
-    void reloadFromDisk() throws IOException, InvalidConfigurationException {
-        YamlConfiguration next = new YamlConfiguration();
-        next.load(plugin.settingsFile("lagg"));
-        settings.loadFromString(next.saveToString());
-        reload();
     }
 
     void reload() {

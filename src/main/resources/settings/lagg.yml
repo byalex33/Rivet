@@ -61,6 +61,4 @@ messages:
   hover-header: "<#f72a4c><bold>Removed ground items</bold></#f72a4c>"
   hover-entry: "<white>%item%:</white> <#f72a4c>%amount%</#f72a4c> items in <#f72a4c>%count%</#f72a4c> entities"
   hover-empty: "<white>No eligible item entities were found.</white>"
-  reloaded: { enabled: true, actions: ['[message] <white>Ground-item cleanup configuration reloaded.</white>'] }
-  reload-failed: { enabled: true, actions: ['[message] <white>Could not reload settings/lagg.yml. Check the console.</white>'] }
-  usage: { enabled: true, actions: ['[message] <white>Usage: /lagg <clear|reload></white>'] }
+  usage: { enabled: true, actions: ['[message] <white>Usage: /lagg clear</white>'] }
