@@ -1,5 +1,5 @@
 # Filters match item materials only; names, lore, enchantments, and other data
-# do not create separate entries.
+# do not create separate entries. Adding an item automatically enables the filter.
 maximum-size: 50
 blocked-worlds: []
 

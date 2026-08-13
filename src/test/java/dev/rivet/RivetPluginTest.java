@@ -579,6 +579,10 @@ public final class RivetPluginTest {
         assertEquals(true, FilterModule.remove(items, Material.DIAMOND));
         FilterModule.FilterState state = new FilterModule.FilterState(items, true);
         assertEquals(false, FilterModule.toggle(state));
+        assertEquals(true, FilterModule.enable(state));
+        assertEquals(true, state.enabled());
+        assertEquals(false, FilterModule.enable(state));
+        assertEquals(false, FilterModule.toggle(state));
         assertEquals(true, FilterModule.toggle(state));
         assertEquals(true, FilterModule.blocksPickup(true, false, items, Material.EMERALD));
         assertEquals(false, FilterModule.blocksPickup(false, false, items, Material.EMERALD));

@@ -181,17 +181,30 @@ final class FilterModule implements Listener {
         FilterState state = state(player.getUniqueId());
         int maximum = Math.max(1, plugin.settings("filter").getInt("maximum-size", 50));
         if (state.items().contains(material)) {
-            send(player, "<white>That material is already filtered.");
+            if (state.enabled()) {
+                send(player, "<white>That material is already filtered.</white>");
+                return;
+            }
+            enable(state);
+            if (save(player)) {
+                send(player, "<white>That material was already filtered; item filtering is now enabled.</white>");
+            } else {
+                state.enabled = false;
+                syncData(player.getUniqueId());
+            }
             return;
         }
         if (!add(state.items(), material, maximum, player.hasPermission("rivet.filter.admin"))) {
             send(player, "<white>Your filter is full (<#f72a4c>" + maximum + "</#f72a4c> materials).");
             return;
         }
+        boolean wasEnabled = state.enabled();
+        enable(state);
         if (save(player)) {
             send(player, "<white>Added <#f72a4c>" + display(material) + "</#f72a4c> to your filter.");
         } else {
             state.items().remove(material);
+            state.enabled = wasEnabled;
             syncData(player.getUniqueId());
         }
     }
@@ -353,6 +366,12 @@ final class FilterModule implements Listener {
     static boolean toggle(FilterState state) {
         state.enabled = !state.enabled;
         return state.enabled;
+    }
+
+    static boolean enable(FilterState state) {
+        boolean changed = !state.enabled;
+        state.enabled = true;
+        return changed;
     }
 
     static boolean blocksPickup(boolean enabled, boolean blockedWorld,

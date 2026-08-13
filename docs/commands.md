@@ -802,6 +802,10 @@ Claim your daily reward.
 
 Manage your persistent item pickup filter.
 
+Adding an item through the command or GUI automatically enables filtering. `/filter
+toggle` can still disable the saved list temporarily; the next item added turns filtering
+back on.
+
 Supports `add [item]`, `remove`, `list`, `clear`, `toggle`, and `help`.
 
 <a id="head"></a>

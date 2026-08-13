@@ -136,6 +136,14 @@ Operators receive `rivet.tp.nocooldown` by default. It makes player-facing telep
 
 `settings/lagg.yml` controls the cleanup interval, warning times, protected-item rules, and every cleanup message. Rivet scans loaded worlds only when a cleanup runs. By default, dropped items with custom names or PersistentDataContainer data are protected. The cleanup result reports both removed entity stacks and their combined item amount; its configurable hover label shows the complete breakdown by material.
 
+### Item pickup filter
+
+`settings/filter.yml` controls the maximum saved materials, worlds where filtering is
+unavailable, feedback, and the filter GUI. A new player's filter is enabled by default.
+Adding an item through `/filter add` or the GUI also enables the filter automatically;
+players can use `/filter toggle` when they intentionally want to retain but temporarily
+disable their saved list.
+
 ### Statistics and Seen v2
 
 `settings/statistics.yml` controls the configurable `/stats`, `/playtime`, and `/seen`
