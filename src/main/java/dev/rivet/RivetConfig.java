@@ -75,6 +75,9 @@ final class RivetConfig {
                 && PermissionModule.migrateGroups(configured);
             settingsChanged |= migrateRenamedMessageActions(name, configured);
             settingsChanged |= migrateMessageActions(name, configured);
+            if (name.equals("statistics") && StatisticsModule.migrateSeenV2(configured)) {
+                settingsChanged = true;
+            }
             if (name.equals("chat") && migrateLegacyChatSettings(configured)) {
                 settingsChanged = true;
             }

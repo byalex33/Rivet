@@ -17,7 +17,7 @@
 | Random teleport | `rtp` | Disabled | Asynchronous searches for safe random destinations. |
 | Nearby players | `near` | Disabled | Visibility-aware nearby-player listing. |
 | Pickup filters | `filter` | Enabled | Persistent per-player item pickup allowlists or denylists. |
-| Statistics | `statistics` | Enabled | Native statistics, playtime, and last-seen information. |
+| Statistics | `statistics` | Enabled | Native statistics, playtime, and compact Seen v2 activity summaries. |
 | Nicknames | `nicknames` | Enabled | Persistent nicknames with controlled MiniMessage formatting. |
 | Trash | `trash` | Enabled | A configurable disposable inventory. |
 | Utilities | `utilities` | Enabled | Portable workstations, player lists, ping, jump, and riding tools. |

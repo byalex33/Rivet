@@ -133,6 +133,17 @@ Operators receive `rivet.tp.nocooldown` by default. It bypasses shared and featu
 
 `settings/lagg.yml` controls the cleanup interval, warning times, protected-item rules, and every cleanup message. Rivet scans loaded worlds only when a cleanup runs. By default, dropped items with custom names or PersistentDataContainer data are protected. The cleanup result reports both removed entity stacks and their combined item amount; its configurable hover label shows the complete breakdown by material.
 
+### Statistics and Seen v2
+
+`settings/statistics.yml` controls the configurable `/stats`, `/playtime`, and `/seen`
+message actions. Seen v2 provides separate online, offline, staff-location, and staff-death
+outputs. Its relative-time placeholders retain an exact timestamp on hover, formatted by
+`seen.date-format`.
+
+Paper supplies first join, last login, and total playtime. Rivet stores only the last
+logout location and most recent observed death in `data/statistics.yml`; older players
+show `unknown` for fields that have not yet been observed by Seen v2.
+
 ### Gameplay audit log
 
 `settings/logs.yml` controls individual event categories, the retention period, excluded worlds and materials, and compact lookup page sizes. Commands are disabled by default. Enabling command logging never records chat, `/me`, private messages, or replies.
@@ -147,7 +158,7 @@ Sound and particle fields accept Minecraft registry keys with or without the `mi
 
 ## Runtime data
 
-Files under `data/` contain generated state such as homes, warps, graves, teleport history, breeders, holograms, permission users, ignored players, chat styles and tags, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, not YAML.
+Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, not YAML.
 
 Do not hand-edit runtime data while the server is running. Rivet may overwrite an external change the next time it saves that module.
 

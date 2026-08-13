@@ -190,7 +190,7 @@ public final class RivetPluginTest {
                 "drop-effects.sound.name", "drop-effects.particles.spiral.name",
                 "drop-effects.particles.burst.name"),
             "statistics", List.of("seen.usage", "seen.online", "seen.offline",
-                "seen.date-format"),
+                "seen.staff-location", "seen.staff-death", "seen.date-format"),
             "tree-feller", List.of("tree-feller.message", "tree-feller.sound.name",
                 "veinminer.message", "veinminer.particles.name"),
             "villager-reroll", List.of("permission", "allow-after-trading",

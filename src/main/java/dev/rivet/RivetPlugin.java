@@ -239,6 +239,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (moduleEnabled("statistics")) {
             statistics = new StatisticsModule(this);
+            getServer().getPluginManager().registerEvents(statistics, this);
         }
         if (moduleEnabled("trash")) {
             trash = new TrashModule(this);

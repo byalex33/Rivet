@@ -3,26 +3,62 @@ package dev.rivet;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
-final class StatisticsModule {
+final class StatisticsModule implements Listener {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
+    private final YamlConfiguration data;
 
     StatisticsModule(RivetPlugin plugin) {
         this.plugin = plugin;
+        data = plugin.data("statistics");
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        String base = playerPath(player.getUniqueId());
+        data.set(base + ".name", player.getName());
+        data.set(base + ".last-logout", System.currentTimeMillis());
+        storeLocation(data, base + ".last-location", new StoredLocation(
+            player.getWorld().getName(), player.getX(), player.getY(), player.getZ()));
+        saveData();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        String base = playerPath(player.getUniqueId());
+        data.set(base + ".name", player.getName());
+        data.set(base + ".last-death.time", System.currentTimeMillis());
+        storeLocation(data, base + ".last-death.location", new StoredLocation(
+            player.getWorld().getName(), player.getX(), player.getY(), player.getZ()));
+        saveData();
     }
 
     boolean command(CommandSender sender, String[] args) {
@@ -101,7 +137,7 @@ final class StatisticsModule {
     boolean seen(CommandSender sender, String[] args) {
         if (args.length != 1) {
             plugin.messageActions().run(sender, plugin.settings("statistics"), "seen.usage",
-                "<white>Usage: /seen &lt;player&gt;</white>");
+                "<white>%tag% Usage: /seen &lt;player&gt;</white>", tag());
             return true;
         }
 
@@ -119,21 +155,26 @@ final class StatisticsModule {
         }
 
         long now = System.currentTimeMillis();
-        long seenAt = online == null ? target.getLastSeen() : target.getLastLogin();
-        if (seenAt <= 0) {
-            seenAt = target.getLastPlayed();
-        }
+        long firstJoin = target.getFirstPlayed();
+        long lastLogin = target.getLastLogin();
+        long storedLogout = data.getLong(playerPath(target.getUniqueId()) + ".last-logout");
+        long lastLogout = storedLogout > 0 ? storedLogout
+            : online == null ? positive(target.getLastSeen(), target.getLastPlayed()) : 0;
+        long playtime = target.getStatistic(Statistic.PLAY_ONE_MINUTE) * 50L;
         TagResolver placeholders = TagResolver.resolver(
+            tag(),
             Placeholder.unparsed("player", target.getName()),
-            Placeholder.unparsed("duration", seenAt <= 0
-                ? "unknown" : relativeDuration(now - seenAt)),
-            Placeholder.unparsed("timestamp", timestamp(seenAt)));
+            Placeholder.component("first_join", relativeTime(firstJoin, now)),
+            Placeholder.component("last_login", relativeTime(lastLogin, now)),
+            Placeholder.component("last_logout", relativeTime(lastLogout, now)),
+            Placeholder.unparsed("playtime", duration(playtime)),
+            Placeholder.component("session", elapsedTime(lastLogin, now)));
         String path = online == null ? "seen.offline" : "seen.online";
-        String fallback = online == null
-            ? "<white><#f72a4c>%player%</#f72a4c> was last seen <#f72a4c>%duration%</#f72a4c> ago (%timestamp%).</white>"
-            : "<white><#f72a4c>%player%</#f72a4c> is currently online (joined <#f72a4c>%duration%</#f72a4c> ago).</white>";
-        plugin.messageActions().run(sender, plugin.settings("statistics"), path, fallback,
-            placeholders);
+        plugin.messageActions().run(sender, plugin.settings("statistics"), path,
+            defaultSeenActions(online != null), placeholders);
+        if (sender.hasPermission("rivet.seen.location")) {
+            sendStaffDetails(sender, target, online, now);
+        }
         return true;
     }
 
@@ -152,16 +193,78 @@ final class StatisticsModule {
     }
 
     List<String> seenCompletions(CommandSender sender, String[] args) {
-        return args.length == 1
-            ? plugin.getServer().getOnlinePlayers().stream()
-                .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
-                .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList()
-            : List.of();
+        if (args.length != 1) {
+            return List.of();
+        }
+        LinkedHashSet<String> names = new LinkedHashSet<>();
+        plugin.getServer().getOnlinePlayers().stream()
+            .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
+            .map(Player::getName).forEach(names::add);
+        ConfigurationSection players = data.getConfigurationSection("players");
+        if (players != null) {
+            players.getKeys(false).stream().map(uuid -> data.getString("players." + uuid + ".name"))
+                .filter(java.util.Objects::nonNull)
+                .filter(name -> {
+                    Player online = plugin.getServer().getPlayerExact(name);
+                    return online == null || !(sender instanceof Player viewer) || viewer.canSee(online);
+                }).forEach(names::add);
+        }
+        return names.stream().sorted(String.CASE_INSENSITIVE_ORDER).toList();
     }
 
     private void notFound(CommandSender sender) {
         plugin.messageActions().run(sender, plugin.settings("statistics"), "seen.not-found",
-            "<white>That player could not be found.</white>");
+            "<white>%tag% That player could not be found.</white>", tag());
+    }
+
+    private void sendStaffDetails(CommandSender sender, OfflinePlayer target, Player online,
+                                  long now) {
+        String base = playerPath(target.getUniqueId());
+        StoredLocation location = online == null
+            ? storedLocation(data, base + ".last-location")
+            : new StoredLocation(online.getWorld().getName(), online.getX(), online.getY(), online.getZ());
+        plugin.messageActions().run(sender, plugin.settings("statistics"), "seen.staff-location",
+            "<dark_gray>Location:</dark_gray> <white>%world%</white> <dark_gray>•</dark_gray> <white>%coordinates%</white>",
+            Placeholder.unparsed("world", location == null ? "unknown" : location.world()),
+            Placeholder.unparsed("coordinates", location == null ? "unknown" : location.coordinates()));
+
+        long deathTime = data.getLong(base + ".last-death.time");
+        StoredLocation death = storedLocation(data, base + ".last-death.location");
+        if (deathTime > 0 && death != null) {
+            plugin.messageActions().run(sender, plugin.settings("statistics"), "seen.staff-death",
+                "<dark_gray>Last death:</dark_gray> <white>%last_death%</white> <dark_gray>•</dark_gray> <white>%death_location%</white>",
+                Placeholder.component("last_death", relativeTime(deathTime, now)),
+                Placeholder.unparsed("death_location", death.world() + " " + death.coordinates()));
+        }
+    }
+
+    private TagResolver tag() {
+        return Placeholder.component("tag", RivetMessages.tag(plugin));
+    }
+
+    static List<String> defaultSeenActions(boolean online) {
+        String status = online
+            ? "<green>Online</green> <dark_gray>•</dark_gray> <white>Online for %session%</white>"
+            : "<gray>Offline</gray>";
+        return List.of(
+            "[message] %tag% <#f72a4c><bold>%player%</bold></#f72a4c> " + status,
+            "[message] <dark_gray>First join:</dark_gray> <white>%first_join%</white> <dark_gray>• Last login:</dark_gray> <white>%last_login%</white>",
+            "[message] <dark_gray>Last logout:</dark_gray> <white>%last_logout%</white> <dark_gray>• Playtime:</dark_gray> <white>%playtime%</white>");
+    }
+
+    static boolean migrateSeenV2(YamlConfiguration settings) {
+        List<String> oldOnline = List.of("[message] <white><#f72a4c>%player%</#f72a4c> is currently online (joined <#f72a4c>%duration%</#f72a4c> ago).</white>");
+        List<String> oldOffline = List.of("[message] <white><#f72a4c>%player%</#f72a4c> was last seen <#f72a4c>%duration%</#f72a4c> ago (%timestamp%).</white>");
+        boolean changed = false;
+        if (settings.getStringList("seen.online.actions").equals(oldOnline)) {
+            settings.set("seen.online.actions", defaultSeenActions(true));
+            changed = true;
+        }
+        if (settings.getStringList("seen.offline.actions").equals(oldOffline)) {
+            settings.set("seen.offline.actions", defaultSeenActions(false));
+            changed = true;
+        }
+        return changed;
     }
 
     private String timestamp(long millis) {
@@ -179,6 +282,70 @@ final class StatisticsModule {
             return DateTimeFormatter.ofPattern("d MMM uuuu 'at' HH:mm z", Locale.UK)
                 .withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(millis));
         }
+    }
+
+    private Component relativeTime(long millis, long now) {
+        return millis <= 0 ? Component.text("unknown")
+            : timeComponent(friendlyElapsed(now - millis) + " ago", timestamp(millis));
+    }
+
+    private Component elapsedTime(long startedAt, long now) {
+        return startedAt <= 0 ? Component.text("unknown")
+            : timeComponent(friendlyElapsed(now - startedAt), timestamp(startedAt));
+    }
+
+    static Component timeComponent(String visible, String exact) {
+        return Component.text(visible).hoverEvent(HoverEvent.showText(
+            Component.text("Exact time: " + exact)));
+    }
+
+    static String friendlyElapsed(long millis) {
+        Duration elapsed = Duration.ofMillis(Math.max(0, millis));
+        long days = elapsed.toDays();
+        if (days > 0) {
+            return days + (days == 1 ? " day" : " days");
+        }
+        long hours = elapsed.toHours();
+        long minutes = elapsed.toMinutesPart();
+        if (hours > 0) {
+            return hours + "h" + (minutes > 0 ? " " + minutes + "m" : "");
+        }
+        long totalMinutes = elapsed.toMinutes();
+        if (totalMinutes > 0) {
+            return totalMinutes + "m";
+        }
+        long seconds = elapsed.toSeconds();
+        return seconds < 5 ? "just now" : seconds + "s";
+    }
+
+    static void storeLocation(YamlConfiguration data, String path, StoredLocation location) {
+        data.set(path + ".world", location.world());
+        data.set(path + ".x", location.x());
+        data.set(path + ".y", location.y());
+        data.set(path + ".z", location.z());
+    }
+
+    static StoredLocation storedLocation(YamlConfiguration data, String path) {
+        String world = data.getString(path + ".world");
+        return world == null || world.isBlank() ? null : new StoredLocation(world,
+            data.getDouble(path + ".x"), data.getDouble(path + ".y"),
+            data.getDouble(path + ".z"));
+    }
+
+    private void saveData() {
+        try {
+            plugin.saveData("statistics");
+        } catch (IOException exception) {
+            plugin.getLogger().severe("Could not save Seen v2 data: " + exception.getMessage());
+        }
+    }
+
+    private static long positive(long preferred, long fallback) {
+        return preferred > 0 ? preferred : Math.max(0, fallback);
+    }
+
+    private static String playerPath(UUID player) {
+        return "players." + player;
     }
 
     private static int statistic(OfflinePlayer player, Statistic statistic, Material material) {
@@ -202,5 +369,12 @@ final class StatisticsModule {
     static String relativeDuration(long millis) {
         long safeMillis = Math.max(0, millis);
         return safeMillis < 60_000 ? safeMillis / 1_000 + "s" : duration(safeMillis);
+    }
+
+    record StoredLocation(String world, double x, double y, double z) {
+        String coordinates() {
+            return (long) Math.floor(x) + ", " + (long) Math.floor(y) + ", "
+                + (long) Math.floor(z);
+        }
     }
 }

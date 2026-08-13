@@ -14,8 +14,22 @@ playtime:
   actions:
     - "[message] <#f72a4c>%player%'s playtime:</#f72a4c> <#f72a4c>%playtime%</#f72a4c>"
 seen:
-  usage: { enabled: true, actions: ['[message] <white>Usage: /seen &lt;player&gt;</white>'] }
-  not-found: { enabled: true, actions: ['[message] <white>That player could not be found.</white>'] }
-  online: { enabled: true, actions: ['[message] <white><#f72a4c>%player%</#f72a4c> is currently online (joined <#f72a4c>%duration%</#f72a4c> ago).</white>'] }
-  offline: { enabled: true, actions: ['[message] <white><#f72a4c>%player%</#f72a4c> was last seen <#f72a4c>%duration%</#f72a4c> ago (%timestamp%).</white>'] }
+  # Relative time placeholders carry hover text with the exact timestamp.
+  usage: { enabled: true, actions: ['[message] <white>%tag% Usage: /seen &lt;player&gt;</white>'] }
+  not-found: { enabled: true, actions: ['[message] <white>%tag% That player could not be found.</white>'] }
+  online:
+    enabled: true
+    actions:
+      - '[message] %tag% <#f72a4c><bold>%player%</bold></#f72a4c> <green>Online</green> <dark_gray>•</dark_gray> <white>Online for %session%</white>'
+      - '[message] <dark_gray>First join:</dark_gray> <white>%first_join%</white> <dark_gray>• Last login:</dark_gray> <white>%last_login%</white>'
+      - '[message] <dark_gray>Last logout:</dark_gray> <white>%last_logout%</white> <dark_gray>• Playtime:</dark_gray> <white>%playtime%</white>'
+  offline:
+    enabled: true
+    actions:
+      - '[message] %tag% <#f72a4c><bold>%player%</bold></#f72a4c> <gray>Offline</gray>'
+      - '[message] <dark_gray>First join:</dark_gray> <white>%first_join%</white> <dark_gray>• Last login:</dark_gray> <white>%last_login%</white>'
+      - '[message] <dark_gray>Last logout:</dark_gray> <white>%last_logout%</white> <dark_gray>• Playtime:</dark_gray> <white>%playtime%</white>'
+  # These lines are only sent to viewers with rivet.seen.location.
+  staff-location: { enabled: true, actions: ['[message] <dark_gray>Location:</dark_gray> <white>%world%</white> <dark_gray>•</dark_gray> <white>%coordinates%</white>'] }
+  staff-death: { enabled: true, actions: ['[message] <dark_gray>Last death:</dark_gray> <white>%last_death%</white> <dark_gray>•</dark_gray> <white>%death_location%</white>'] }
   date-format: "d MMM uuuu 'at' HH:mm z"

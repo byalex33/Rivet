@@ -1,6 +1,6 @@
 # Permissions
 
-Rivet declares 142 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
+Rivet declares 143 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
 
 The command permission is checked by Paper before Rivet handles the command. Additional `.others`, formatting, bypass, row, and wildcard nodes enable narrower capabilities inside a command.
 
@@ -136,6 +136,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.playtime` | `true` | [`/playtime`](commands.md#playtime) |
 | `rivet.playtime.others` | `op` | Allows targeting another player in the related command. |
 | `rivet.seen` | `true` | [`/seen`](commands.md#seen) |
+| `rivet.seen.location` | `op` | Shows current/last known coordinates and recorded death details in [`/seen`](commands.md#seen). |
 | `rivet.ride` | `op` | [`/ride`](commands.md#ride) |
 | `rivet.sameip` | `op` | [`/sameip`](commands.md#sameip) |
 | `rivet.toast` | `op` | [`/toast`](commands.md#toast) |

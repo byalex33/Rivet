@@ -329,7 +329,7 @@ commands:
     usage: /playtime [player]
     permission: rivet.playtime
   seen:
-    description: Show when a player was last online
+    description: Show a player's join, login, logout, and playtime summary
     usage: /seen <player>
     permission: rivet.seen
   ride:
@@ -632,6 +632,8 @@ permissions:
     default: op
   rivet.seen:
     default: true
+  rivet.seen.location:
+    default: op
   rivet.ride:
     default: op
   rivet.sameip:

@@ -851,9 +851,17 @@ Show native player playtime.
 - **Default:** `true`
 - **Aliases:** None
 
-Show when a player was last online.
+Show a compact player activity summary: online/offline state, first join, last login,
+last logout, total playtime, and the current session duration when online. Relative
+times keep the output readable; hover them to see the exact configured date and time.
 
-Online players show their current session duration. Offline players show the last-seen duration and timestamp.
+Viewers with `rivet.seen.location` also see the current or last known world and block
+coordinates, plus the most recently recorded death time and location when available.
+Rivet stores only logout/location and death details that Paper does not expose reliably;
+join and playtime values come from Paper's native player data and statistics.
+
+Vanished online players appear unavailable to viewers who cannot see them and are also
+excluded from those viewers' tab completions.
 
 <a id="craft"></a>
 

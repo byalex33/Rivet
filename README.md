@@ -46,7 +46,7 @@ Common starting points:
 - [`/sethome`](docs/commands.md#sethome) creates a home.
 - [`/setwarp`](docs/commands.md#setwarp) creates a public warp.
 - [`/setspawn`](docs/commands.md#setspawn) sets the server spawn.
-- [`/seen`](docs/commands.md#seen) shows a player's online or last-seen state.
+- [`/seen`](docs/commands.md#seen) shows a compact join, login, logout, and playtime summary.
 - [`/tppos`](docs/commands.md#tppos) teleports to absolute or relative coordinates.
 - [`/restorationcore`](docs/commands.md#restorationcore) gives throwable crater-repair items.
 - [`/log inspect`](docs/commands.md#log) toggles interactive block and container history.
