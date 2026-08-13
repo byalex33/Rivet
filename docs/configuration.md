@@ -120,6 +120,16 @@ Style and tag displays use a visual-only MiniMessage parser. Colors, gradients, 
 
 Messages accept MiniMessage plus `%player%`, `%killer%`, `%mob%`, `%weapon%`, and `%world%`. Player, entity, world, and item names are inserted safely rather than parsed as formatting. Weapons preserve custom names and include a real-item hover. Empty cause lists fall back to `generic`; when both are empty, the original vanilla death message is retained.
 
+### Creeper restoration
+
+`settings/creeper-restoration.yml` controls container and block-entity restoration,
+animation timing, Restoration Core behavior, messages, sounds, and particles. With
+`restore-container-contents` enabled, Rivet snapshots every affected container before
+clearing its live block inventory. This escrow prevents the same contents from dropping
+during the explosion and then being restored as a second copy. Double-chest halves are
+cleared independently; if live contents cannot be cleared safely, Rivet discards their
+saved copy rather than risk duplication.
+
 ### Gameplay mechanics
 
 `settings/gameplay.yml` contains small switches that do not need full module lifecycle management: crop-trample protection, water-harvest replanting, Iron Golem poppy drops, and faster hoppers. Hopper transfers use a 2-tick cooldown by default; vanilla uses 8 ticks.

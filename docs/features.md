@@ -92,7 +92,7 @@ When a creeper destroys blocks, Rivet records their block data for the lifetime 
 
 An authorized administrator can create a Restoration Core with [`/restorationcore`](commands.md#restorationcore). A player right-clicks the core to throw it like a projectile. If it lands near a saved crater, one core is consumed and empty spaces are rebuilt with reverse-flight block animation. A missed core drops as an item and can be recovered.
 
-Container restoration, container contents, other block-entity data, activation distance, timing, sounds, and particles are configurable in `settings/creeper-restoration.yml`. Crater snapshots are intentionally not persisted across restarts.
+Container restoration, container contents, other block-entity data, activation distance, timing, sounds, and particles are configurable in `settings/creeper-restoration.yml`. When contents are enabled, Rivet captures every affected container first and clears its live block inventory before Paper destroys it. The snapshot is therefore the only copy: contents cannot both fall as drops and later reappear during repair. Double-chest halves are handled independently so an undamaged half is not emptied. Crater snapshots are intentionally not persisted across restarts.
 
 ## Data and privacy
 

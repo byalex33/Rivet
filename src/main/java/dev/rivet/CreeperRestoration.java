@@ -12,6 +12,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Chest;
 import org.bukkit.block.Container;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.BlockData;
@@ -65,7 +66,7 @@ final class CreeperRestoration implements Listener {
         projectileKey = new NamespacedKey(plugin, "restoration_core_projectile");
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onCreeperExplode(EntityExplodeEvent event) {
         if (!(event.getEntity() instanceof Creeper) || event.blockList().isEmpty()) {
             return;
@@ -77,8 +78,11 @@ final class CreeperRestoration implements Listener {
             .filter(java.util.Objects::nonNull)
             .toList();
 
-        // The snapshot is the only source of the destroyed materials. Suppressing ordinary
-        // drops prevents both blocks and container contents from being duplicated on repair.
+        // Snapshot every block before touching a live inventory. When container contents will
+        // be restored, move them into the in-memory snapshot by clearing the live inventory
+        // before vanilla destroys the block. Yield alone does not reliably suppress inventory
+        // drops on every Paper/plugin combination, which could otherwise create a second copy.
+        blocks.forEach(this::escrowContainerContents);
         event.setYield(0);
         if (blocks.isEmpty()) {
             return;
@@ -258,6 +262,43 @@ final class CreeperRestoration implements Listener {
             && settings.getBoolean("restoration.restore-other-block-entity-data", true);
         return new SavedBlock(block.getWorld(), block.getX(), block.getY(), block.getZ(),
             block.getBlockData().clone(), preserveState ? state : null, debrisVelocity(block));
+    }
+
+    private void escrowContainerContents(SavedBlock saved) {
+        if (!shouldEscrowContents(
+                settings.getBoolean("restoration.restore-containers", true),
+                settings.getBoolean("restoration.restore-container-contents", true),
+                saved.state instanceof Container)
+            || !(saved.state instanceof Container snapshot)) {
+            return;
+        }
+        try {
+            BlockState liveState = saved.block().getState(false);
+            if (!(liveState instanceof Container live)) {
+                // Fail closed: if Rivet cannot remove the live copy, do not restore another.
+                snapshot.getSnapshotInventory().clear();
+                return;
+            }
+            if (live instanceof Chest chest) {
+                // getInventory() combines both halves of a double chest. Clear only the block
+                // represented by this saved snapshot so a surviving half is never emptied.
+                chest.getBlockInventory().clear();
+                if (!chest.getBlockInventory().isEmpty()) {
+                    snapshot.getSnapshotInventory().clear();
+                }
+            } else {
+                live.getInventory().clear();
+                if (!live.getInventory().isEmpty()) {
+                    snapshot.getSnapshotInventory().clear();
+                }
+            }
+        } catch (RuntimeException exception) {
+            snapshot.getSnapshotInventory().clear();
+            plugin.getLogger().log(Level.WARNING,
+                "Could not escrow container contents at " + saved.x + ", " + saved.y + ", "
+                    + saved.z + "; its saved contents were discarded to prevent duplication.",
+                exception);
+        }
     }
 
     private Vector debrisVelocity(Block block) {
@@ -570,6 +611,12 @@ final class CreeperRestoration implements Listener {
         }
         return (int) Math.round(index * (double) Math.max(0, totalDuration - flightDuration)
             / (blocks - 1));
+    }
+
+    static boolean shouldEscrowContents(boolean restoreContainers,
+                                        boolean restoreContainerContents,
+                                        boolean savedContainer) {
+        return restoreContainers && restoreContainerContents && savedContainer;
     }
 
     private record SavedBlock(World world, int x, int y, int z, BlockData data,

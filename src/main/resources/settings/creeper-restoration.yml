@@ -16,6 +16,7 @@ restoration:
   # When false, container blocks such as chests are destroyed permanently.
   restore-containers: true
   # Only applies when restore-containers is true.
+  # Rivet escrows these contents before the explosion so they cannot also drop and duplicate.
   restore-container-contents: true
   # Restores signs, banners, decorated pots, and other non-container block entities.
   restore-other-block-entity-data: true

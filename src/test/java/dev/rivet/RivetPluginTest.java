@@ -383,6 +383,10 @@ public final class RivetPluginTest {
         assertEquals(30, CreeperRestoration.startTick(2, 5, 70, 10));
         assertEquals(60, CreeperRestoration.startTick(4, 5, 70, 10));
         assertEquals(0, CreeperRestoration.startTick(0, 1, 70, 10));
+        assertEquals(true, CreeperRestoration.shouldEscrowContents(true, true, true));
+        assertEquals(false, CreeperRestoration.shouldEscrowContents(false, true, true));
+        assertEquals(false, CreeperRestoration.shouldEscrowContents(true, false, true));
+        assertEquals(false, CreeperRestoration.shouldEscrowContents(true, true, false));
     }
 
     @Test
