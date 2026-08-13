@@ -127,6 +127,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private HelpModule help;
     private HopperModule hoppers;
     private LaggModule lagg;
+    private AuditModule audit;
     private GuiActions guiActions;
     private RivetConfig files;
     private YamlConfiguration homes;
@@ -217,6 +218,17 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (moduleEnabled("lagg")) {
             lagg = new LaggModule(this);
+        }
+        if (moduleEnabled("logs")) {
+            try {
+                audit = new AuditModule(this);
+                getServer().getPluginManager().registerEvents(audit, this);
+            } catch (java.sql.SQLException exception) {
+                getLogger().log(java.util.logging.Level.SEVERE,
+                    "Could not open Rivet's SQLite audit log", exception);
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
         }
         if (moduleEnabled("statistics")) {
             statistics = new StatisticsModule(this);
@@ -311,6 +323,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (lagg != null) {
             lagg.shutdown();
+        }
+        if (audit != null) {
+            audit.shutdown();
         }
         if (afk != null) {
             afk.shutdown();
@@ -525,6 +540,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (name.equals("lagg")) {
             return lagg.command(sender, args);
         }
+        if (name.equals("log")) {
+            return audit.command(sender, args);
+        }
         if (name.equals("perm") || name.equals("group")) {
             return permissions.command(sender, name, args);
         }
@@ -720,6 +738,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "rename" -> args.length == 1 ? List.of("clear") : List.of();
                 case "lore" -> args.length == 1 ? List.of("add", "set", "remove", "clear") : List.of();
                 case "lagg" -> args.length == 1 ? List.of("clear", "reload") : List.of();
+                case "log" -> audit.completions(sender, args);
                 case "rivet" -> args.length == 1 ? List.of("reload") : List.of();
                 default -> List.of();
             };
@@ -1968,6 +1987,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             if (lagg != null) {
                 lagg.reload();
             }
+            if (audit != null) {
+                audit.reload();
+            }
             if (graves != null) {
                 graves.reload();
             }
@@ -2007,6 +2029,24 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         return files.dataFile(module);
     }
 
+    void auditSyntheticBlockBreak(Player player, Block block, String beforeData) {
+        if (audit != null) {
+            audit.recordSyntheticBlockBreak(player, block, beforeData);
+        }
+    }
+
+    void ignoreAuditBlockBreakCheck(Player player, Block block) {
+        if (audit != null) {
+            audit.ignoreBlockBreakCheck(player, block);
+        }
+    }
+
+    void finishAuditBlockBreakCheck(Player player, Block block) {
+        if (audit != null) {
+            audit.finishBlockBreakCheck(player, block);
+        }
+    }
+
     void saveData(String module) throws IOException {
         files.saveData(module);
     }
@@ -2044,6 +2084,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "filter" -> "filter";
             case "help" -> "help";
             case "lagg" -> "lagg";
+            case "log" -> "logs";
             default -> null;
         };
     }

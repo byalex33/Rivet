@@ -22,6 +22,7 @@ Rivet includes:
 - Auto breeders, faster hoppers, ground-item cleanup, egg capture, villager trade rerolling, tree felling, vein mining, mob heads, holograms, and creeper-crater restoration.
 - Test worlds, biome search, time and weather controls, inventory scanning, and world administration.
 - Vanish, flight, coordinate teleportation, god mode, healing, moderation notes, boss bars, toasts, and optional local permissions.
+- Lightweight SQLite gameplay auditing with block/container inspection, filtered lookups, retention, and rollback-ready records.
 - Permission-aware interactive help, configurable messages, sounds, particles, and module-level feature switches.
 
 See the [feature overview](docs/features.md) for module defaults and behavior.
@@ -37,7 +38,7 @@ Rivet creates `plugins/Rivet/` with global configuration, module switches, modul
 
 ## Command documentation
 
-Rivet registers 97 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
+Rivet registers 98 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
 
 Common starting points:
 
@@ -48,6 +49,7 @@ Common starting points:
 - [`/seen`](docs/commands.md#seen) shows a player's online or last-seen state.
 - [`/tppos`](docs/commands.md#tppos) teleports to absolute or relative coordinates.
 - [`/restorationcore`](docs/commands.md#restorationcore) gives throwable crater-repair items.
+- [`/log inspect`](docs/commands.md#log) toggles interactive block and container history.
 - [`/rivet reload`](docs/commands.md#rivet) validates and reloads settings.
 
 ## Configuration

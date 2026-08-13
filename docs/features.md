@@ -50,6 +50,15 @@ Small mechanics such as faster hoppers, crop protection, water replanting, and I
 | Announcements | `announcements` | Disabled | Rotating MiniMessage announcements with sound and empty-server controls. |
 | Join and leave | `join-leave` | Enabled | Join/leave messages, welcome titles, MOTD, and first-join behavior. |
 | Help | `help` | Enabled | Permission-aware interactive command pages. |
+| Gameplay audit | `logs` | Enabled | Batched SQLite logging, compact player/time/radius lookups, and clickable block or container inspection. |
+
+## Gameplay audit
+
+Rivet records block placement and breaking, container additions and removals, item pickup and drops, entity kills, player deaths, sign edits, explosions, creeper and fire damage, and useful state-changing block interactions. Command logging is opt-in and always excludes public chat, `/me`, private messages, and replies.
+
+[`/log inspect`](commands.md#log) makes left- or right-clicking a block show newest-first history; containers show their inventory transactions instead. [`/log lookup`](commands.md#log) supports an optional player, compact time such as `30m` or `2h`, and a location radius. Coordinates expose exact world details on hover and teleport authorized viewers on click. Pages use clickable previous/next controls.
+
+The SQLite rows retain actor UUID/name, action, location, target, amount, before/after state, and explanatory or serialized item metadata. This makes a future rollback/restore feature possible without implementing or exposing it yet.
 
 ## Creeper restoration
 
@@ -61,4 +70,4 @@ Container restoration, container contents, other block-entity data, activation d
 
 ## Data and privacy
 
-Rivet stores gameplay state in local YAML files under `plugins/Rivet/data/`. The [`/sameip`](commands.md#sameip) command compares current session addresses without saving or displaying the raw address. Rivet uses bStats for anonymous usage metrics; server owners can use the global bStats opt-out.
+Rivet stores ordinary gameplay state in local YAML files under `plugins/Rivet/data/` and audit history in `plugins/Rivet/logs.db`. Audit command logging is disabled by default, and chat and private messages are never stored. The [`/sameip`](commands.md#sameip) command compares current session addresses without saving or displaying the raw address. Rivet uses bStats for anonymous usage metrics; server owners can use the global bStats opt-out.

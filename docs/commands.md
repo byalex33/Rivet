@@ -1,6 +1,6 @@
 # Command reference
 
-Rivet registers 97 commands. Every command below has a stable link used by the documentation sidebar.
+Rivet registers 98 commands. Every command below has a stable link used by the documentation sidebar.
 
 ## Syntax conventions
 
@@ -22,7 +22,7 @@ Rivet registers 97 commands. Every command below has a stable link used by the d
 | Gameplay systems | [`/givebreeder`](#givebreeder), [`/restorationcore`](#restorationcore), [`/kit`](#kit), [`/daily`](#daily), [`/filter`](#filter), [`/head`](#head) |
 | Player information and utilities | [`/stats`](#stats), [`/playtime`](#playtime), [`/seen`](#seen), [`/craft`](#craft), [`/anvil`](#anvil), [`/smithing`](#smithing), [`/stonecutter`](#stonecutter), [`/grindstone`](#grindstone), [`/jump`](#jump), [`/list`](#list), [`/ping`](#ping), [`/ride`](#ride), [`/sit`](#sit), [`/lay`](#lay), [`/crawl`](#crawl) |
 | Staff and moderation | [`/gmc`](#gmc), [`/gms`](#gms), [`/vanish`](#vanish), [`/fly`](#fly), [`/flyspeed`](#flyspeed), [`/commandspy`](#commandspy), [`/heal`](#heal), [`/feed`](#feed), [`/god`](#god), [`/bossbarmsg`](#bossbarmsg), [`/note`](#note), [`/sameip`](#sameip), [`/toast`](#toast) |
-| Server administration | [`/perm`](#perm), [`/group`](#group), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/lagg`](#lagg), [`/help`](#help), [`/rivet`](#rivet) |
+| Server administration | [`/perm`](#perm), [`/group`](#group), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/lagg`](#lagg), [`/log`](#log), [`/help`](#help), [`/rivet`](#rivet) |
 
 ## Homes and warps
 
@@ -1214,6 +1214,32 @@ Clear loaded auto-breeder holograms and recreate displays for active breeders. T
 Clear eligible dropped item entities or reload `settings/lagg.yml`.
 
 `/lagg clear` scans loaded worlds immediately and resets the automatic cleanup countdown. It never targets mobs, minecarts, armor stands, projectiles, or any entity other than dropped `Item` entities. `/lagg reload` validates and reloads only this module's settings while keeping the current configuration active if loading fails.
+
+<a id="log"></a>
+
+### `/log`
+
+- **Syntax:** `/log <inspect|lookup|page|reload>`
+- **Permissions:** `rivet.logs.inspect`, `rivet.logs.lookup`, or `rivet.logs.reload`, depending on the subcommand
+- **Default:** `op`
+- **Aliases:** `/logs`
+
+Inspect and search Rivet's SQLite gameplay audit history.
+
+```text
+/log inspect
+/log lookup
+/log lookup <player>
+/log lookup <player> <time>
+/log lookup <player> <time> radius:<radius>
+/log lookup <time> radius:<radius>
+/log page <number>
+/log reload
+```
+
+`/log inspect` toggles inspector mode. Left- or right-click a block for its recent history; clicking a container shows inventory additions and removals. Inspector and lookup output is newest-first. Times use compact values such as `30m`, `2h`, `7d`, or `1w`; radius is limited to 1,000 blocks and is centered on the viewer.
+
+A bare player lookup covers the configured default time globally. A bare `/log lookup` uses the configured default time and radius around the player. Previous and next controls run `/log page`, and coordinates show the exact world and position on hover. With `rivet.logs.teleport`, clicking coordinates teleports the viewer to that location. `/log reload` validates only `settings/logs.yml`.
 
 <a id="help"></a>
 

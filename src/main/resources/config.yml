@@ -4,6 +4,9 @@
 message-palette-version: 1
 # Internal configuration migration version.
 configuration-version: 2
+messages:
+  # Shared MiniMessage tag used by tagged Rivet modules.
+  tag: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>›</dark_gray>"
 effects:
   # Show title feedback for supported commands.
   titles: true

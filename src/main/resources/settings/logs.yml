@@ -1,0 +1,27 @@
+# High-volume records are stored in logs.db. This file contains settings only.
+logging:
+  block-place: true
+  block-break: true
+  containers: true
+  item-pickup: true
+  item-drop: true
+  entities: true
+  deaths: true
+  signs: true
+  explosions: true
+  fire: true
+  interactions: true
+  # Chat and private-message commands are never recorded, even when enabled.
+  commands: false
+
+retention:
+  days: 30
+
+excluded-worlds: []
+excluded-materials: []
+
+lookup:
+  default-time: 30m
+  default-radius: 10
+  page-size: 7
+  inspector-entries: 7

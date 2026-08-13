@@ -157,6 +157,8 @@ final class TreeFeller implements Listener {
             try {
                 for (Block ore : vein) {
                     collector.captureFrom(ore);
+                    plugin.auditSyntheticBlockBreak(player, ore,
+                        ore.getBlockData().getAsString());
                     ore.breakNaturally(dropTool, true, true);
                 }
             } finally {
@@ -301,8 +303,13 @@ final class TreeFeller implements Listener {
                 if (log.equals(base)) {
                     continue;
                 }
+                plugin.ignoreAuditBlockBreakCheck(player, log);
                 BlockBreakEvent check = new BlockBreakEvent(log, player);
-                plugin.getServer().getPluginManager().callEvent(check);
+                try {
+                    plugin.getServer().getPluginManager().callEvent(check);
+                } finally {
+                    plugin.finishAuditBlockBreakCheck(player, log);
+                }
                 if (check.isCancelled()) {
                     return false;
                 }
@@ -350,6 +357,7 @@ final class TreeFeller implements Listener {
         if (block.getType() != piece.data().getMaterial()) {
             return;
         }
+        plugin.auditSyntheticBlockBreak(player, block, piece.data().getAsString());
         block.setType(Material.AIR, false);
         piece.drops().forEach(drop -> player.getInventory().addItem(drop).values()
             .forEach(leftover -> block.getWorld().dropItemNaturally(block.getLocation(), leftover)));

@@ -149,7 +149,7 @@ public final class RivetPluginTest {
         assertNotNull(globalResource);
         YamlConfiguration global = YamlConfiguration.loadConfiguration(
             new InputStreamReader(globalResource, StandardCharsets.UTF_8));
-        assertEquals(Set.of("configuration-version", "effects", "message-palette-version"),
+        assertEquals(Set.of("configuration-version", "effects", "message-palette-version", "messages"),
             global.getKeys(false));
         YamlConfiguration graves = YamlConfiguration.loadConfiguration(new InputStreamReader(
             getClass().getResourceAsStream("/settings/graves.yml"), StandardCharsets.UTF_8));
@@ -332,7 +332,7 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
-        assertEquals(97, plugin.getConfigurationSection("commands").getKeys(false).size());
+        assertEquals(98, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
             .stream().filter(command -> !command.equals("rivet"))
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
@@ -369,6 +369,7 @@ public final class RivetPluginTest {
         assertEquals("worlds", RivetPlugin.moduleForCommand("findbiome"));
         assertEquals("help", RivetPlugin.moduleForCommand("help"));
         assertEquals("lagg", RivetPlugin.moduleForCommand("lagg"));
+        assertEquals("logs", RivetPlugin.moduleForCommand("log"));
         assertNull(RivetPlugin.moduleForCommand("rivet"));
         assertNull(RivetPlugin.moduleForCommand("unknown"));
     }

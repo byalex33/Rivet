@@ -360,6 +360,10 @@ commands:
     description: Clear ground items or reload cleanup settings
     usage: /lagg <clear|reload>
     permission: rivet.lagg
+  log:
+    aliases: [logs]
+    description: Inspect and search the gameplay audit log
+    usage: /log <inspect|lookup|page|reload>
   rivet:
     description: Show Rivet information or reload configuration
     usage: /rivet [reload]
@@ -601,6 +605,16 @@ permissions:
   rivet.help:
     default: true
   rivet.lagg:
+    default: op
+  rivet.logs.lookup:
+    default: op
+  rivet.logs.inspect:
+    default: op
+  rivet.logs.reload:
+    default: op
+  rivet.logs.commands:
+    default: op
+  rivet.logs.teleport:
     default: op
   rivet.admin:
     default: op

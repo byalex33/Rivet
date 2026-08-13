@@ -105,6 +105,7 @@
     - [/group](commands.md#group)
     - [/hologram](commands.md#hologram)
     - [/lagg](commands.md#lagg)
+    - [/log](commands.md#log)
     - [/help](commands.md#help)
     - [/rivet](commands.md#rivet)
 - [Configuration](configuration.md)
