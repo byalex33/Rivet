@@ -175,31 +175,25 @@ final class GraveModule implements Listener {
         long now = System.currentTimeMillis();
         long remaining = cooldownRemaining(state.lastBack,
             Math.max(0, settings.getLong("back.cooldown-seconds", 30)), now);
-        if (remaining > 0) {
+        if (remaining > 0 && !player.hasPermission("rivet.tp.nocooldown")) {
             player.sendMessage(MM.deserialize(settings.getString("back.messages.cooldown",
                     "<white>You can use /back again in %seconds% seconds.</white>"),
                 Placeholder.unparsed("seconds", Long.toString(remaining))));
             return true;
         }
-        int delay = Math.max(0, settings.getInt("back.teleport-delay-seconds", 3));
-        teleports.start(player, destination, delay,
-            settings.getBoolean("back.cancel-on-move", true),
-            MM.deserialize(settings.getString("back.messages.wait",
-                    "<white>Returning in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"),
-                Placeholder.unparsed("seconds", Integer.toString(delay))),
-            MM.deserialize(settings.getString("back.messages.cancelled",
-                "<white>Back teleport cancelled because you moved.</white>")),
-            () -> {
+        teleports.start(player, destination, () -> {
+            if (!player.hasPermission("rivet.tp.nocooldown")) {
                 deaths.put(player.getUniqueId(), state.withLastBack(System.currentTimeMillis()));
                 try {
                     save();
                 } catch (IOException exception) {
                     plugin.getLogger().severe("Could not save /back cooldown: " + exception.getMessage());
                 }
-                player.sendMessage(MM.deserialize(settings.getString("back.messages.teleported",
-                    "<white>Returned to your latest death location.</white>")));
-                plugin.teleportFeedback(player, "Death location");
-            });
+            }
+            player.sendMessage(MM.deserialize(settings.getString("back.messages.teleported",
+                "<white>Returned to your latest death location.</white>")));
+            plugin.teleportFeedback(player, "Death location");
+        });
         return true;
     }
 

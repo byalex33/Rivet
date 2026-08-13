@@ -409,7 +409,8 @@ final class TreeFeller implements Listener {
         if (name.startsWith("DEEPSLATE_")) {
             name = name.substring(10);
         }
-        return name.endsWith("_ORE") || material == Material.ANCIENT_DEBRIS ? name : null;
+        return name.endsWith("_ORE") || material == Material.ANCIENT_DEBRIS
+            || material == Material.GLOWSTONE ? name : null;
     }
 
     static TextColor oreColor(Material material) {
@@ -423,6 +424,7 @@ final class TreeFeller implements Listener {
             case "EMERALD_ORE" -> 0x55FF55;
             case "DIAMOND_ORE" -> 0x55FFFF;
             case "ANCIENT_DEBRIS" -> 0x8B5A4A;
+            case "GLOWSTONE" -> 0xFFF47D;
             default -> 0xFFFFFF;
         });
     }

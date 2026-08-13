@@ -37,7 +37,7 @@ effects:
   activation:
     sound:
       enabled: true
-      name: block_beacon_power_select
+      name: block.beacon.power_select
       volume: 0.7
       pitch: 1.5
     particles:

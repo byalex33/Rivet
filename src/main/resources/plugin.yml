@@ -356,6 +356,10 @@ commands:
     description: Browse the commands available to you
     usage: /help [page]
     permission: rivet.help
+  lagg:
+    description: Clear ground items or reload cleanup settings
+    usage: /lagg <clear|reload>
+    permission: rivet.lagg
   rivet:
     description: Show Rivet information or reload configuration
     usage: /rivet [reload]
@@ -410,6 +414,8 @@ permissions:
   rivet.teleport:
     default: op
   rivet.tppos:
+    default: op
+  rivet.tp.nocooldown:
     default: op
   rivet.vanish:
     default: op
@@ -594,5 +600,7 @@ permissions:
     default: op
   rivet.help:
     default: true
+  rivet.lagg:
+    default: op
   rivet.admin:
     default: op

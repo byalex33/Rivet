@@ -42,27 +42,27 @@ messages:
 effects:
   throw-sound:
     enabled: true
-    name: entity_egg_throw
+    name: entity.egg.throw
     volume: 0.8
     pitch: 0.8
   miss-sound:
     enabled: true
-    name: block_amethyst_block_hit
+    name: block.amethyst_block.hit
     volume: 0.7
     pitch: 0.7
   start-sound:
     enabled: true
-    name: block_beacon_activate
+    name: block.beacon.activate
     volume: 1.0
     pitch: 1.35
   block-sound:
     enabled: true
-    name: block_amethyst_block_place
+    name: block.amethyst_block.place
     volume: 0.25
     pitch: 1.5
   completion-sound:
     enabled: true
-    name: block_beacon_power_select
+    name: block.beacon.power_select
     volume: 1.0
     pitch: 1.65
   particles:

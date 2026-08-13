@@ -104,6 +104,7 @@
     - [/perm](commands.md#perm)
     - [/group](commands.md#group)
     - [/hologram](commands.md#hologram)
+    - [/lagg](commands.md#lagg)
     - [/help](commands.md#help)
     - [/rivet](commands.md#rivet)
 - [Configuration](configuration.md)

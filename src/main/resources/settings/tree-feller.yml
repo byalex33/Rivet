@@ -10,7 +10,7 @@ tree-feller:
   message: "<white>Felled <#f72a4c>%count%</#f72a4c> × <#f72a4c>%material%</#f72a4c></white>"
   sound:
     enabled: true
-    name: block_wood_break
+    name: block.wood.break
     volume: 0.8
     pitch: 1.1
   particles:
@@ -24,7 +24,7 @@ veinminer:
   message: "<white>Mined <#f72a4c>%count%</#f72a4c> of <#f72a4c>%material%</#f72a4c></white>"
   sound:
     enabled: false
-    name: block_stone_break
+    name: block.stone.break
     volume: 0.8
     pitch: 1.1
   particles:

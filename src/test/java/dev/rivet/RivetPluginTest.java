@@ -53,6 +53,14 @@ public final class RivetPluginTest {
     }
 
     @Test
+    public void mapsBreederBlocksToChunksIncludingNegativeCoordinates() {
+        assertEquals(true, AutoBreeder.sameChunk(0, 15, 0, 0));
+        assertEquals(true, AutoBreeder.sameChunk(16, 31, 1, 1));
+        assertEquals(true, AutoBreeder.sameChunk(-1, -16, -1, -1));
+        assertEquals(false, AutoBreeder.sameChunk(-17, 0, -1, 0));
+    }
+
+    @Test
     public void autoBreederSupportsAnimalSpecificFoodAndHolograms() {
         assertEquals(Material.WHEAT, AutoBreeder.breedingFood(EntityType.COW));
         assertEquals(Material.CARROT, AutoBreeder.breedingFood(EntityType.PIG));
@@ -134,21 +142,30 @@ public final class RivetPluginTest {
             .allMatch(Boolean.class::isInstance));
         assertEquals(RivetConfig.ENABLED_BY_DEFAULT,
             modules.getKeys(false).stream().filter(modules::getBoolean).collect(Collectors.toSet()));
-        RivetConfig.MODULES.forEach(module ->
-            assertNotNull(module, getClass().getResource("/settings/" + module + ".yml")));
+        RivetConfig.SETTINGS.forEach(name ->
+            assertNotNull(name, getClass().getResource("/settings/" + name + ".yml")));
 
         var globalResource = getClass().getResourceAsStream("/config.yml");
         assertNotNull(globalResource);
         YamlConfiguration global = YamlConfiguration.loadConfiguration(
             new InputStreamReader(globalResource, StandardCharsets.UTF_8));
-        assertEquals(Set.of("effects", "message-palette-version"), global.getKeys(false));
+        assertEquals(Set.of("configuration-version", "effects", "message-palette-version"),
+            global.getKeys(false));
         YamlConfiguration graves = YamlConfiguration.loadConfiguration(new InputStreamReader(
             getClass().getResourceAsStream("/settings/graves.yml"), StandardCharsets.UTF_8));
         assertEquals(false, graves.getBoolean("tracking-compass.enabled", true));
-        YamlConfiguration worlds = YamlConfiguration.loadConfiguration(new InputStreamReader(
-            getClass().getResourceAsStream("/settings/worlds.yml"), StandardCharsets.UTF_8));
-        assertEquals(true, worlds.getBoolean("crop-trample-protection", false));
-        assertEquals(true, worlds.getBoolean("water-harvest-replanting", false));
+        YamlConfiguration gameplay = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/settings/gameplay.yml"), StandardCharsets.UTF_8));
+        assertEquals(true, gameplay.getBoolean("crop-trample-protection", false));
+        assertEquals(true, gameplay.getBoolean("water-harvest-replanting", false));
+        assertEquals(true, gameplay.getBoolean("iron-golem-poppy-drops", false));
+        assertEquals(true, gameplay.getBoolean("hoppers.enabled", false));
+        assertEquals(2, gameplay.getInt("hoppers.transfer-cooldown-ticks"));
+        YamlConfiguration teleports = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/settings/teleports.yml"), StandardCharsets.UTF_8));
+        assertEquals(3, teleports.getInt("warmup-seconds"));
+        assertEquals(10, teleports.getInt("cooldown-seconds"));
+        assertEquals(true, teleports.getBoolean("cancel-on-move", false));
     }
 
     @Test
@@ -215,6 +232,18 @@ public final class RivetPluginTest {
     }
 
     @Test
+    public void optionallyRemovesOnlyIronGolemPoppyDrops() {
+        assertEquals(true, RivetPlugin.isDisabledIronGolemPoppyDrop(
+            EntityType.IRON_GOLEM, false, Material.POPPY));
+        assertEquals(false, RivetPlugin.isDisabledIronGolemPoppyDrop(
+            EntityType.IRON_GOLEM, true, Material.POPPY));
+        assertEquals(false, RivetPlugin.isDisabledIronGolemPoppyDrop(
+            EntityType.IRON_GOLEM, false, Material.IRON_INGOT));
+        assertEquals(false, RivetPlugin.isDisabledIronGolemPoppyDrop(
+            EntityType.VILLAGER, false, Material.POPPY));
+    }
+
+    @Test
     public void environmentCommandActionsUseSupportedTags() {
         YamlConfiguration environment = YamlConfiguration.loadConfiguration(new InputStreamReader(
             getClass().getResourceAsStream("/settings/environment.yml"), StandardCharsets.UTF_8));
@@ -278,7 +307,7 @@ public final class RivetPluginTest {
 
     @Test
     public void packagedSettingsUsePercentSyntaxForRivetPlaceholders() {
-        RivetConfig.MODULES.forEach(module -> {
+        RivetConfig.SETTINGS.forEach(module -> {
             YamlConfiguration settings = YamlConfiguration.loadConfiguration(new InputStreamReader(
                 getClass().getResourceAsStream("/settings/" + module + ".yml"), StandardCharsets.UTF_8));
             settings.getValues(true).forEach((path, value) -> {
@@ -303,7 +332,7 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
-        assertEquals(96, plugin.getConfigurationSection("commands").getKeys(false).size());
+        assertEquals(97, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
             .stream().filter(command -> !command.equals("rivet"))
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
@@ -339,6 +368,7 @@ public final class RivetPluginTest {
         assertEquals("inventory", RivetPlugin.moduleForCommand("scan"));
         assertEquals("worlds", RivetPlugin.moduleForCommand("findbiome"));
         assertEquals("help", RivetPlugin.moduleForCommand("help"));
+        assertEquals("lagg", RivetPlugin.moduleForCommand("lagg"));
         assertNull(RivetPlugin.moduleForCommand("rivet"));
         assertNull(RivetPlugin.moduleForCommand("unknown"));
     }
@@ -913,6 +943,7 @@ public final class RivetPluginTest {
         assertEquals("DIAMOND_ORE", TreeFeller.oreKey(org.bukkit.Material.DEEPSLATE_DIAMOND_ORE));
         assertEquals("NETHER_QUARTZ_ORE", TreeFeller.oreKey(org.bukkit.Material.NETHER_QUARTZ_ORE));
         assertEquals("ANCIENT_DEBRIS", TreeFeller.oreKey(org.bukkit.Material.ANCIENT_DEBRIS));
+        assertEquals("GLOWSTONE", TreeFeller.oreKey(org.bukkit.Material.GLOWSTONE));
         assertNull(TreeFeller.oreKey(org.bukkit.Material.STONE));
     }
 
@@ -922,6 +953,7 @@ public final class RivetPluginTest {
         assertEquals(0xFFFFFF, TreeFeller.oreColor(org.bukkit.Material.IRON_ORE).value());
         assertEquals(0x55FFFF, TreeFeller.oreColor(org.bukkit.Material.DEEPSLATE_DIAMOND_ORE).value());
         assertEquals(0xFF5555, TreeFeller.oreColor(org.bukkit.Material.REDSTONE_ORE).value());
+        assertEquals(0xFFF47D, TreeFeller.oreColor(org.bukkit.Material.GLOWSTONE).value());
     }
 
     @Test

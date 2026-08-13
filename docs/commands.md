@@ -1,6 +1,6 @@
 # Command reference
 
-Rivet registers 96 commands. Every command below has a stable link used by the documentation sidebar.
+Rivet registers 97 commands. Every command below has a stable link used by the documentation sidebar.
 
 ## Syntax conventions
 
@@ -22,7 +22,7 @@ Rivet registers 96 commands. Every command below has a stable link used by the d
 | Gameplay systems | [`/givebreeder`](#givebreeder), [`/restorationcore`](#restorationcore), [`/kit`](#kit), [`/daily`](#daily), [`/filter`](#filter), [`/head`](#head) |
 | Player information and utilities | [`/stats`](#stats), [`/playtime`](#playtime), [`/seen`](#seen), [`/craft`](#craft), [`/anvil`](#anvil), [`/smithing`](#smithing), [`/stonecutter`](#stonecutter), [`/grindstone`](#grindstone), [`/jump`](#jump), [`/list`](#list), [`/ping`](#ping), [`/ride`](#ride), [`/sit`](#sit), [`/lay`](#lay), [`/crawl`](#crawl) |
 | Staff and moderation | [`/gmc`](#gmc), [`/gms`](#gms), [`/vanish`](#vanish), [`/fly`](#fly), [`/flyspeed`](#flyspeed), [`/commandspy`](#commandspy), [`/heal`](#heal), [`/feed`](#feed), [`/god`](#god), [`/bossbarmsg`](#bossbarmsg), [`/note`](#note), [`/sameip`](#sameip), [`/toast`](#toast) |
-| Server administration | [`/perm`](#perm), [`/group`](#group), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/help`](#help), [`/rivet`](#rivet) |
+| Server administration | [`/perm`](#perm), [`/group`](#group), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/lagg`](#lagg), [`/help`](#help), [`/rivet`](#rivet) |
 
 ## Homes and warps
 
@@ -100,6 +100,8 @@ Delete a public warp.
 
 ## Teleportation
 
+Player-facing destination commands use the warmup, movement cancellation, and shared cooldown configured in `settings/teleports.yml`. `/back`, TPA requests, and `/rtp` also keep their feature-specific cooldowns. `rivet.tp.nocooldown` bypasses all teleport cooldowns. Staff and test-world movement commands remain immediate.
+
 <a id="spawn"></a>
 
 ### `/spawn`
@@ -135,7 +137,7 @@ Set the server spawn.
 
 Request to teleport to a player.
 
-Requests expire and use the cooldown, warmup, and movement rules from `settings/tpa.yml`.
+Request expiry and request throttling use `settings/tpa.yml`; an accepted teleport uses the shared policy in `settings/teleports.yml`.
 
 <a id="tpahere"></a>
 
@@ -185,7 +187,7 @@ Deny a teleport request.
 
 Teleport to a safe random location.
 
-Specifying a world requires `rivet.rtp.world`. Safe destination checks and cooldowns are configurable.
+Specifying a world requires `rivet.rtp.world`. Safe destination checks and the RTP-specific cooldown use `settings/rtp.yml`; teleport timing uses `settings/teleports.yml`.
 
 <a id="near"></a>
 
@@ -1199,6 +1201,19 @@ Run `/hologram help` for create, copy, edit, delete, list, nearby, teleport, and
 - **Aliases:** None
 
 Clear loaded auto-breeder holograms and recreate displays for active breeders. This includes displays using Rivet's former `core:` tags and legacy invisible ArmorStand hologram stacks. Holograms created with `/holo` are not changed.
+
+<a id="lagg"></a>
+
+### `/lagg`
+
+- **Syntax:** `/lagg <clear|reload>`
+- **Permission:** `rivet.lagg`
+- **Default:** `op`
+- **Aliases:** None
+
+Clear eligible dropped item entities or reload `settings/lagg.yml`.
+
+`/lagg clear` scans loaded worlds immediately and resets the automatic cleanup countdown. It never targets mobs, minecarts, armor stands, projectiles, or any entity other than dropped `Item` entities. `/lagg reload` validates and reloads only this module's settings while keeping the current configuration active if loading fails.
 
 <a id="help"></a>
 

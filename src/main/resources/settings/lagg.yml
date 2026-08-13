@@ -1,0 +1,32 @@
+# Seconds between ground-item cleanups. Items are scanned only when a cleanup runs.
+cleanup-interval-seconds: 300
+
+# Warnings must be greater than 0 and shorter than the cleanup interval.
+warning-seconds:
+  - 60
+  - 30
+  - 10
+
+# Avoid broadcasting scheduled cleanup results when nothing was eligible.
+broadcast-empty-cleanups: false
+
+ignore:
+  # Protect dropped items with an entity custom name or an ItemStack custom name.
+  custom-names: true
+  # Protect dropped items or ItemStacks carrying PersistentDataContainer data.
+  persistent-data: true
+
+# MiniMessage tags are supported. Available placeholders vary by message:
+# warning: %seconds%, %plural%
+# cleanup: %count% (entities), %amount% (total stack contents), %details% (hover label)
+# hover-entry: %item%, %amount%, %count%
+messages:
+  warning: "<white>Ground items will be cleared in <#f72a4c>%seconds%</#f72a4c> second%plural%.</white>"
+  cleanup: "<white>Cleared <#f72a4c>%count%</#f72a4c> ground item entities (<#f72a4c>%amount%</#f72a4c> items). %details%</white>"
+  hover-label: "<#f72a4c>[Hover for more info]</#f72a4c>"
+  hover-header: "<#f72a4c><bold>Removed ground items</bold></#f72a4c>"
+  hover-entry: "<white>%item%:</white> <#f72a4c>%amount%</#f72a4c> items in <#f72a4c>%count%</#f72a4c> entities"
+  hover-empty: "<white>No eligible item entities were found.</white>"
+  reloaded: "<white>Ground-item cleanup configuration reloaded.</white>"
+  reload-failed: "<white>Could not reload settings/lagg.yml. Check the console.</white>"
+  usage: "<white>Usage: /lagg <clear|reload></white>"

@@ -1,6 +1,5 @@
 package dev.rivet;
 
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Location;
@@ -54,7 +53,8 @@ final class RtpModule {
         long cooldown = Math.max(0, settings.getLong("cooldown-seconds", 300)) * 1000L;
         long remaining = data.getLong("players." + player.getUniqueId() + ".last-use")
             + cooldown - now;
-        if (remaining > 0 && !player.hasPermission("rivet.rtp.cooldown.bypass")) {
+        if (remaining > 0 && !player.hasPermission("rivet.rtp.cooldown.bypass")
+            && !player.hasPermission("rivet.tp.nocooldown")) {
             player.sendMessage(MM.deserialize(settings.getString("messages.cooldown",
                     "<white>You can use RTP again in <#f72a4c>%seconds%s</#f72a4c>."),
                 Placeholder.unparsed("seconds", Long.toString((remaining + 999) / 1000))));
@@ -124,14 +124,7 @@ final class RtpModule {
                 if (!player.isOnline()) {
                     return;
                 }
-                int warmup = Math.max(0, settings.getInt("warmup-seconds", 3));
-                Component waiting = MM.deserialize(settings.getString("messages.warmup",
-                        "<white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move."),
-                    Placeholder.unparsed("seconds", Integer.toString(warmup)));
-                Component cancelled = MM.deserialize(settings.getString("messages.cancelled",
-                    "<white>Random teleport cancelled because you moved."));
-                teleports.start(player, safe, warmup,
-                    settings.getBoolean("cancel-on-movement", true), waiting, cancelled, () -> success(player));
+                teleports.start(player, safe, () -> success(player));
             });
         });
     }
@@ -160,11 +153,14 @@ final class RtpModule {
     }
 
     private void success(Player player) {
-        data.set("players." + player.getUniqueId() + ".last-use", System.currentTimeMillis());
-        try {
-            plugin.saveData("rtp");
-        } catch (IOException exception) {
-            plugin.getLogger().warning("Could not save data/rtp.yml: " + exception.getMessage());
+        if (!player.hasPermission("rivet.rtp.cooldown.bypass")
+            && !player.hasPermission("rivet.tp.nocooldown")) {
+            data.set("players." + player.getUniqueId() + ".last-use", System.currentTimeMillis());
+            try {
+                plugin.saveData("rtp");
+            } catch (IOException exception) {
+                plugin.getLogger().warning("Could not save data/rtp.yml: " + exception.getMessage());
+            }
         }
         message(player, "success", "<white>Teleported to a safe random location.");
         plugin.teleportFeedback(player, "Random location");

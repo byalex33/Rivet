@@ -272,18 +272,8 @@ final class VillagerRerollModule implements Listener {
     }
 
     private Sound configuredSound() {
-        String configured = settings.getString("effects.sound.name", "entity.villager.work_librarian");
-        if (configured != null) {
-            NamespacedKey key = NamespacedKey.fromString(configured.contains(":")
-                ? configured : "minecraft:" + configured);
-            if (key != null) {
-                Sound sound = org.bukkit.Registry.SOUNDS.get(key);
-                if (sound != null) {
-                    return sound;
-                }
-            }
-        }
-        return Sound.ENTITY_VILLAGER_WORK_LIBRARIAN;
+        return ConfiguredEffect.sound(plugin, settings, "effects.sound.name",
+            Sound.ENTITY_VILLAGER_WORK_LIBRARIAN);
     }
 
     private void message(Player player, String path, String fallback) {

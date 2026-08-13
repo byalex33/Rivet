@@ -52,14 +52,15 @@ final class AnnouncementsModule {
         if (!settings.getBoolean("sound.enabled", false)) {
             return;
         }
-        try {
-            Sound sound = Sound.valueOf(settings.getString("sound.name", "BLOCK_NOTE_BLOCK_PLING"));
-            float volume = (float) settings.getDouble("sound.volume", .8);
-            float pitch = (float) settings.getDouble("sound.pitch", 1.2);
-            plugin.getServer().getOnlinePlayers().forEach(player ->
-                player.playSound(player.getLocation(), sound, volume, pitch));
-        } catch (IllegalArgumentException exception) {
+        Sound sound = ConfiguredEffect.resolveSound(
+            settings.getString("sound.name", "block.note_block.pling"));
+        if (sound == null) {
             plugin.getLogger().warning("Invalid announcement sound in settings/announcements.yml.");
+            return;
         }
+        float volume = (float) settings.getDouble("sound.volume", .8);
+        float pitch = (float) settings.getDouble("sound.pitch", 1.2);
+        plugin.getServer().getOnlinePlayers().forEach(player ->
+            player.playSound(player.getLocation(), sound, volume, pitch));
     }
 }

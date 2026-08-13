@@ -8,7 +8,6 @@ messages:
   missing: "<white>No %name% is set.</white>"
   deleted: "<white>Home <#f72a4c>%name%</#f72a4c> deleted.</white>"
   world-unavailable: "<white>The world for <#f72a4c>%name%</#f72a4c> is unavailable.</white>"
-  teleport-failed: "<white>Teleport failed.</white>"
   teleported: "<white>Teleported to <#f72a4c>%name%</#f72a4c>.</white>"
   save-failed: "<white>Could not save the change. Check the console.</white>"
 
@@ -19,7 +18,7 @@ effects:
     subtitle: "<white>Teleported</white>"
     titles-enabled: true
     sound-enabled: true
-    sound: entity_enderman_teleport
+    sound: entity.enderman.teleport
     volume: 0.8
     pitch: 1.1
     particles-enabled: true
@@ -30,7 +29,7 @@ effects:
     subtitle: "<white>Home set</white>"
     titles-enabled: true
     sound-enabled: true
-    sound: block_respawn_anchor_set_spawn
+    sound: block.respawn_anchor.set_spawn
     volume: 0.8
     pitch: 1.1
     particles-enabled: true
@@ -41,7 +40,7 @@ effects:
     subtitle: "<white>Home deleted</white>"
     titles-enabled: true
     sound-enabled: true
-    sound: block_note_block_pling
+    sound: block.note_block.pling
     volume: 0.8
     pitch: 1.1
     particles-enabled: true

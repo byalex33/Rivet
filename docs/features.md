@@ -4,10 +4,10 @@
 
 | Feature | Module | Default | Description |
 |---|---|---:|---|
-| Homes | `homes` | Enabled | Named player homes with configurable limits and effects. |
-| Warps | `warps` | Enabled | Named public server destinations. |
+| Homes | `homes` | Enabled | Named player homes with configurable limits, effects, and shared teleport policy. |
+| Warps | `warps` | Enabled | Named public server destinations using the shared teleport policy. |
 | Graves | `graves` | Enabled | Persistent death graves, recovery rules, tracking compasses, and `/back`. |
-| Spawn | `spawn` | Enabled | Server spawn, join spawning, warmups, and movement cancellation. |
+| Spawn | `spawn` | Enabled | Server spawn and immediate join spawning; `/spawn` uses the shared teleport policy. |
 | Chat | `chat` | Enabled | MiniMessage chat, private messages, ignore lists, social spy, chat colors, and item links. |
 | Kits | `kits` | Disabled | Configured item kits with permissions and persistent cooldowns. |
 | AFK | `afk` | Enabled | Manual and automatic AFK state, reasons, sleep exclusion, and status checks. |
@@ -29,12 +29,16 @@
 | Auto breeders | `breeders` | Enabled | Persistent, species-specific automated breeders with a live next-breed hologram countdown, stored breeding XP, and chicken-egg collection. |
 | Egg capture | `egg-capture` | Enabled | Capture supported mobs with thrown eggs and animated effects. |
 | Creeper restoration | `creeper-restoration` | Enabled | Visual creeper debris and throwable Restoration Cores that reconstruct saved craters. |
-| Tree felling | `tree-feller` | Enabled | Whole-tree cutting and connected ore vein mining with drops and XP clumped at the initially mined block. |
+| Ground-item cleanup | `lagg` | Enabled | Periodically removes eligible dropped item entities from loaded worlds, with configurable warnings, protected named or plugin-tagged items, and hoverable removal details. |
+| Faster hoppers | Core gameplay | Enabled | Shortens block-hopper transfer cooldowns from vanilla's 8 ticks to a configurable 2 ticks by default. |
+| Tree felling | `tree-feller` | Enabled | Whole-tree cutting and connected ore or Glowstone vein mining with drops and XP clumped at the initially mined block. |
 | Mob heads | `mob-heads` | Enabled | Configurable, Looting-aware mob-head drops and cached player heads, with vanilla Wither Skeleton skull drops preserved by default. |
 | Villager reroll | `villager-reroll` | Enabled | Adds a non-consuming reroll offer to the vanilla trade screen using Paper's native trade generation. Untraded villagers with workstations are eligible by default. |
 | Environment | `environment` | Enabled | Animated time changes and weather controls. |
 | Worlds | `worlds` | Disabled | Tracked flat and void test worlds, biome search, world tools, and spawn controls. |
 | Inventory tools | `inventory` | Disabled | Inventory administration, item creation, repair, editing, donation, and scanning. |
+
+Small mechanics such as faster hoppers, crop protection, water replanting, and Iron Golem poppy drops live together in `settings/gameplay.yml` rather than creating one-switch modules.
 
 ## Server administration features
 

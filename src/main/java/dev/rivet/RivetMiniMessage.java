@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 final class RivetMiniMessage {
     private static final Set<String> PLACEHOLDERS = Set.of(
         "amount", "animal", "biome", "blocks_broken", "blocks_placed", "bred",
-        "command", "commands", "count", "deaths", "description", "distance", "duration",
+        "command", "commands", "count", "deaths", "description", "details", "distance", "duration",
         "food", "id", "item", "items", "jumps", "kit", "kits", "matches", "material",
         "max", "maximum", "message", "mob", "mob_kills", "name", "page", "pages", "ping",
         "player", "player_kills", "players", "playtime", "plural", "quality", "radius", "reason",

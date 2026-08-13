@@ -1,7 +1,3 @@
-# Delay before /spawn completes. Set to 0 for immediate teleporting.
-teleport-delay-seconds: 3
-cancel-on-move: true
-
 join:
   # If both are false, joining never changes a player's location.
   teleport-every-join: false
@@ -10,6 +6,4 @@ join:
 messages:
   set: "<white>Spawn set to your location.</white>"
   not-set: "<white>The server spawn has not been set.</white>"
-  wait: "<white>Teleporting to spawn in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"
-  cancelled: "<white>Teleport cancelled because you moved.</white>"
   teleported: "<white>Teleported to spawn.</white>"

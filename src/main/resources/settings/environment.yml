@@ -9,25 +9,25 @@ times:
   day:
     commands_when_ran:
       - '[actionbar] <white>Time set to <green>Day</green></white>'
-      - '[sound] ui_button_click'
+      - '[sound] ui.button.click'
 
   night:
     commands_when_ran:
       - '[actionbar] <white>Time set to <green>Night</green></white>'
-      - '[sound] ui_button_click'
+      - '[sound] ui.button.click'
 
 weather:
   rain:
     commands_when_ran:
       - '[actionbar] <white>Weather set to <green>Rain</green></white>'
-      - '[sound] ui_button_click'
+      - '[sound] ui.button.click'
 
   thunder:
     commands_when_ran:
       - '[actionbar] <white>Weather set to <green>Thunder</green></white>'
-      - '[sound] ui_button_click'
+      - '[sound] ui.button.click'
 
   sun:
     commands_when_ran:
       - '[actionbar] <white>Weather set to <green>Sun</green></white>'
-      - '[sound] ui_button_click'
+      - '[sound] ui.button.click'

@@ -63,10 +63,7 @@ final class GuiActions {
     }
 
     private void sound(Player player, String configured) {
-        String normalized = configured.toLowerCase(Locale.ROOT);
-        NamespacedKey key = NamespacedKey.fromString(normalized.contains(":")
-            ? normalized : "minecraft:" + normalized);
-        Sound sound = key == null ? null : Registry.SOUND_EVENT.get(key);
+        Sound sound = ConfiguredEffect.resolveSound(configured);
         if (sound == null) {
             warn("sound", configured);
             return;

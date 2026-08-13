@@ -21,7 +21,7 @@ drop-effects:
   enabled: true
   sound:
     enabled: true
-    name: entity_turtle_egg_hatch
+    name: entity.turtle_egg.hatch
     volume: 1.2
     pitch: 0.85
   particles:

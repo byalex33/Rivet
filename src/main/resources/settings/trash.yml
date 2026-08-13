@@ -12,7 +12,7 @@ gui:
   # [bossbar] [-d:seconds] [-c:color] [-s:style] <text>
   # [lightning] (visual only), and [close]
   open_commands:
-    - '[sound] block_chest_open'
+    - '[sound] block.chest.open'
     - '[message] <white>The trash has been opened.</white>'
   items:
     'fillerItems1':

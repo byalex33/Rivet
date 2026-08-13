@@ -9,17 +9,17 @@ captured-egg:
 effects:
   start-sound:
     enabled: true
-    name: block_trial_spawner_ominous_activate
+    name: block.trial_spawner.ominous_activate
     volume: 0.8
     pitch: 1.35
   completion-sound:
     enabled: true
-    name: entity_firework_rocket_large_blast
+    name: entity.firework_rocket.large_blast
     volume: 1.0
     pitch: 0.8
   received-sound:
     enabled: true
-    name: entity_allay_item_given
+    name: entity.allay.item_given
     volume: 0.8
     pitch: 1.3
   particles:

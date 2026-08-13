@@ -15,14 +15,46 @@ final class ConfiguredEffect {
 
     static Sound sound(RivetPlugin plugin, YamlConfiguration settings, String path, Sound fallback) {
         String configured = settings.getString(path, Registry.SOUND_EVENT.getKeyOrThrow(fallback).asString());
-        NamespacedKey key = key(configured);
-        Sound sound = key == null ? null : Registry.SOUND_EVENT.get(key);
+        Sound sound = resolveSound(configured);
         if (sound == null) {
             plugin.getLogger().warning("Invalid sound '" + configured + "' at " + path
                 + "; using " + Registry.SOUND_EVENT.getKeyOrThrow(fallback).asString() + ".");
             return fallback;
         }
         return sound;
+    }
+
+    @SuppressWarnings("deprecation")
+    static Sound resolveSound(String configured) {
+        NamespacedKey key = key(configured);
+        Sound sound = key == null ? null : Registry.SOUND_EVENT.get(key);
+        if (sound != null || configured == null || configured.isBlank()) {
+            return sound;
+        }
+        String legacy = legacySoundName(configured);
+        if (legacy == null) {
+            return null;
+        }
+        try {
+            return Sound.valueOf(legacy);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    static String legacySoundName(String configured) {
+        if (configured == null || configured.isBlank()) {
+            return null;
+        }
+        String legacy = configured.trim();
+        int namespace = legacy.indexOf(':');
+        if (namespace >= 0) {
+            if (!legacy.substring(0, namespace).equalsIgnoreCase("minecraft")) {
+                return null;
+            }
+            legacy = legacy.substring(namespace + 1);
+        }
+        return legacy.toUpperCase(Locale.ROOT);
     }
 
     static Particle particle(RivetPlugin plugin, YamlConfiguration settings,

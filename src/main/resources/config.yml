@@ -2,6 +2,8 @@
 # module options live in settings/; saved runtime data lives in data/.
 # Internal one-time migration marker for Rivet's white and #f72a4c message palette.
 message-palette-version: 1
+# Internal configuration migration version.
+configuration-version: 2
 effects:
   # Show title feedback for supported commands.
   titles: true

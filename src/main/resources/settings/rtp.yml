@@ -6,8 +6,6 @@ minimum-radius: 500
 maximum-radius: 5000
 maximum-attempts: 24
 cooldown-seconds: 300
-warmup-seconds: 3
-cancel-on-movement: true
 
 # Nether searches stay below the bedrock ceiling.
 nether-maximum-y: 120
@@ -27,8 +25,6 @@ worlds:
 
 messages:
   searching: "<white>Searching for a safe location...</white>"
-  warmup: "<white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"
-  cancelled: "<white>Random teleport cancelled because you moved.</white>"
   cooldown: "<white>You can use RTP again in <#f72a4c>%seconds%s</#f72a4c>."
   success: "<white>Teleported to a safe random location.</white>"
   failed: "<white>Could not find a safe location. Try again later.</white>"

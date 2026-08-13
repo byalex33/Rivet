@@ -1,7 +1,6 @@
 package dev.rivet;
 
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -43,7 +42,7 @@ final class SpawnModule implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         if (settings.getBoolean("join.teleport-every-join")
             || settings.getBoolean("join.teleport-first-join") && !event.getPlayer().hasPlayedBefore()) {
-            teleport(event.getPlayer());
+            teleport(event.getPlayer(), false);
         }
     }
 
@@ -66,23 +65,26 @@ final class SpawnModule implements Listener {
     }
 
     private void teleport(Player player) {
+        teleport(player, true);
+    }
+
+    private void teleport(Player player, boolean playerInitiated) {
         Location destination = location();
         if (destination == null) {
             player.sendMessage(MM.deserialize(settings.getString("messages.not-set",
                 "<white>The server spawn has not been set.")));
             return;
         }
-        int delay = Math.max(0, settings.getInt("teleport-delay-seconds", 3));
-        teleports.start(player, destination, delay, settings.getBoolean("cancel-on-move", true),
-            MM.deserialize(settings.getString("messages.wait",
-                    "<white>Teleporting to spawn in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"),
-                Placeholder.unparsed("seconds", Integer.toString(delay))),
-            MM.deserialize(settings.getString("messages.cancelled", "<white>Teleport cancelled because you moved.")),
-            () -> {
-                player.sendMessage(MM.deserialize(settings.getString("messages.teleported",
-                    "<white>Teleported to spawn.")));
-                plugin.teleportFeedback(player, "Spawn");
-            });
+        Runnable success = () -> {
+            player.sendMessage(MM.deserialize(settings.getString("messages.teleported",
+                "<white>Teleported to spawn.")));
+            plugin.teleportFeedback(player, "Spawn");
+        };
+        if (playerInitiated) {
+            teleports.start(player, destination, success);
+        } else {
+            teleports.startImmediate(player, destination, success);
+        }
     }
 
     private Location location() {

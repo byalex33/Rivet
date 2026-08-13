@@ -47,6 +47,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -119,6 +120,7 @@ final class AutoBreeder implements Listener {
     private final Set<NamespacedKey> recipeKeys = new HashSet<>();
     private final Set<String> breeders = new HashSet<>();
     private final Map<String, Inventory> inventories = new HashMap<>();
+    private final Map<String, TextDisplay> loadedHolograms = new HashMap<>();
     private final Map<UUID, PendingBreed> pendingBreeds = new HashMap<>();
     private final YamlConfiguration data;
     private final YamlConfiguration settings;
@@ -242,13 +244,23 @@ final class AutoBreeder implements Listener {
         List<String> loaded = breeders.stream().filter(key -> {
             Location location = location(key);
             return location != null && location.getWorld().equals(event.getWorld())
-                && location.getBlockX() >> 4 == event.getChunk().getX()
-                && location.getBlockZ() >> 4 == event.getChunk().getZ();
+                && sameChunk(location.getBlockX(), location.getBlockZ(),
+                    event.getChunk().getX(), event.getChunk().getZ());
         }).toList();
         if (!loaded.isEmpty()) {
             plugin.getServer().getScheduler().runTask(plugin,
                 () -> loaded.forEach(this::ensureHologram));
         }
+    }
+
+    @EventHandler
+    public void onChunkUnload(ChunkUnloadEvent event) {
+        loadedHolograms.keySet().removeIf(key -> {
+            Location location = location(key);
+            return location != null && location.getWorld().equals(event.getWorld())
+                && sameChunk(location.getBlockX(), location.getBlockZ(),
+                    event.getChunk().getX(), event.getChunk().getZ());
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -357,6 +369,7 @@ final class AutoBreeder implements Listener {
     void shutdown() {
         task.cancel();
         inventories.forEach(this::persist);
+        loadedHolograms.clear();
         recipeKeys.forEach(Bukkit::removeRecipe);
     }
 
@@ -476,6 +489,7 @@ final class AutoBreeder implements Listener {
                 .forEach(holograms::add);
         }
         holograms.forEach(Entity::remove);
+        loadedHolograms.clear();
         ensureLoadedHolograms();
         sender.sendMessage(MM.deserialize(
             "<white>Cleared <#f72a4c>%count%</#f72a4c> loaded auto-breeder hologram%plural% "
@@ -626,7 +640,7 @@ final class AutoBreeder implements Listener {
             secondsUntilBreed = BREED_INTERVAL_SECONDS;
             breed();
         }
-        ensureLoadedHolograms();
+        updateLoadedHolograms();
     }
 
     private void breed() {
@@ -798,7 +812,7 @@ final class AutoBreeder implements Listener {
         data.set(path(key) + ".food", food(inventory, food(key)));
         data.set(path(key) + ".eggs", eggs(inventory));
         save();
-        ensureHologram(key);
+        updateHologram(key);
     }
 
     private void ensureLoadedHolograms() {
@@ -819,12 +833,12 @@ final class AutoBreeder implements Listener {
         }
         List<Entity> existing = holograms(key, location);
         if (existing.size() == 1 && existing.getFirst() instanceof TextDisplay display) {
-            display.text(configuredHologram(animal(key), food(inventory(key), food(key)), animalsBred(key)));
+            loadedHolograms.put(key, display);
+            updateHologram(key);
             return;
         }
         existing.forEach(Entity::remove);
         location.getWorld().spawn(location.clone().add(.5, 1.6, .5), TextDisplay.class, display -> {
-            display.text(configuredHologram(animal(key), food(inventory(key), food(key)), animalsBred(key)));
             display.setBillboard(Display.Billboard.CENTER);
             display.setAlignment(TextDisplay.TextAlignment.CENTER);
             display.setBackgroundColor(Color.fromARGB(150, 0, 0, 0));
@@ -832,7 +846,31 @@ final class AutoBreeder implements Listener {
             display.setPersistent(true);
             display.setInvulnerable(true);
             display.getPersistentDataContainer().set(hologramKey, PersistentDataType.STRING, key);
+            loadedHolograms.put(key, display);
+            updateHologram(key);
         });
+    }
+
+    private void updateLoadedHolograms() {
+        List.copyOf(loadedHolograms.keySet()).forEach(this::updateHologram);
+    }
+
+    private void updateHologram(String key) {
+        TextDisplay display = loadedHolograms.get(key);
+        if (display == null) {
+            return;
+        }
+        if (!display.isValid()) {
+            loadedHolograms.remove(key, display);
+            return;
+        }
+        display.text(configuredHologram(animal(key), storedFood(key), animalsBred(key)));
+    }
+
+    private int storedFood(String key) {
+        Inventory inventory = inventories.get(key);
+        return inventory == null ? Math.max(0, data.getInt(path(key) + ".food"))
+            : food(inventory, food(key));
     }
 
     private List<Entity> holograms(String key, Location location) {
@@ -843,6 +881,7 @@ final class AutoBreeder implements Listener {
     }
 
     private void removeHologram(String key, Location location) {
+        loadedHolograms.remove(key);
         if (location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
             holograms(key, location).forEach(Entity::remove);
         }
@@ -1113,6 +1152,10 @@ final class AutoBreeder implements Listener {
 
     static boolean readyToBreed(boolean canBreed, int loveModeTicks) {
         return canBreed && loveModeTicks == 0;
+    }
+
+    static boolean sameChunk(int blockX, int blockZ, int chunkX, int chunkZ) {
+        return blockX >> 4 == chunkX && blockZ >> 4 == chunkZ;
     }
 
     private record PendingBreed(String key, long expiresAt) {

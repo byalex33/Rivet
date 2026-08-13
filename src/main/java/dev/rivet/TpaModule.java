@@ -84,7 +84,7 @@ final class TpaModule implements Listener {
         long now = System.currentTimeMillis();
         long remaining = cooldownRemaining(cooldowns.getOrDefault(requester.getUniqueId(), 0L),
             setting("cooldown-seconds", 30), now);
-        if (remaining > 0) {
+        if (remaining > 0 && !requester.hasPermission("rivet.tp.nocooldown")) {
             send(requester, "cooldown", "<white>Wait %seconds% seconds before sending another request.",
                 Placeholder.unparsed("seconds", Long.toString(remaining)));
             return true;
@@ -93,7 +93,9 @@ final class TpaModule implements Listener {
         List<Request> incoming = requests.computeIfAbsent(target.getUniqueId(), ignored -> new ArrayList<>());
         incoming.removeIf(request -> request.requester.equals(requester));
         incoming.add(new Request(requester, target, here, now));
-        cooldowns.put(requester.getUniqueId(), now);
+        if (!requester.hasPermission("rivet.tp.nocooldown")) {
+            cooldowns.put(requester.getUniqueId(), now);
+        }
         send(requester, "sent", "<white>Teleport request sent to <#f72a4c>%player%</#f72a4c>.", player(target));
         send(target, here ? "received-here" : "received",
             here
@@ -126,11 +128,11 @@ final class TpaModule implements Listener {
             send(target, "none", "<white>No matching teleport request was found.");
             return true;
         }
-        incoming.remove(request);
-        if (incoming.isEmpty()) {
-            requests.remove(target.getUniqueId());
-        }
         if (!accept) {
+            incoming.remove(request);
+            if (incoming.isEmpty()) {
+                requests.remove(target.getUniqueId());
+            }
             send(target, "denied", "<white>Denied <#f72a4c>%player%</#f72a4c>'s request.", player(request.requester));
             send(request.requester, "denied-requester", "<white>%player% denied your teleport request.", player(target));
             return true;
@@ -138,18 +140,18 @@ final class TpaModule implements Listener {
         Player moving = request.here ? target : request.requester;
         Player destinationPlayer = request.here ? request.requester : target;
         Location destination = destinationPlayer.getLocation().clone();
-        int delay = setting("teleport-delay-seconds", 3);
+        if (!teleports.start(moving, destination, () -> {
+            send(moving, "teleported", "<white>Teleport complete.");
+            plugin.teleportFeedback(moving, "Teleport");
+        })) {
+            return true;
+        }
+        incoming.remove(request);
+        if (incoming.isEmpty()) {
+            requests.remove(target.getUniqueId());
+        }
         send(target, "accepted", "<white>Accepted <#f72a4c>%player%</#f72a4c>'s request.", player(request.requester));
         send(request.requester, "accepted-requester", "<white>%player% accepted your teleport request.", player(target));
-        teleports.start(moving, destination, delay,
-            plugin.settings("tpa").getBoolean("cancel-on-move", true),
-            MM.deserialize(message("wait", "<white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move."),
-                Placeholder.unparsed("seconds", Integer.toString(delay))),
-            MM.deserialize(message("cancelled", "<white>Teleport cancelled because you moved.")),
-            () -> {
-                send(moving, "teleported", "<white>Teleport complete.");
-                plugin.teleportFeedback(moving, "Teleport");
-            });
         return true;
     }
 

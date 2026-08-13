@@ -3,7 +3,7 @@ skip-when-empty: true
 
 sound:
   enabled: false
-  name: BLOCK_NOTE_BLOCK_PLING
+  name: block.note_block.pling
   volume: 0.8
   pitch: 1.2
 

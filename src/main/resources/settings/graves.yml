@@ -2,13 +2,9 @@
 death-message: "<white>You died at <#f72a4c>%x%, %y%, %z%</#f72a4c> in <white>%world%</white>.</white>"
 
 back:
-  teleport-delay-seconds: 3
   cooldown-seconds: 30
-  cancel-on-move: true
   messages:
     none: "<white>No death location is saved.</white>"
-    wait: "<white>Returning in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"
-    cancelled: "<white>Back teleport cancelled because you moved.</white>"
     cooldown: "<white>You can use /back again in %seconds% seconds.</white>"
     teleported: "<white>Returned to your latest death location.</white>"
 

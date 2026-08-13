@@ -1,9 +1,5 @@
 # Flat test worlds normally block natural mob spawning. Spawner, structure,
 # command, and other non-natural spawn reasons are unaffected.
-crop-trample-protection: true
-# Water-harvested crops reserve one harvested seed/crop and replant after the water clears.
-water-harvest-replanting: true
-
 flat-worlds:
   allow-natural-mob-spawning: false
 

@@ -29,11 +29,12 @@ final class RivetConfig {
         "mob-heads", "villager-reroll", "holograms", "permissions", "worlds", "staff",
         "environment", "inventory", "spawn", "tpa", "kits", "afk", "join-leave",
         "announcements", "nicknames", "statistics", "trash", "utilities", "poses",
-        "backpacks", "daily", "rtp", "near", "filter", "help");
+        "backpacks", "daily", "rtp", "near", "filter", "help", "lagg");
     static final Set<String> ENABLED_BY_DEFAULT = Set.of(
         "chat", "homes", "warps", "graves", "breeders", "egg-capture", "creeper-restoration", "tree-feller",
         "mob-heads", "villager-reroll", "holograms", "environment", "spawn", "afk", "join-leave",
-        "nicknames", "statistics", "trash", "utilities", "filter", "help");
+        "nicknames", "statistics", "trash", "utilities", "filter", "help", "lagg");
+    static final List<String> SETTINGS = settingsFiles();
 
     private final RivetPlugin plugin;
     private final File settingsDirectory;
@@ -57,24 +58,26 @@ final class RivetConfig {
         migrateFile("permissions/users.yml", "data/permissions.yml");
 
         File globalFile = new File(plugin.getDataFolder(), "config.yml");
-        boolean migrateMessagePalette = loadChecked(globalFile)
-            .getInt("message-palette-version", 0) < 1;
+        YamlConfiguration persistedGlobal = loadChecked(globalFile);
+        boolean migrateMessagePalette = persistedGlobal.getInt("message-palette-version", 0) < 1;
+        int configurationVersion = persistedGlobal.getInt("configuration-version", 0);
         boolean worldsSettingsExisted = settingsFile("worlds").exists();
+        boolean gameplaySettingsExisted = settingsFile("gameplay").exists();
         saveResource("modules.yml");
-        for (String module : MODULES) {
-            saveResource("settings/" + module + ".yml");
-            YamlConfiguration configured = loadChecked(settingsFile(module));
-            boolean settingsChanged = mergeBundledDefaults(module, configured);
-            if (migrateMessagePalette && migrateMessagePalette(configured, module)) {
+        for (String name : SETTINGS) {
+            saveResource("settings/" + name + ".yml");
+            YamlConfiguration configured = loadChecked(settingsFile(name));
+            boolean settingsChanged = mergeBundledDefaults(name, configured);
+            if (migrateMessagePalette && migrateMessagePalette(configured, name)) {
                 settingsChanged = true;
             }
-            if (migratePlaceholderSyntax(configured, module)) {
+            if (migratePlaceholderSyntax(configured, name)) {
                 settingsChanged = true;
             }
             if (settingsChanged) {
-                configured.save(settingsFile(module));
+                configured.save(settingsFile(name));
             }
-            settings.put(module, configured);
+            settings.put(name, configured);
         }
         if (migrateMessagePalette) {
             plugin.getConfig().set("message-palette-version", 1);
@@ -88,6 +91,7 @@ final class RivetConfig {
         MODULES.forEach(module -> activeModules.put(module,
             modules.getBoolean(module, ENABLED_BY_DEFAULT.contains(module))));
         migrateLegacyConfig(worldsSettingsExisted);
+        migrateGameplaySettings(gameplaySettingsExisted, configurationVersion);
     }
 
     boolean enabled(String module) {
@@ -121,17 +125,17 @@ final class RivetConfig {
         YamlConfiguration nextModules = loadChecked(new File(plugin.getDataFolder(), "modules.yml"));
         validateModules(nextModules, new File(plugin.getDataFolder(), "modules.yml"));
         Map<String, YamlConfiguration> nextSettings = new HashMap<>();
-        for (String module : MODULES) {
-            nextSettings.put(module, loadChecked(settingsFile(module)));
+        for (String name : SETTINGS) {
+            nextSettings.put(name, loadChecked(settingsFile(name)));
         }
 
         List<String> changedModules = changedModules(activeModules, nextModules);
         plugin.reloadConfig();
         modules.loadFromString(nextModules.saveToString());
-        for (String module : MODULES) {
-            settings.get(module).loadFromString(nextSettings.get(module).saveToString());
+        for (String name : SETTINGS) {
+            settings.get(name).loadFromString(nextSettings.get(name).saveToString());
         }
-        return new ReloadResult(changedModules, MODULES.size() + 2);
+        return new ReloadResult(changedModules, SETTINGS.size() + 2);
     }
 
     private static YamlConfiguration loadChecked(File file)
@@ -270,6 +274,51 @@ final class RivetConfig {
             config.save(new File(plugin.getDataFolder(), "config.yml"));
             plugin.getLogger().info("Migrated legacy values from config.yml.");
         }
+    }
+
+    private void migrateGameplaySettings(boolean gameplaySettingsExisted, int configurationVersion)
+        throws IOException, InvalidConfigurationException {
+        if (configurationVersion >= 2) {
+            return;
+        }
+        YamlConfiguration gameplay = settings("gameplay");
+        if (!gameplaySettingsExisted) {
+            YamlConfiguration worlds = settings("worlds");
+            copyValue(worlds, "crop-trample-protection", gameplay, "crop-trample-protection");
+            copyValue(worlds, "water-harvest-replanting", gameplay, "water-harvest-replanting");
+            copyValue(worlds, "iron-golem-poppy-drops", gameplay, "iron-golem-poppy-drops");
+
+            File legacyHoppersFile = settingsFile("hoppers");
+            if (legacyHoppersFile.isFile()) {
+                YamlConfiguration legacyHoppers = loadChecked(legacyHoppersFile);
+                copyValue(legacyHoppers, "transfer-cooldown-ticks", gameplay,
+                    "hoppers.transfer-cooldown-ticks");
+            }
+            File modulesFile = new File(plugin.getDataFolder(), "modules.yml");
+            YamlConfiguration configuredModules = loadChecked(modulesFile);
+            if (configuredModules.contains("hoppers")) {
+                gameplay.set("hoppers.enabled", configuredModules.getBoolean("hoppers"));
+            }
+            gameplay.save(settingsFile("gameplay"));
+        }
+        plugin.getConfig().set("configuration-version", 2);
+        plugin.saveConfig();
+        plugin.getLogger().info("Migrated small gameplay mechanics to settings/gameplay.yml; "
+            + "legacy keys were left untouched.");
+    }
+
+    private static void copyValue(YamlConfiguration source, String sourcePath,
+                                  YamlConfiguration target, String targetPath) {
+        if (source.contains(sourcePath)) {
+            target.set(targetPath, source.get(sourcePath));
+        }
+    }
+
+    private static List<String> settingsFiles() {
+        java.util.ArrayList<String> names = new java.util.ArrayList<>(MODULES);
+        names.add("gameplay");
+        names.add("teleports");
+        return List.copyOf(names);
     }
 
     private static boolean migrateMessagePalette(YamlConfiguration configuration, String module) {

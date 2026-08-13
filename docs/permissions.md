@@ -1,6 +1,6 @@
 # Permissions
 
-Rivet declares 114 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
+Rivet declares 116 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
 
 The command permission is checked by Paper before Rivet handles the command. Additional `.others`, formatting, bypass, row, and wildcard nodes enable narrower capabilities inside a command.
 
@@ -33,6 +33,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.chatcolor.advanced` | `op` | Allows additional safe MiniMessage formatting. |
 | `rivet.teleport` | `op` | [`/tp`](commands.md#tp) |
 | `rivet.tppos` | `op` | [`/tppos`](commands.md#tppos) |
+| `rivet.tp.nocooldown` | `op` | Bypasses shared and feature-specific teleport cooldowns. |
 | `rivet.vanish` | `op` | [`/vanish`](commands.md#vanish) |
 | `rivet.vanish.see` | `op` | Additional capability used by the related feature. |
 | `rivet.fly` | `op` | [`/fly`](commands.md#fly) |
@@ -121,6 +122,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.top.others` | `op` | Allows targeting another player in the related command. |
 | `rivet.tree` | `op` | [`/tree`](commands.md#tree) |
 | `rivet.help` | `true` | [`/help`](commands.md#help) |
+| `rivet.lagg` | `op` | [`/lagg clear`](commands.md#lagg), [`/lagg reload`](commands.md#lagg) |
 | `rivet.admin` | `op` | [`/rivet`](commands.md#rivet) |
 
 ## Rivet permission module

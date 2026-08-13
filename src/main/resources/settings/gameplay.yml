@@ -1,0 +1,10 @@
+# Small gameplay mechanics live together here instead of each becoming a module.
+crop-trample-protection: true
+water-harvest-replanting: true
+iron-golem-poppy-drops: true
+
+hoppers:
+  enabled: true
+  # Vanilla uses 8 ticks. 2 ticks is approximately 10 transfers/second.
+  # Values below 1 are treated as 1.
+  transfer-cooldown-ticks: 2

@@ -1,7 +1,5 @@
 request-expiry-seconds: 60
 cooldown-seconds: 30
-teleport-delay-seconds: 3
-cancel-on-move: true
 
 # Messages support MiniMessage and the placeholders used in each default.
 messages:
@@ -20,6 +18,4 @@ messages:
   self: "<white>You cannot send a teleport request to yourself.</white>"
   not-online: "<white>That player is not online.</white>"
   cooldown: "<white>Wait %seconds% seconds before sending another request.</white>"
-  wait: "<white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"
-  cancelled: "<white>Teleport cancelled because you moved.</white>"
   teleported: "<white>Teleport complete.</white>"

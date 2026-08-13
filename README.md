@@ -19,7 +19,7 @@ Rivet includes:
 - Homes, public warps, spawn management, teleport requests, graves, and safe random teleportation.
 - MiniMessage chat, private messages, social spy, ignore lists, chat colors, nicknames, AFK state, playtime, statistics, and last-seen information.
 - Kits, backpacks, daily rewards, pickup filters, trash inventories, portable workstations, and native player poses.
-- Auto breeders, egg capture, villager trade rerolling, tree felling, vein mining, mob heads, holograms, and creeper-crater restoration.
+- Auto breeders, faster hoppers, ground-item cleanup, egg capture, villager trade rerolling, tree felling, vein mining, mob heads, holograms, and creeper-crater restoration.
 - Test worlds, biome search, time and weather controls, inventory scanning, and world administration.
 - Vanish, flight, coordinate teleportation, god mode, healing, moderation notes, boss bars, toasts, and optional local permissions.
 - Permission-aware interactive help, configurable messages, sounds, particles, and module-level feature switches.
@@ -37,7 +37,7 @@ Rivet creates `plugins/Rivet/` with global configuration, module switches, modul
 
 ## Command documentation
 
-Rivet registers 95 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
+Rivet registers 97 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
 
 Common starting points:
 
@@ -56,7 +56,7 @@ Rivet separates configuration by responsibility:
 
 - `config.yml` contains plugin-wide visual settings.
 - `modules.yml` enables or disables complete modules.
-- `settings/<module>.yml` contains module-owned options and messages.
+- `settings/` contains module options plus grouped gameplay and cross-feature policy files.
 - `data/` contains generated persistent state and should not be edited while the server is running.
 
 Read the [configuration guide](docs/configuration.md) before changing module switches or runtime data.

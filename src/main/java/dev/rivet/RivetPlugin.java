@@ -125,6 +125,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private StaffTools staffTools;
     private FilterModule filter;
     private HelpModule help;
+    private HopperModule hoppers;
+    private LaggModule lagg;
     private GuiActions guiActions;
     private RivetConfig files;
     private YamlConfiguration homes;
@@ -146,8 +148,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         worldData = data("worlds");
         guiActions = new GuiActions(this);
         new Metrics(this, 33219);
-        if (moduleEnabled("spawn") || moduleEnabled("tpa") || moduleEnabled("graves")
-            || moduleEnabled("rtp")) {
+        if (moduleEnabled("homes") || moduleEnabled("warps") || moduleEnabled("spawn")
+            || moduleEnabled("tpa") || moduleEnabled("graves") || moduleEnabled("rtp")) {
             delayedTeleports = new DelayedTeleport(this);
             getServer().getPluginManager().registerEvents(delayedTeleports, this);
         }
@@ -213,6 +215,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("announcements")) {
             announcements = new AnnouncementsModule(this);
         }
+        if (moduleEnabled("lagg")) {
+            lagg = new LaggModule(this);
+        }
         if (moduleEnabled("statistics")) {
             statistics = new StatisticsModule(this);
         }
@@ -252,14 +257,15 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("help")) {
             help = new HelpModule(this);
         }
+        if (settings("gameplay").getBoolean("hoppers.enabled", true)) {
+            hoppers = new HopperModule(this);
+            getServer().getPluginManager().registerEvents(hoppers, this);
+        }
         if (moduleEnabled("staff")) {
             staffTools = new StaffTools(this);
             getServer().getPluginManager().registerEvents(staffTools, this);
         }
-        if (moduleEnabled("worlds") || moduleEnabled("staff") || moduleEnabled("mob-heads")
-            || cropTrampleProtection() || waterHarvestReplanting()) {
-            getServer().getPluginManager().registerEvents(this, this);
-        }
+        getServer().getPluginManager().registerEvents(this, this);
         if (permissions != null) {
             getServer().getOnlinePlayers().forEach(permissions::apply);
         }
@@ -302,6 +308,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (announcements != null) {
             announcements.shutdown();
+        }
+        if (lagg != null) {
+            lagg.shutdown();
         }
         if (afk != null) {
             afk.shutdown();
@@ -347,11 +356,15 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     }
 
     private boolean cropTrampleProtection() {
-        return settings("worlds").getBoolean("crop-trample-protection", true);
+        return settings("gameplay").getBoolean("crop-trample-protection", true);
     }
 
     private boolean waterHarvestReplanting() {
-        return settings("worlds").getBoolean("water-harvest-replanting", true);
+        return settings("gameplay").getBoolean("water-harvest-replanting", true);
+    }
+
+    private boolean ironGolemPoppyDrops() {
+        return settings("gameplay").getBoolean("iron-golem-poppy-drops", true);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -365,6 +378,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
+        boolean poppyDropsEnabled = ironGolemPoppyDrops();
+        event.getDrops().removeIf(drop -> isDisabledIronGolemPoppyDrop(
+            event.getEntityType(), poppyDropsEnabled, drop.getType()));
         Player killer = event.getEntity().getKiller();
         if (!moduleEnabled("mob-heads") || killer == null
             || !usesCustomMobHeadDrop(event.getEntityType(), settings("mob-heads")
@@ -505,6 +521,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (commandDisabled(name, this::moduleEnabled)) {
             send(sender, "<white>The <#f72a4c>" + module + "</#f72a4c> module is disabled.");
             return true;
+        }
+        if (name.equals("lagg")) {
+            return lagg.command(sender, args);
         }
         if (name.equals("perm") || name.equals("group")) {
             return permissions.command(sender, name, args);
@@ -700,6 +719,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     ? List.of("all") : List.of();
                 case "rename" -> args.length == 1 ? List.of("clear") : List.of();
                 case "lore" -> args.length == 1 ? List.of("add", "set", "remove", "clear") : List.of();
+                case "lagg" -> args.length == 1 ? List.of("clear", "reload") : List.of();
                 case "rivet" -> args.length == 1 ? List.of("reload") : List.of();
                 default -> List.of();
             };
@@ -1034,17 +1054,14 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 Placeholder.unparsed("name", name));
             return true;
         }
-        if (!player.teleport(location)) {
-            moduleMessage(player, module, "messages.teleport-failed",
-                "<white>Teleport failed.</white>");
-            return true;
-        }
-        moduleMessage(player, module, "messages.teleported",
-            "<white>Teleported to <#f72a4c>%name%</#f72a4c>.</white>",
-            Placeholder.unparsed("name", name));
-        configuredEffect(player, module, "effects.teleport",
-            Sound.ENTITY_ENDERMAN_TELEPORT, Particle.PORTAL,
-            Placeholder.unparsed("name", titleCase(name)));
+        delayedTeleports.start(player, location, () -> {
+            moduleMessage(player, module, "messages.teleported",
+                "<white>Teleported to <#f72a4c>%name%</#f72a4c>.</white>",
+                Placeholder.unparsed("name", name));
+            configuredEffect(player, module, "effects.teleport",
+                Sound.ENTITY_ENDERMAN_TELEPORT, Particle.PORTAL,
+                Placeholder.unparsed("name", titleCase(name)));
+        });
         return true;
     }
 
@@ -1948,6 +1965,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             if (announcements != null) {
                 announcements.reload();
             }
+            if (lagg != null) {
+                lagg.reload();
+            }
             if (graves != null) {
                 graves.reload();
             }
@@ -2023,6 +2043,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                  "condense", "donate", "giveall", "hat", "scan" -> "inventory";
             case "filter" -> "filter";
             case "help" -> "help";
+            case "lagg" -> "lagg";
             default -> null;
         };
     }
@@ -2079,6 +2100,11 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return true;
         }
         return false;
+    }
+
+    static boolean isDisabledIronGolemPoppyDrop(EntityType type, boolean enabled,
+                                                Material material) {
+        return type == EntityType.IRON_GOLEM && !enabled && material == Material.POPPY;
     }
 
     static boolean hasNaturalFlight(GameMode gameMode) {

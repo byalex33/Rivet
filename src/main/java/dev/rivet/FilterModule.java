@@ -3,8 +3,6 @@ package dev.rivet;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -97,11 +95,11 @@ final class FilterModule implements Listener {
                 Placeholder.unparsed("item", display(event.getItem().getItemStack().getType()))));
         }
         String configuredSound = settings.getString("feedback.sound", "");
-        NamespacedKey key = configuredSound == null || configuredSound.isBlank() ? null
-            : NamespacedKey.fromString(configuredSound.toLowerCase(Locale.ROOT));
-        Sound sound = key == null ? null : Registry.SOUNDS.get(key);
+        Sound sound = ConfiguredEffect.resolveSound(configuredSound);
         if (sound != null) {
             player.playSound(player.getLocation(), sound, 0.6f, 0.8f);
+        } else if (configuredSound != null && !configuredSound.isBlank()) {
+            plugin.getLogger().warning("Invalid filter feedback sound '" + configuredSound + "'.");
         }
     }
 
