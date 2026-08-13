@@ -210,7 +210,9 @@ List nearby visible players.
 - **Default:** `true`
 - **Aliases:** None
 
-Return to your latest death location.
+Return to your most recent useful location. Rivet records deaths and the origin of meaningful teleports such as homes, warps, spawn, accepted TPA requests, RTP, portals, and direct staff or utility teleports.
+
+The history is internal and is never addressed by number. A successful `/back` consumes the chosen entry instead of recording another return trip, which prevents the command from endlessly bouncing between two places. Tiny or internal movement corrections are ignored. History and the command's feature-specific cooldown survive restarts.
 
 
 <a id="tp"></a>

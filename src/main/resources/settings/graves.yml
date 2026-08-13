@@ -1,12 +1,16 @@
-# Saved graves and latest death locations are stored in ../data/graves.yml.
-death-message: "<white>You died at <#f72a4c>%x%, %y%, %z%</#f72a4c> in <white>%world%</white>.</white>"
+# Saved graves live in ../data/graves.yml. Internal /back history lives in ../data/teleports.yml.
+death-message:
+  enabled: true
+  actions:
+    - '[message] <white>You died at <#f72a4c>%x%, %y%, %z%</#f72a4c> in <white>%world%</white>.</white>'
 
 back:
   cooldown-seconds: 30
   messages:
-    none: "<white>No death location is saved.</white>"
-    cooldown: "<white>You can use /back again in %seconds% seconds.</white>"
-    teleported: "<white>Returned to your latest death location.</white>"
+    usage: { enabled: true, actions: ['[message] <white>Usage: /back</white>'] }
+    none: { enabled: true, actions: ['[message] <white>No previous location is available.</white>'] }
+    cooldown: { enabled: true, actions: ['[message] <white>You can use /back again in <#f72a4c>%seconds%</#f72a4c> seconds.</white>'] }
+    teleported: { enabled: true, actions: ['[message] <white>Returned to your previous location.</white>'] }
 
 ownership:
   # When true, only the owner can initially open a grave.

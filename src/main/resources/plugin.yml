@@ -211,7 +211,7 @@ commands:
     usage: /kit [name]
     permission: rivet.kit
   back:
-    description: Return to your latest death location
+    description: Return to your most recent useful location
     permission: rivet.back
   afk:
     description: Toggle AFK status with an optional reason

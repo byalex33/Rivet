@@ -6,7 +6,7 @@
 |---|---|---:|---|
 | Homes | `homes` | Enabled | Named player homes with configurable limits, effects, and shared teleport policy. |
 | Warps | `warps` | Enabled | Named public server destinations using the shared teleport policy. |
-| Graves | `graves` | Enabled | Persistent death graves, recovery rules, tracking compasses, and `/back`. |
+| Graves | `graves` | Enabled | Persistent death graves, recovery rules, tracking compasses, and smart persistent `/back` history. |
 | Spawn | `spawn` | Enabled | Server spawn and immediate join spawning; `/spawn` uses the shared teleport policy. |
 | Chat | `chat` | Enabled | MiniMessage chat, private messages, ignore lists, social spy, chat colors, and item links. |
 | Kits | `kits` | Disabled | Configured item kits with permissions and persistent cooldowns. |

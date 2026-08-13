@@ -109,6 +109,8 @@ Substantial modules own a file under `settings/`. Small mechanics are grouped in
 
 Operators receive `rivet.tp.nocooldown` by default. It bypasses shared and feature-specific teleport cooldowns, but not the warmup.
 
+`/back` keeps up to eight recent, distinct locations internally in `data/teleports.yml`. Deaths and meaningful command, plugin, or portal teleports are recorded; tiny moves, bed exits, dismounts, spectator movement, chorus fruit, and automatic join spawning are ignored. Players only use `/back`: there are no numbered history commands. Existing saved death locations are imported automatically when no newer history exists.
+
 ### Ground-item cleanup
 
 `settings/lagg.yml` controls the cleanup interval, warning times, protected-item rules, and every cleanup message. Rivet scans loaded worlds only when a cleanup runs. By default, dropped items with custom names or PersistentDataContainer data are protected. The cleanup result reports both removed entity stacks and their combined item amount; its configurable hover label shows the complete breakdown by material.
@@ -123,7 +125,7 @@ Sound and particle fields accept Minecraft registry keys with or without the `mi
 
 ## Runtime data
 
-Files under `data/` contain generated state such as homes, warps, graves, breeders, holograms, permission users, ignored players, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, not YAML.
+Files under `data/` contain generated state such as homes, warps, graves, teleport history, breeders, holograms, permission users, ignored players, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, not YAML.
 
 Do not hand-edit runtime data while the server is running. Rivet may overwrite an external change the next time it saves that module.
 

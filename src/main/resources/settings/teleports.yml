@@ -5,7 +5,7 @@ cooldown-seconds: 10
 cancel-on-move: true
 
 messages:
-  warmup: "<white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>"
-  cancelled: "<white>Teleport cancelled because you moved.</white>"
-  cooldown: "<white>You can teleport again in <#f72a4c>%seconds%</#f72a4c> seconds.</white>"
-  failed: "<white>Teleport failed.</white>"
+  warmup: { enabled: true, actions: ['[message] <white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>'] }
+  cancelled: { enabled: true, actions: ['[message] <white>Teleport cancelled because you moved.</white>'] }
+  cooldown: { enabled: true, actions: ['[message] <white>You can teleport again in <#f72a4c>%seconds%</#f72a4c> seconds.</white>'] }
+  failed: { enabled: true, actions: ['[message] <white>Teleport failed.</white>'] }

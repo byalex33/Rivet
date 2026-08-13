@@ -58,7 +58,6 @@ final class GraveModule implements Listener {
     private final File file;
     private final YamlConfiguration settings;
     private final Map<UUID, Grave> graves = new HashMap<>();
-    private final Map<UUID, DeathState> deaths = new HashMap<>();
     private BukkitTask expiryTask;
 
     GraveModule(RivetPlugin plugin, DelayedTeleport teleports) {
@@ -85,23 +84,13 @@ final class GraveModule implements Listener {
     public void onDeath(PlayerDeathEvent event) {
         Player player = event.getPlayer();
         Location death = player.getLocation();
-        DeathState previous = deaths.get(player.getUniqueId());
-        deaths.put(player.getUniqueId(), new DeathState(death.getWorld().getUID(), death.getX(),
-            death.getY(), death.getZ(), death.getYaw(), death.getPitch(),
-            previous == null ? 0 : previous.lastBack));
-        player.sendMessage(MM.deserialize(settings.getString("death-message",
-                "<white>You died at <#f72a4c>%x%, %y%, %z%</#f72a4c> in <white>%world%</white>.</white>"),
+        teleports.recordDeath(player, death);
+        plugin.messageActions().run(player, settings, "death-message",
+            "<white>You died at <#f72a4c>%x%, %y%, %z%</#f72a4c> in <white>%world%</white>.</white>",
             Placeholder.unparsed("x", Integer.toString(death.getBlockX())),
             Placeholder.unparsed("y", Integer.toString(death.getBlockY())),
             Placeholder.unparsed("z", Integer.toString(death.getBlockZ())),
-            Placeholder.unparsed("world", death.getWorld().getName())));
-        try {
-            save();
-        } catch (IOException exception) {
-            plugin.getLogger().severe("Could not save " + player.getName() + "'s death location: "
-                + exception.getMessage());
-        }
-
+            Placeholder.unparsed("world", death.getWorld().getName()));
         if (event.getKeepInventory() || event.getDrops().isEmpty()) {
             return;
         }
@@ -162,37 +151,31 @@ final class GraveModule implements Listener {
 
     boolean back(Player player, String[] args) {
         if (args.length != 0) {
-            player.sendMessage(MM.deserialize("<white>Usage: /back"));
+            plugin.messageActions().run(player, settings, "back.messages.usage",
+                "<white>Usage: /back</white>");
             return true;
         }
-        DeathState state = deaths.get(player.getUniqueId());
-        Location destination = state == null ? null : location(state);
+        TeleportHistory.BackDestination destination = teleports.backDestination(player);
         if (destination == null) {
-            player.sendMessage(MM.deserialize(settings.getString("back.messages.none",
-                "<white>No death location is saved.</white>")));
+            plugin.messageActions().run(player, settings, "back.messages.none",
+                "<white>No previous location is available.</white>");
             return true;
         }
         long now = System.currentTimeMillis();
-        long remaining = cooldownRemaining(state.lastBack,
+        long remaining = cooldownRemaining(teleports.lastBack(player),
             Math.max(0, settings.getLong("back.cooldown-seconds", 30)), now);
         if (remaining > 0 && !player.hasPermission("rivet.tp.nocooldown")) {
-            player.sendMessage(MM.deserialize(settings.getString("back.messages.cooldown",
-                    "<white>You can use /back again in %seconds% seconds.</white>"),
-                Placeholder.unparsed("seconds", Long.toString(remaining))));
+            plugin.messageActions().run(player, settings, "back.messages.cooldown",
+                "<white>You can use /back again in <#f72a4c>%seconds%</#f72a4c> seconds.</white>",
+                Placeholder.unparsed("seconds", Long.toString(remaining)));
             return true;
         }
-        teleports.start(player, destination, () -> {
-            if (!player.hasPermission("rivet.tp.nocooldown")) {
-                deaths.put(player.getUniqueId(), state.withLastBack(System.currentTimeMillis()));
-                try {
-                    save();
-                } catch (IOException exception) {
-                    plugin.getLogger().severe("Could not save /back cooldown: " + exception.getMessage());
-                }
-            }
-            player.sendMessage(MM.deserialize(settings.getString("back.messages.teleported",
-                "<white>Returned to your latest death location.</white>")));
-            plugin.teleportFeedback(player, "Death location");
+        teleports.startBack(player, destination.location(), () -> {
+            teleports.completeBack(player, destination,
+                !player.hasPermission("rivet.tp.nocooldown"));
+            plugin.messageActions().run(player, settings, "back.messages.teleported",
+                "<white>Returned to your previous location.</white>");
+            plugin.teleportFeedback(player, "Previous location");
         });
         return true;
     }
@@ -441,19 +424,24 @@ final class GraveModule implements Listener {
                 }
             }
             ConfigurationSection deathSection = yaml.getConfigurationSection("deaths");
+            boolean importedHistory = false;
             if (deathSection != null) {
                 for (String key : deathSection.getKeys(false)) {
                     try {
                         String path = "deaths." + key;
-                        deaths.put(UUID.fromString(key), new DeathState(
+                        importedHistory |= teleports.importLegacyDeath(UUID.fromString(key),
                             UUID.fromString(yaml.getString(path + ".world", "")),
                             yaml.getDouble(path + ".x"), yaml.getDouble(path + ".y"),
                             yaml.getDouble(path + ".z"), (float) yaml.getDouble(path + ".yaw"),
-                            (float) yaml.getDouble(path + ".pitch"), yaml.getLong(path + ".last-back")));
+                            (float) yaml.getDouble(path + ".pitch"), yaml.getLong(path + ".last-back"));
                     } catch (IllegalArgumentException exception) {
                         plugin.getLogger().warning("Skipped invalid death location " + key + ".");
                     }
                 }
+            }
+            if (importedHistory) {
+                teleports.saveImportedHistory();
+                plugin.getLogger().info("Migrated saved death locations into teleport history.");
             }
         } catch (IOException | InvalidConfigurationException exception) {
             plugin.getLogger().severe("Could not load data/graves.yml: " + exception.getMessage());
@@ -474,17 +462,6 @@ final class GraveModule implements Listener {
             yaml.set(path + ".items", grave.items());
             yaml.set(path + ".created-at", grave.createdAt());
         }
-        for (Map.Entry<UUID, DeathState> entry : deaths.entrySet()) {
-            String path = "deaths." + entry.getKey();
-            DeathState state = entry.getValue();
-            yaml.set(path + ".world", state.world.toString());
-            yaml.set(path + ".x", state.x);
-            yaml.set(path + ".y", state.y);
-            yaml.set(path + ".z", state.z);
-            yaml.set(path + ".yaw", state.yaw);
-            yaml.set(path + ".pitch", state.pitch);
-            yaml.set(path + ".last-back", state.lastBack);
-        }
         Files.createDirectories(file.toPath().getParent());
         File temporary = new File(file.getParentFile(), file.getName() + ".tmp");
         yaml.save(temporary);
@@ -499,11 +476,6 @@ final class GraveModule implements Listener {
     private Location location(Grave grave) {
         World world = plugin.getServer().getWorld(grave.world());
         return world == null ? null : new Location(world, grave.x(), grave.y(), grave.z());
-    }
-
-    private Location location(DeathState state) {
-        World world = plugin.getServer().getWorld(state.world);
-        return world == null ? null : new Location(world, state.x, state.y, state.z, state.yaw, state.pitch);
     }
 
     private static String coordinates(Location location) {
@@ -538,10 +510,4 @@ final class GraveModule implements Listener {
                          String cause, List<ItemStack> items, long createdAt) {
     }
 
-    private record DeathState(UUID world, double x, double y, double z, float yaw, float pitch,
-                              long lastBack) {
-        private DeathState withLastBack(long value) {
-            return new DeathState(world, x, y, z, yaw, pitch, value);
-        }
-    }
 }

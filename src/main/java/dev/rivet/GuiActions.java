@@ -3,6 +3,7 @@ package dev.rivet;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -36,6 +37,10 @@ final class GuiActions {
     }
 
     void run(Player player, List<String> configuredActions) {
+        run(player, configuredActions, TagResolver.empty());
+    }
+
+    void run(Player player, List<String> configuredActions, TagResolver placeholders) {
         for (String configured : configuredActions) {
             Action action = parseAction(configured);
             if (action == null) {
@@ -43,13 +48,16 @@ final class GuiActions {
                 continue;
             }
             switch (action.tag()) {
-                case "message" -> player.sendMessage(MM.deserialize(action.value()));
+                case "message" -> player.sendMessage(MM.deserialize(action.value(), placeholders));
+                case "broadcast" -> plugin.getServer().broadcast(
+                    MM.deserialize(action.value(), placeholders));
                 case "sound" -> sound(player, action.value());
-                case "toast" -> toast(player, action.value());
-                case "actionbar", "action-bar" -> player.sendActionBar(MM.deserialize(action.value()));
+                case "toast" -> toast(player, action.value(), placeholders);
+                case "actionbar", "action-bar" -> player.sendActionBar(
+                    MM.deserialize(action.value(), placeholders));
                 case "particle" -> particle(player, action.value());
-                case "title" -> title(player, action.value());
-                case "bossbar", "boss-bar" -> bossBar(player, action.value());
+                case "title" -> title(player, action.value(), placeholders);
+                case "bossbar", "boss-bar" -> bossBar(player, action.value(), placeholders);
                 case "lightning" -> player.getWorld().strikeLightningEffect(player.getLocation());
                 case "close" -> player.closeInventory();
                 default -> plugin.getLogger().warning("Unknown GUI action tag '[" + action.tag() + "]'.");
@@ -95,10 +103,10 @@ final class GuiActions {
         player.spawnParticle(particle, player.getLocation().add(0, 1, 0), count, .35, .5, .35, .02);
     }
 
-    private void title(Player player, String configured) {
+    private void title(Player player, String configured, TagResolver placeholders) {
         String[] parts = configured.split("\\|", -1);
-        Component title = MM.deserialize(parts.length == 0 ? "" : parts[0].trim());
-        Component subtitle = MM.deserialize(parts.length < 2 ? "" : parts[1].trim());
+        Component title = MM.deserialize(parts.length == 0 ? "" : parts[0].trim(), placeholders);
+        Component subtitle = MM.deserialize(parts.length < 2 ? "" : parts[1].trim(), placeholders);
         int fadeIn = positiveInt(parts, 2, 10);
         int stay = positiveInt(parts, 3, 50);
         int fadeOut = positiveInt(parts, 4, 10);
@@ -106,14 +114,14 @@ final class GuiActions {
             ticks(fadeIn), ticks(stay), ticks(fadeOut))));
     }
 
-    private void bossBar(Player player, String configured) {
+    private void bossBar(Player player, String configured, TagResolver placeholders) {
         StaffTools.BossBarArguments parsed = StaffTools.parseBossBarArguments(arguments(configured),
             5, "purple", "solid");
         if (!parsed.valid()) {
             warn("bossbar", configured);
             return;
         }
-        BossBar bar = BossBar.bossBar(MM.deserialize(parsed.message()), 1,
+        BossBar bar = BossBar.bossBar(MM.deserialize(parsed.message(), placeholders), 1,
             parsed.color(), parsed.overlay());
         ActiveBar active = new ActiveBar(player, bar);
         bossBars.add(active);
@@ -122,16 +130,16 @@ final class GuiActions {
             Math.max(1, (long) Math.ceil(parsed.duration() * 20)));
     }
 
-    private void toast(Player player, String configured) {
+    private void toast(Player player, String configured, TagResolver placeholders) {
         StaffTools.ToastArguments parsed = StaffTools.parseToastArguments(arguments(configured),
             "task", "paper");
         if (!parsed.valid()) {
             warn("toast", configured);
             return;
         }
-        Component title = MM.deserialize(parsed.title());
+        Component title = MM.deserialize(parsed.title(), placeholders);
         Component description = parsed.message().isEmpty()
-            ? Component.empty() : MM.deserialize(parsed.message());
+            ? Component.empty() : MM.deserialize(parsed.message(), placeholders);
         NamespacedKey key = new NamespacedKey(plugin,
             "gui_toast_" + UUID.randomUUID().toString().replace("-", ""));
         String json = "{\"criteria\":{\"show\":{\"trigger\":\"minecraft:impossible\"}},"

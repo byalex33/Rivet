@@ -129,6 +129,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private LaggModule lagg;
     private AuditModule audit;
     private GuiActions guiActions;
+    private MessageActions messageActions;
     private RivetConfig files;
     private YamlConfiguration homes;
     private YamlConfiguration warps;
@@ -148,6 +149,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         warps = data("warps");
         worldData = data("worlds");
         guiActions = new GuiActions(this);
+        messageActions = new MessageActions(this);
         new Metrics(this, 33219);
         if (moduleEnabled("homes") || moduleEnabled("warps") || moduleEnabled("spawn")
             || moduleEnabled("tpa") || moduleEnabled("graves") || moduleEnabled("rtp")) {
@@ -368,6 +370,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     GuiActions guiActions() {
         return guiActions;
+    }
+
+    MessageActions messageActions() {
+        return messageActions;
     }
 
     private boolean cropTrampleProtection() {

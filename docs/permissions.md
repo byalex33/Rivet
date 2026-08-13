@@ -58,7 +58,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.kit` | `true` | [`/kit`](commands.md#kit) |
 | `rivet.kit.starter` | `true` | Additional capability used by the related feature. |
 | `rivet.kit.*` | `op` | Wildcard parent for the related permission family. |
-| `rivet.back` | `true` | [`/back`](commands.md#back) |
+| `rivet.back` | `true` | Uses [`/back`](commands.md#back) to return to the newest valid internal history location. No extra history permission is required. |
 | `rivet.afk` | `true` | [`/afk`](commands.md#afk) |
 | `rivet.afk.others` | `op` | Allows targeting another player in the related command. |
 | `rivet.afk.silent` | `op` | Additional capability used by the related feature. |

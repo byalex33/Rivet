@@ -67,7 +67,8 @@ final class RivetConfig {
         for (String name : SETTINGS) {
             saveResource("settings/" + name + ".yml");
             YamlConfiguration configured = loadChecked(settingsFile(name));
-            boolean settingsChanged = mergeBundledDefaults(name, configured);
+            boolean settingsChanged = migrateMessageActions(name, configured);
+            settingsChanged |= mergeBundledDefaults(name, configured);
             if (migrateMessagePalette && migrateMessagePalette(configured, name)) {
                 settingsChanged = true;
             }
@@ -207,6 +208,36 @@ final class RivetConfig {
                     configured.set(entry.getKey(), entry.getValue());
                     changed = true;
                 }
+            }
+            return changed;
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not read bundled settings for " + module, exception);
+        }
+    }
+
+    private boolean migrateMessageActions(String module, YamlConfiguration configured) {
+        try (var resource = plugin.getResource("settings/" + module + ".yml")) {
+            if (resource == null) {
+                return false;
+            }
+            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
+                new InputStreamReader(resource, StandardCharsets.UTF_8));
+            boolean changed = false;
+            for (String actionsPath : defaults.getValues(true).keySet().stream()
+                 .filter(path -> path.endsWith(".actions") && defaults.isList(path)).toList()) {
+                String eventPath = actionsPath.substring(0, actionsPath.length() - ".actions".length());
+                String legacy = configured.isString(eventPath) ? configured.getString(eventPath) : null;
+                if (legacy == null) {
+                    continue;
+                }
+                List<String> defaultActions = defaults.getStringList(actionsPath);
+                String tag = defaultActions.isEmpty() ? "message"
+                    : java.util.Optional.ofNullable(GuiActions.parseAction(defaultActions.getFirst()))
+                        .map(GuiActions.Action::tag).orElse("message");
+                configured.set(eventPath, null);
+                configured.set(eventPath + ".enabled", true);
+                configured.set(actionsPath, List.of("[" + tag + "] " + legacy));
+                changed = true;
             }
             return changed;
         } catch (IOException exception) {
