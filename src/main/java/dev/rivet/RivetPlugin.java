@@ -688,7 +688,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "rename" -> itemTools.rename(player, args);
             case "lore" -> itemTools.lore(player, args);
             case "trash" -> trash.command(player, args);
-            case "craft", "anvil", "smithing", "stonecutter", "grindstone", "jump", "list", "ping", "ride" ->
+            case "craft", "anvil", "smithing", "stonecutter", "grindstone", "jump", "list", "nv", "ping", "ride" ->
                 utilities.command(player, name, args);
             case "sit", "lay", "crawl" -> poses.command(player, name, args);
             case "head" -> playerHead(player, args);
@@ -785,7 +785,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     ? List.of("all") : List.of();
                 case "rename" -> args.length == 1 ? List.of("clear") : List.of();
                 case "lore" -> args.length == 1 ? List.of("add", "set", "remove", "clear") : List.of();
-                case "lagg" -> args.length == 1 ? List.of("clear", "reload") : List.of();
+                case "lagg" -> args.length == 1 ? List.of("clear") : List.of();
                 case "log" -> audit.completions(sender, args);
                 case "snapshot" -> snapshots.completions(sender, args);
                 case "rivet" -> args.length == 1 ? List.of("reload") : List.of();
@@ -2117,7 +2117,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "nick" -> "nicknames";
             case "stats", "playtime", "seen" -> "statistics";
             case "trash" -> "trash";
-            case "craft", "anvil", "smithing", "stonecutter", "grindstone", "jump", "list", "ping", "ride" -> "utilities";
+            case "craft", "anvil", "smithing", "stonecutter", "grindstone", "jump", "list", "nv", "ping", "ride" -> "utilities";
             case "sit", "lay", "crawl" -> "poses";
             case "head" -> "mob-heads";
             case "backpack" -> "backpacks";

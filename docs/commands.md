@@ -1,6 +1,6 @@
 # Command reference
 
-Rivet registers 99 commands. Every command below has a stable link used by the documentation sidebar.
+Rivet registers 100 commands. Every command below has a stable link used by the documentation sidebar.
 
 ## Syntax conventions
 
@@ -20,7 +20,7 @@ Rivet registers 99 commands. Every command below has a stable link used by the d
 | Inventory and items | [`/clear`](#clear), [`/i`](#i), [`/condense`](#condense), [`/donate`](#donate), [`/giveall`](#giveall), [`/scan`](#scan), [`/invsee`](#invsee), [`/enderchest`](#enderchest), [`/repair`](#repair), [`/rename`](#rename), [`/lore`](#lore), [`/hat`](#hat), [`/trash`](#trash), [`/backpack`](#backpack) |
 | World and environment | [`/flat`](#flat), [`/flatworld`](#flatworld), [`/voidworld`](#voidworld), [`/worldspawn`](#worldspawn), [`/setworldspawn`](#setworldspawn), [`/killall`](#killall), [`/findbiome`](#findbiome), [`/top`](#top), [`/tree`](#tree), [`/day`](#day), [`/night`](#night), [`/noon`](#noon), [`/midnight`](#midnight), [`/sun`](#sun), [`/rain`](#rain), [`/thunder`](#thunder) |
 | Gameplay systems | [`/givebreeder`](#givebreeder), [`/restorationcore`](#restorationcore), [`/kit`](#kit), [`/daily`](#daily), [`/filter`](#filter), [`/head`](#head) |
-| Player information and utilities | [`/stats`](#stats), [`/playtime`](#playtime), [`/seen`](#seen), [`/craft`](#craft), [`/anvil`](#anvil), [`/smithing`](#smithing), [`/stonecutter`](#stonecutter), [`/grindstone`](#grindstone), [`/jump`](#jump), [`/list`](#list), [`/ping`](#ping), [`/ride`](#ride), [`/sit`](#sit), [`/lay`](#lay), [`/crawl`](#crawl) |
+| Player information and utilities | [`/stats`](#stats), [`/playtime`](#playtime), [`/seen`](#seen), [`/craft`](#craft), [`/anvil`](#anvil), [`/smithing`](#smithing), [`/stonecutter`](#stonecutter), [`/grindstone`](#grindstone), [`/jump`](#jump), [`/list`](#list), [`/nv`](#nv), [`/ping`](#ping), [`/ride`](#ride), [`/sit`](#sit), [`/lay`](#lay), [`/crawl`](#crawl) |
 | Staff and moderation | [`/gmc`](#gmc), [`/gms`](#gms), [`/vanish`](#vanish), [`/fly`](#fly), [`/flyspeed`](#flyspeed), [`/commandspy`](#commandspy), [`/heal`](#heal), [`/feed`](#feed), [`/god`](#god), [`/bossbarmsg`](#bossbarmsg), [`/note`](#note), [`/sameip`](#sameip), [`/toast`](#toast) |
 | Server administration | [`/perm`](#perm), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/lagg`](#lagg), [`/log`](#log), [`/snapshot`](#snapshot), [`/help`](#help), [`/rivet`](#rivet) |
 
@@ -951,6 +951,19 @@ Teleport safely to the block you are looking at.
 List visible online players.
 
 
+<a id="nv"></a>
+
+### `/nv`
+
+- **Syntax:** `/nv`
+- **Permission:** `rivet.nv`
+- **Default:** `op`
+- **Aliases:** None
+
+Toggle infinite Night Vision for yourself. The effect is applied without particles or an
+inventory-screen icon; running the command again removes it.
+
+
 <a id="ping"></a>
 
 ### `/ping`
@@ -1244,14 +1257,14 @@ Clear loaded auto-breeder holograms and recreate displays for active breeders. T
 
 ### `/lagg`
 
-- **Syntax:** `/lagg <clear|reload>`
+- **Syntax:** `/lagg clear`
 - **Permission:** `rivet.lagg`
 - **Default:** `op`
 - **Aliases:** None
 
-Clear eligible dropped item entities or reload `settings/lagg.yml`.
+Clear eligible dropped item entities.
 
-`/lagg clear` scans loaded worlds immediately and resets the automatic cleanup countdown. It never targets mobs, minecarts, armor stands, projectiles, or any entity other than dropped `Item` entities. Named items, plugin-tagged items, and configured crop harvests are protected by default. `/lagg reload` validates and reloads only this module's settings while keeping the current configuration active if loading fails.
+`/lagg clear` scans loaded worlds immediately and resets the automatic cleanup countdown. It never targets mobs, minecarts, armor stands, projectiles, or any entity other than dropped `Item` entities. Named items, plugin-tagged items, and configured crop harvests are protected by default. Use `/rivet reload` after changing `settings/lagg.yml`.
 
 <a id="log"></a>
 

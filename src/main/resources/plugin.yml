@@ -332,6 +332,10 @@ commands:
     description: Show a player's join, login, logout, and playtime summary
     usage: /seen <player>
     permission: rivet.seen
+  nv:
+    description: Toggle infinite night vision
+    usage: /nv
+    permission: rivet.nv
   snapshot:
     description: Browse and restore recent inventory snapshots
     usage: /snapshot <player>
@@ -361,8 +365,8 @@ commands:
     usage: /help [page]
     permission: rivet.help
   lagg:
-    description: Clear ground items or reload cleanup settings
-    usage: /lagg <clear|reload>
+    description: Clear eligible dropped items
+    usage: /lagg clear
     permission: rivet.lagg
   log:
     aliases: [logs]
@@ -637,6 +641,8 @@ permissions:
   rivet.seen:
     default: true
   rivet.seen.location:
+    default: op
+  rivet.nv:
     default: op
   rivet.snapshots.view:
     default: op

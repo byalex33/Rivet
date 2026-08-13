@@ -190,6 +190,9 @@ When the `permissions` module is enabled, `settings/permissions.yml` stores huma
 
 Sound and particle fields accept Minecraft registry keys with or without the `minecraft:` prefix. Sound fields also accept legacy Bukkit names such as `ENTITY_ENDERMAN_TELEPORT` or `entity_enderman_teleport`. Invalid configured effects fall back to safe defaults and produce a warning in the server log.
 
+`settings/utilities.yml` contains the shared message actions used when `/nv` enables or
+disables Night Vision, alongside portable-interface, jump, ride, list, and ping settings.
+
 ## Runtime data
 
 Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, and inventory snapshots use `snapshots.db`; neither uses YAML for payload data.
@@ -202,7 +205,7 @@ Do not hand-edit runtime data while the server is running. Rivet may overwrite a
 
 Settings changes apply immediately where supported. Changes to `modules.yml` are reported but do not take effect until restart.
 
-Use [`/lagg reload`](commands.md#lagg) to reload only `settings/lagg.yml` and restart its warning schedule. `/rivet reload` also refreshes the active cleanup schedule.
+`/rivet reload` reloads `settings/lagg.yml` and restarts the active cleanup and warning schedule.
 
 Use [`/log reload`](commands.md#log) to validate and reload only `settings/logs.yml`. Exclusions and event switches apply to new records immediately; lowering retention also schedules an immediate purge.
 

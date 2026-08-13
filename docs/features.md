@@ -20,7 +20,7 @@
 | Statistics | `statistics` | Enabled | Native statistics, playtime, and compact Seen v2 activity summaries. |
 | Nicknames | `nicknames` | Enabled | Persistent nicknames with controlled MiniMessage formatting. |
 | Trash | `trash` | Enabled | A configurable disposable inventory. |
-| Utilities | `utilities` | Enabled | Portable workstations, player lists, ping, jump, and riding tools. |
+| Utilities | `utilities` | Enabled | Portable workstations, player lists, ping, Night Vision, jump, and riding tools. |
 | Poses | `poses` | Disabled | Native Paper sitting, laying, and crawling poses. |
 
 ## Death messages

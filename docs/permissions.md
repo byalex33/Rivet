@@ -1,6 +1,6 @@
 # Permissions
 
-Rivet declares 147 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
+Rivet declares 148 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
 
 The command permission is checked by Paper before Rivet handles the command. Additional `.others`, formatting, bypass, row, and wildcard nodes enable narrower capabilities inside a command.
 
@@ -137,6 +137,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.playtime.others` | `op` | Allows targeting another player in the related command. |
 | `rivet.seen` | `true` | [`/seen`](commands.md#seen) |
 | `rivet.seen.location` | `op` | Shows current/last known coordinates and recorded death details in [`/seen`](commands.md#seen). |
+| `rivet.nv` | `op` | Toggles infinite Night Vision with [`/nv`](commands.md#nv). |
 | `rivet.snapshots.view` | `op` | Opens your own snapshot browser with [`/snapshot`](commands.md#snapshot). |
 | `rivet.snapshots.others` | `op` | Allows [`/snapshot`](commands.md#snapshot) to browse another player's snapshots. |
 | `rivet.snapshots.restore` | `op` | Restores a selected snapshot to its online target after the configured safety flow. |
@@ -148,7 +149,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.top.others` | `op` | Allows targeting another player in the related command. |
 | `rivet.tree` | `op` | [`/tree`](commands.md#tree) |
 | `rivet.help` | `true` | [`/help`](commands.md#help) |
-| `rivet.lagg` | `op` | [`/lagg clear`](commands.md#lagg), [`/lagg reload`](commands.md#lagg) |
+| `rivet.lagg` | `op` | [`/lagg clear`](commands.md#lagg) |
 | `rivet.logs.lookup` | `op` | Searches audit history and changes lookup pages with [`/log lookup`](commands.md#log) and [`/log page`](commands.md#log). |
 | `rivet.logs.inspect` | `op` | Toggles block and container inspector mode with [`/log inspect`](commands.md#log). |
 | `rivet.logs.reload` | `op` | Reloads `settings/logs.yml` with [`/log reload`](commands.md#log). |

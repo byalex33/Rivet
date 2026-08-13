@@ -38,7 +38,7 @@ Rivet creates `plugins/Rivet/` with global configuration, module switches, modul
 
 ## Command documentation
 
-Rivet registers 99 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
+Rivet registers 100 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
 
 Common starting points:
 

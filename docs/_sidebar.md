@@ -82,6 +82,7 @@
     - [/grindstone](commands.md#grindstone)
     - [/jump](commands.md#jump)
     - [/list](commands.md#list)
+    - [/nv](commands.md#nv)
     - [/ping](commands.md#ping)
     - [/ride](commands.md#ride)
     - [/sit](commands.md#sit)

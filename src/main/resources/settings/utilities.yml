@@ -25,3 +25,13 @@ ping:
     enabled: true
     actions:
       - "[message] <#f72a4c>%player%'s ping:</#f72a4c> <#f72a4c>%ping% ms</#f72a4c> <white>(%quality%)</white>"
+
+night-vision:
+  enabled:
+    enabled: true
+    actions:
+      - '[message] <white>Night vision enabled.</white>'
+  disabled:
+    enabled: true
+    actions:
+      - '[message] <white>Night vision disabled.</white>'

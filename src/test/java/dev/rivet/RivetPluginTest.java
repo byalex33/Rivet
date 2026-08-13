@@ -332,7 +332,7 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
-        assertEquals(99, plugin.getConfigurationSection("commands").getKeys(false).size());
+        assertEquals(100, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
             .stream().filter(command -> !command.equals("rivet"))
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
@@ -372,6 +372,7 @@ public final class RivetPluginTest {
         assertEquals("lagg", RivetPlugin.moduleForCommand("lagg"));
         assertEquals("logs", RivetPlugin.moduleForCommand("log"));
         assertEquals("snapshots", RivetPlugin.moduleForCommand("snapshot"));
+        assertEquals("utilities", RivetPlugin.moduleForCommand("nv"));
         assertNull(RivetPlugin.moduleForCommand("group"));
         assertNull(RivetPlugin.moduleForCommand("rivet"));
         assertNull(RivetPlugin.moduleForCommand("unknown"));
@@ -790,6 +791,12 @@ public final class RivetPluginTest {
         assertEquals(false, UtilitiesModule.parseOptionalTarget(new String[]{"Alex"}, false).valid());
         assertEquals(false,
             UtilitiesModule.parseOptionalTarget(new String[]{"Alex", "extra"}, true).valid());
+        assertEquals(true, UtilitiesModule.nextNightVisionState(false));
+        assertEquals(false, UtilitiesModule.nextNightVisionState(true));
+        YamlConfiguration utilities = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/settings/utilities.yml"), StandardCharsets.UTF_8));
+        assertEquals(true, utilities.isList("night-vision.enabled.actions"));
+        assertEquals(true, utilities.isList("night-vision.disabled.actions"));
     }
 
     @Test

@@ -18,6 +18,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +42,9 @@ final class UtilitiesModule implements Listener {
         }
         if (command.equals("list")) {
             return list(player, args);
+        }
+        if (command.equals("nv")) {
+            return nightVision(player, args);
         }
         if (command.equals("ping")) {
             return ping(player, args);
@@ -142,6 +147,26 @@ final class UtilitiesModule implements Listener {
         return true;
     }
 
+    private boolean nightVision(Player player, String[] args) {
+        if (args.length != 0) {
+            send(player, "<white>Usage: /nv");
+            return true;
+        }
+        boolean enable = nextNightVisionState(
+            player.hasPotionEffect(PotionEffectType.NIGHT_VISION));
+        if (enable) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION,
+                PotionEffect.INFINITE_DURATION, 0, false, false, false));
+        } else {
+            player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+        }
+        plugin.messageActions().run(player, plugin.settings("utilities"),
+            enable ? "night-vision.enabled" : "night-vision.disabled",
+            enable ? "<white>Night vision enabled.</white>"
+                : "<white>Night vision disabled.</white>");
+        return true;
+    }
+
     private boolean ride(Player player, String[] args) {
         if (args.length != 0) {
             send(player, "<white>Usage: /ride");
@@ -237,6 +262,10 @@ final class UtilitiesModule implements Listener {
 
     static String pingQuality(int ping) {
         return ping < 75 ? "excellent" : ping < 150 ? "good" : ping < 250 ? "fair" : "poor";
+    }
+
+    static boolean nextNightVisionState(boolean currentlyEnabled) {
+        return !currentlyEnabled;
     }
 
     private static void send(Player player, String message) {
