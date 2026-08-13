@@ -56,8 +56,8 @@ final class SpawnModule implements Listener {
         data.set("spawn.pitch", location.getPitch());
         try {
             plugin.saveData("spawn");
-            player.sendMessage(MM.deserialize(settings.getString("messages.set",
-                "<white>Spawn set to your location.")));
+            plugin.messageActions().run(player, settings, "messages.set",
+                "<white>Spawn set to your location.");
         } catch (IOException exception) {
             plugin.getLogger().severe("Could not save data/spawn.yml: " + exception.getMessage());
             player.sendMessage(MM.deserialize("<white>Could not save the spawn. Check the console."));
@@ -71,13 +71,13 @@ final class SpawnModule implements Listener {
     private void teleport(Player player, boolean playerInitiated) {
         Location destination = location();
         if (destination == null) {
-            player.sendMessage(MM.deserialize(settings.getString("messages.not-set",
-                "<white>The server spawn has not been set.")));
+            plugin.messageActions().run(player, settings, "messages.not-set",
+                "<white>The server spawn has not been set.");
             return;
         }
         Runnable success = () -> {
-            player.sendMessage(MM.deserialize(settings.getString("messages.teleported",
-                "<white>Teleported to spawn.")));
+            plugin.messageActions().run(player, settings, "messages.teleported",
+                "<white>Teleported to spawn.");
             plugin.teleportFeedback(player, "Spawn");
         };
         if (playerInitiated) {

@@ -11,9 +11,11 @@ import java.util.List;
 
 final class NearModule {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
+    private final RivetPlugin plugin;
     private final YamlConfiguration settings;
 
     NearModule(RivetPlugin plugin) {
+        this.plugin = plugin;
         settings = plugin.settings("near");
     }
 
@@ -40,16 +42,16 @@ final class NearModule {
         }
         send(player, "messages.header", "<#f72a4c>Nearby players within <#f72a4c>%radius%</#f72a4c> blocks:</#f72a4c>",
             "radius", number(radius));
-        nearby.forEach(other -> player.sendMessage(MM.deserialize(settings.getString("messages.entry",
-                "<#f72a4c>%player%</#f72a4c> <white>- %distance%m</white>"),
+        nearby.forEach(other -> plugin.messageActions().run(player, settings, "messages.entry",
+            "<#f72a4c>%player%</#f72a4c> <white>- %distance%m</white>",
             Placeholder.unparsed("player", other.getName()),
-            Placeholder.unparsed("distance", number(other.getLocation().distance(player.getLocation()))))));
+            Placeholder.unparsed("distance", number(other.getLocation().distance(player.getLocation())))));
         return true;
     }
 
     private void send(Player player, String path, String fallback, String key, String value) {
-        player.sendMessage(MM.deserialize(settings.getString(path, fallback),
-            Placeholder.unparsed(key, value)));
+        plugin.messageActions().run(player, settings, path, fallback,
+            Placeholder.unparsed(key, value));
     }
 
     private static String number(double value) {

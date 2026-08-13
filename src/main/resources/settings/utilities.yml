@@ -15,7 +15,13 @@ ride:
 
 list:
   # The count includes only players visible to the viewer.
-  format: "<#f72a4c>Online (%count%/%maximum%):</#f72a4c> <#f72a4c>%players%</#f72a4c>"
+  output:
+    enabled: true
+    actions:
+      - '[message] <#f72a4c>Online (%count%/%maximum%):</#f72a4c> <#f72a4c>%players%</#f72a4c>'
 
 ping:
-  format: "<#f72a4c>%player%'s ping:</#f72a4c> <#f72a4c>%ping% ms</#f72a4c> <white>(%quality%)</white>"
+  output:
+    enabled: true
+    actions:
+      - "[message] <#f72a4c>%player%'s ping:</#f72a4c> <#f72a4c>%ping% ms</#f72a4c> <white>(%quality%)</white>"

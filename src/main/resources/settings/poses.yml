@@ -2,6 +2,6 @@
 allowed-worlds: []
 
 messages:
-  enabled: "<white>Pose enabled. Move, dismount, or run the command again to leave it.</white>"
-  disabled: "<white>Pose disabled.</white>"
-  not-allowed: "<white>Poses are not allowed in this world.</white>"
+  enabled: { enabled: true, actions: ['[message] <white>Pose enabled. Move, dismount, or run the command again to leave it.</white>'] }
+  disabled: { enabled: true, actions: ['[message] <white>Pose disabled.</white>'] }
+  not-allowed: { enabled: true, actions: ['[message] <white>Poses are not allowed in this world.</white>'] }

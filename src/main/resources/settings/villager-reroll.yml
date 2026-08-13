@@ -24,22 +24,22 @@ trade:
 messages:
   rerolled:
     enabled: true
-    text: '<white>Villager trades <#f72a4c>rerolled</#f72a4c>.</white>'
+    actions: ['[message] <white>Villager trades <#f72a4c>rerolled</#f72a4c>.</white>']
   trades-locked:
     enabled: true
-    text: '<white>This villager has already been traded with, so its trades are locked.</white>'
+    actions: ['[message] <white>This villager has already been traded with, so its trades are locked.</white>']
   no-workstation:
     enabled: true
-    text: '<white>This villager needs its workstation before its trades can be rerolled.</white>'
+    actions: ['[message] <white>This villager needs its workstation before its trades can be rerolled.</white>']
   busy:
     enabled: true
-    text: '<white>That villager is already rerolling its trades.</white>'
+    actions: ['[message] <white>That villager is already rerolling its trades.</white>']
   no-permission:
     enabled: true
-    text: '<white>You do not have permission to reroll villager trades.</white>'
+    actions: ['[message] <white>You do not have permission to reroll villager trades.</white>']
   failed:
     enabled: true
-    text: '<white>The villager''s trades could not be rerolled.</white>'
+    actions: ["[message] <white>The villager's trades could not be rerolled.</white>"]
 
 effects:
   sound:

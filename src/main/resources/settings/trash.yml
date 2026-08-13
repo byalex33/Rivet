@@ -4,16 +4,20 @@ gui:
   title: "<#f72a4c>Trash — items are destroyed</#f72a4c>"
   # GUI actions support:
   # [message] <text>
-  # [sound] <sound>
+  # [broadcast] <text>
+  # [sound] <sound> [volume] [pitch]
   # [toast] [i:<item>] [type:task|goal|challenge] <text>
   # [actionbar] <text>
   # [particle] <particle> [count]
+  # [firework] <#RRGGBB,#RRGGBB> | <type> | <power> | <count> | <gap ticks>
   # [title] <title> | <subtitle> | <fade-in ticks> | <stay ticks> | <fade-out ticks>
   # [bossbar] [-d:seconds] [-c:color] [-s:style] <text>
   # [lightning] (visual only), and [close]
   open_commands:
-    - '[sound] block.chest.open'
-    - '[message] <white>The trash has been opened.</white>'
+    enabled: true
+    actions:
+      - '[sound] block.chest.open'
+      - '[message] <white>The trash has been opened.</white>'
   items:
     'fillerItems1':
       material: GRAY_STAINED_GLASS_PANE

@@ -141,8 +141,8 @@ final class CreeperRestoration implements Listener {
             playSound(impact, "effects.miss-sound", Sound.BLOCK_AMETHYST_BLOCK_HIT,
                 .7f, .7f);
             if (player != null) {
-                player.sendActionBar(text("messages.no-crater",
-                    "<white>No repairable creeper crater was found nearby.</white>"));
+                plugin.messageActions().run(player, settings, "messages.no-crater", "actionbar",
+                    "<white>No repairable creeper crater was found nearby.</white>");
             }
         }
     }
@@ -159,8 +159,8 @@ final class CreeperRestoration implements Listener {
         } else if (args.length == 1 || args.length == 2) {
             target = plugin.getServer().getPlayerExact(args[0]);
             if (target == null) {
-                sender.sendMessage(text("messages.player-not-online",
-                    "<white>That player is not online.</white>"));
+                message(sender, "messages.player-not-online",
+                    "<white>That player is not online.</white>");
                 return true;
             }
             if (args.length == 2) {
@@ -173,8 +173,8 @@ final class CreeperRestoration implements Listener {
 
         int amount = amountArgument == null ? 1 : RivetPlugin.itemAmount(amountArgument);
         if (amount < 1 || amount > MAX_GIVE_AMOUNT) {
-            sender.sendMessage(text("messages.invalid-amount",
-                "<white>Amount must be a whole number from 1 to 2304.</white>"));
+            message(sender, "messages.invalid-amount",
+                "<white>Amount must be a whole number from 1 to 2304.</white>");
             return true;
         }
 
@@ -193,13 +193,13 @@ final class CreeperRestoration implements Listener {
             Placeholder.unparsed("plural", amount == 1 ? "" : "s"),
             Placeholder.unparsed("player", target.getName())
         };
-        sender.sendMessage(text("messages.given",
+        message(sender, "messages.given",
             "<white>Gave <#f72a4c>%amount% Restoration Core%plural%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.</white>",
-            placeholders));
+            placeholders);
         if (!sender.equals(target)) {
-            target.sendMessage(text("messages.received",
+            message(target, "messages.received",
                 "<white>You received <#f72a4c>%amount% Restoration Core%plural%</#f72a4c>.</white>",
-                placeholders));
+                placeholders);
         }
         return true;
     }
@@ -323,9 +323,9 @@ final class CreeperRestoration implements Listener {
         int flightDuration = Math.max(1, Math.min(totalDuration,
             settings.getInt("restoration.block-flight-ticks", 16)));
         if (player != null) {
-            player.sendActionBar(text("messages.restoring",
+            plugin.messageActions().run(player, settings, "messages.restoring", "actionbar",
                 "<white>Reconstructing <#f72a4c>%blocks%</#f72a4c> blocks.</white>",
-                Placeholder.unparsed("blocks", Integer.toString(repairable.size()))));
+                Placeholder.unparsed("blocks", Integer.toString(repairable.size())));
         }
         playSound(crater.center, "effects.start-sound", Sound.BLOCK_BEACON_ACTIVATE,
             1, 1.35f);
@@ -416,9 +416,9 @@ final class CreeperRestoration implements Listener {
         playSound(crater.center, "effects.completion-sound",
             Sound.BLOCK_BEACON_POWER_SELECT, 1, 1.65f);
         if (player != null && player.isOnline()) {
-            player.sendActionBar(text("messages.restored",
+            plugin.messageActions().run(player, settings, "messages.restored", "actionbar",
                 "<white>Restored <#f72a4c>%blocks%</#f72a4c> blocks.</white>",
-                Placeholder.unparsed("blocks", Integer.toString(restored))));
+                Placeholder.unparsed("blocks", Integer.toString(restored)));
         }
     }
 
@@ -554,9 +554,14 @@ final class CreeperRestoration implements Listener {
         return MM.deserialize(settings.getString(path, fallback), placeholders);
     }
 
+    private void message(CommandSender recipient, String path, String fallback,
+                         TagResolver... placeholders) {
+        plugin.messageActions().run(recipient, settings, path, fallback, placeholders);
+    }
+
     private void usage(CommandSender sender) {
-        sender.sendMessage(text("messages.usage",
-            "<white>Usage: /restorationcore [player] [amount]</white>"));
+        message(sender, "messages.usage",
+            "<white>Usage: /restorationcore [player] [amount]</white>");
     }
 
     static int startTick(int index, int blocks, int totalDuration, int flightDuration) {

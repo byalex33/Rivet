@@ -8,7 +8,7 @@
 | Warps | `warps` | Enabled | Named public server destinations using the shared teleport policy. |
 | Graves | `graves` | Enabled | Persistent death graves, recovery rules, tracking compasses, and smart persistent `/back` history. |
 | Spawn | `spawn` | Enabled | Server spawn and immediate join spawning; `/spawn` uses the shared teleport policy. |
-| Chat | `chat` | Enabled | MiniMessage chat, private messages, ignore lists, social spy, chat colors, and item links. |
+| Chat | `chat` | Enabled | Vanilla-style formatted chat, friendly styles, tags, mentions, lightweight anti-spam, private messages, ignore lists, social spy, and item links. |
 | Kits | `kits` | Disabled | Configured item kits with permissions and persistent cooldowns. |
 | AFK | `afk` | Enabled | Manual and automatic AFK state, reasons, sleep exclusion, and status checks. |
 | Backpacks | `backpacks` | Disabled | Persistent personal storage with permission-controlled rows. |
@@ -45,7 +45,7 @@ Small mechanics such as faster hoppers, crop protection, water replanting, and I
 | Feature | Module | Default | Description |
 |---|---|---:|---|
 | Staff tools | `staff` | Disabled | Gamemode, teleportation, vanish, flight, moderation notes, boss bars, toasts, and status tools. |
-| Permissions | `permissions` | Disabled | Lightweight UUID-based users, groups, and wildcard nodes. |
+| Permissions | `permissions` | Disabled | Lightweight UUID users, weighted multi-group inheritance, explicit grants and denies, wildcards, metadata, and Bukkit attachments. |
 | Holograms | `holograms` | Enabled | Persistent text, item, and block displays with animation and visibility controls. |
 | Announcements | `announcements` | Disabled | Rotating MiniMessage announcements with sound and empty-server controls. |
 | Join and leave | `join-leave` | Enabled | Join/leave messages, welcome titles, MOTD, and first-join behavior. |

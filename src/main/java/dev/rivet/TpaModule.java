@@ -174,13 +174,10 @@ final class TpaModule implements Listener {
         return Math.max(0, plugin.settings("tpa").getInt(path, fallback));
     }
 
-    private String message(String path, String fallback) {
-        return plugin.settings("tpa").getString("messages." + path, fallback);
-    }
-
     private void send(Player recipient, String path, String fallback,
                       net.kyori.adventure.text.minimessage.tag.resolver.TagResolver... placeholders) {
-        recipient.sendMessage(MM.deserialize(message(path, fallback), placeholders));
+        plugin.messageActions().run(recipient, plugin.settings("tpa"), "messages." + path,
+            fallback, placeholders);
     }
 
     private static net.kyori.adventure.text.minimessage.tag.resolver.TagResolver player(Player player) {

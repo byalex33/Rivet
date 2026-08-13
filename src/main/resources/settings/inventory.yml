@@ -17,15 +17,15 @@ scan:
   progress-interval-chunks: 500
 
 messages:
-  repair-invalid: "<white>Hold a damaged repairable item.</white>"
-  repair-success: "<white>Repaired the item in your hand.</white>"
-  repair-all: "<white>Repaired <#f72a4c>%count%</#f72a4c> items.</white>"
-  empty-hand: "<white>Hold an item first.</white>"
-  blocked-item: "<white>That material cannot be edited.</white>"
-  rename-success: "<white>Item renamed.</white>"
-  rename-cleared: "<white>Item name cleared.</white>"
-  lore-success: "<white>Item lore updated.</white>"
-  lore-cleared: "<white>Item lore cleared.</white>"
-  lore-line-invalid: "<white>That lore line does not exist.</white>"
-  hat-success: "<white>Equipped the item as your hat.</white>"
-  invalid-text: "<white>Text must be 1-%max% visible characters without control characters.</white>"
+  repair-invalid: { enabled: true, actions: ['[message] <white>Hold a damaged repairable item.</white>'] }
+  repair-success: { enabled: true, actions: ['[message] <white>Repaired the item in your hand.</white>'] }
+  repair-all: { enabled: true, actions: ['[message] <white>Repaired <#f72a4c>%count%</#f72a4c> items.</white>'] }
+  empty-hand: { enabled: true, actions: ['[message] <white>Hold an item first.</white>'] }
+  blocked-item: { enabled: true, actions: ['[message] <white>That material cannot be edited.</white>'] }
+  rename-success: { enabled: true, actions: ['[message] <white>Item renamed.</white>'] }
+  rename-cleared: { enabled: true, actions: ['[message] <white>Item name cleared.</white>'] }
+  lore-success: { enabled: true, actions: ['[message] <white>Item lore updated.</white>'] }
+  lore-cleared: { enabled: true, actions: ['[message] <white>Item lore cleared.</white>'] }
+  lore-line-invalid: { enabled: true, actions: ['[message] <white>That lore line does not exist.</white>'] }
+  hat-success: { enabled: true, actions: ['[message] <white>Equipped the item as your hat.</white>'] }
+  invalid-text: { enabled: true, actions: ['[message] <white>Text must be 1-%max% visible characters without control characters.</white>'] }

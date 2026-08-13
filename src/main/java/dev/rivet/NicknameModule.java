@@ -62,10 +62,10 @@ final class NicknameModule implements Listener {
             String plain = PLAIN.serialize(rendered);
             int maximum = Math.max(1, settings.getInt("maximum-length", 24));
             if (!validNickname(plain, maximum)) {
-                sender.sendMessage(FORMATTED.deserialize(settings.getString("messages.invalid",
-                    "<white>Nicknames must be 1-%max% visible characters with no control characters.</white>"),
+                plugin.messageActions().run(sender, settings, "messages.invalid",
+                    "<white>Nicknames must be 1-%max% visible characters with no control characters.</white>",
                     net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed(
-                        "max", Integer.toString(maximum))));
+                        "max", Integer.toString(maximum)));
                 return true;
             }
             data.set(path, nickname);
@@ -79,9 +79,9 @@ final class NicknameModule implements Listener {
             return true;
         }
         plugin.refreshDisplayName(target);
-        sender.sendMessage(FORMATTED.deserialize(nickname.equalsIgnoreCase("off")
-            ? settings.getString("messages.removed", "<white>Nickname removed.</white>")
-            : settings.getString("messages.set", "<white>Nickname updated.</white>")));
+        plugin.messageActions().run(sender, settings, nickname.equalsIgnoreCase("off")
+            ? "messages.removed" : "messages.set", nickname.equalsIgnoreCase("off")
+            ? "<white>Nickname removed.</white>" : "<white>Nickname updated.</white>");
         return true;
     }
 

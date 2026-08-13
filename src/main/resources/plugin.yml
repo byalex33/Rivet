@@ -125,9 +125,13 @@ commands:
     usage: /ignore <player|list|clear>
     permission: rivet.ignore
   chatcolor:
-    description: Set a persistent chat color or gradient
-    usage: /chatcolor [player] <color|reset>
+    description: Choose a persistent chat style
+    usage: /chatcolor [player] <color|#hex|gradient start end|rainbow|reset>
     permission: rivet.chatcolor
+  tag:
+    description: Choose a cosmetic chat tag
+    usage: /tag <set [player] tag|reset [player]|list>
+    permission: rivet.chat.tag
   tp:
     description: Teleport to a player
     usage: /tp <player>
@@ -169,12 +173,8 @@ commands:
     usage: /bossbarmsg <player|all> [flags] <message>
     permission: rivet.bossbarmsg
   perm:
-    description: Manage user permissions
-    usage: /perm <add|remove|list|check|reload>
-    permission: rivet.permissions.manage
-  group:
-    description: Manage permission groups
-    usage: /group <set|list|info>
+    description: Manage Rivet users, groups, inheritance, and permissions
+    usage: /perm <user|group|check|tree|listgroups|reload>
     permission: rivet.permissions.manage
   hologram:
     aliases: [holo]
@@ -414,6 +414,48 @@ permissions:
   rivet.chatcolor.others:
     default: op
   rivet.chatcolor.advanced:
+    default: op
+  rivet.chat.color.red:
+    default: true
+  rivet.chat.color.gold:
+    default: true
+  rivet.chat.color.aqua:
+    default: true
+  rivet.chat.color.pink:
+    default: true
+  rivet.chat.color.*:
+    default: op
+  rivet.chat.gradient.sunset:
+    default: op
+  rivet.chat.gradient.ocean:
+    default: op
+  rivet.chat.gradient.fire:
+    default: op
+  rivet.chat.gradient.*:
+    default: op
+  rivet.chat.style.custom:
+    default: op
+  rivet.chat.style.others:
+    default: op
+  rivet.chat.tag:
+    default: true
+  rivet.chat.tag.og:
+    default: false
+  rivet.chat.tag.builder:
+    default: false
+  rivet.chat.tag.aviation:
+    default: false
+  rivet.chat.tag.*:
+    default: op
+  rivet.chat.tag.others:
+    default: op
+  rivet.chat.mention:
+    default: true
+  rivet.chat.mention.notify:
+    default: true
+  rivet.chat.mention.everyone:
+    default: op
+  rivet.chat.antispam.bypass:
     default: op
   rivet.teleport:
     default: op

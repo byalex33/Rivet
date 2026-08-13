@@ -33,9 +33,9 @@ final class KitsModule {
     boolean command(Player player, String[] args) {
         if (args.length == 0) {
             List<String> available = kitNames(player);
-            player.sendMessage(MM.deserialize(settings.getString("messages.list",
-                    "<#f72a4c>Available kits:</#f72a4c> <#f72a4c>%kits%</#f72a4c>"),
-                Placeholder.unparsed("kits", available.isEmpty() ? "none" : String.join(", ", available))));
+            plugin.messageActions().run(player, settings, "messages.list",
+                "<#f72a4c>Available kits:</#f72a4c> <#f72a4c>%kits%</#f72a4c>",
+                Placeholder.unparsed("kits", available.isEmpty() ? "none" : String.join(", ", available)));
             return true;
         }
         if (args.length != 1 || !args[0].matches("[A-Za-z0-9_-]{1,32}")) {
@@ -56,10 +56,10 @@ final class KitsModule {
         long remaining = cooldownRemaining(data.getLong(path(player, name)),
             Math.max(0, kit.getLong("cooldown-seconds")), now);
         if (remaining > 0) {
-            player.sendMessage(MM.deserialize(settings.getString("messages.cooldown",
-                    "<white>Kit <#f72a4c>%kit%</#f72a4c> is available in %seconds% seconds."),
+            plugin.messageActions().run(player, settings, "messages.cooldown",
+                "<white>Kit <#f72a4c>%kit%</#f72a4c> is available in %seconds% seconds.",
                 Placeholder.unparsed("kit", name),
-                Placeholder.unparsed("seconds", Long.toString(remaining))));
+                Placeholder.unparsed("seconds", Long.toString(remaining)));
             return true;
         }
 
@@ -167,8 +167,8 @@ final class KitsModule {
     }
 
     private void message(Player player, String key, String fallback, String kit) {
-        player.sendMessage(MM.deserialize(settings.getString("messages." + key, fallback),
-            Placeholder.unparsed("kit", kit)));
+        plugin.messageActions().run(player, settings, "messages." + key, fallback,
+            Placeholder.unparsed("kit", kit));
     }
 
     private static String path(Player player, String kit) {

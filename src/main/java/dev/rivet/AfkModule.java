@@ -260,10 +260,10 @@ final class AfkModule implements Listener {
             path = "messages.afk-with-reason";
             fallback = "<white>%player% is now AFK: <#f72a4c>%reason%</#f72a4c></white>";
         }
-        Component message = MM.deserialize(plugin.settings("afk").getString(path, fallback),
+        plugin.messageActions().run(plugin.getServer().getOnlinePlayers(),
+            plugin.getServer().getOnlinePlayers(), plugin.settings("afk"), path, "message", fallback,
             Placeholder.unparsed("player", player.getName()),
             Placeholder.unparsed("reason", reason == null ? "" : reason));
-        plugin.getServer().broadcast(message);
     }
 
     private void status(Player viewer, Player target) {

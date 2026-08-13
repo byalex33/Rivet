@@ -27,6 +27,7 @@
     - [/socialspy](commands.md#socialspy)
     - [/ignore](commands.md#ignore)
     - [/chatcolor](commands.md#chatcolor)
+    - [/tag](commands.md#tag)
     - [/me](commands.md#me)
     - [/nick](commands.md#nick)
     - [/afk](commands.md#afk)
@@ -102,7 +103,6 @@
     - [/toast](commands.md#toast)
   - Server administration
     - [/perm](commands.md#perm)
-    - [/group](commands.md#group)
     - [/hologram](commands.md#hologram)
     - [/lagg](commands.md#lagg)
     - [/log](commands.md#log)

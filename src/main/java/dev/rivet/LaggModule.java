@@ -92,11 +92,11 @@ final class LaggModule {
     }
 
     private void broadcastWarning(int seconds) {
-        String template = settings.getString("messages.warning",
-            "<white>Ground items will be cleared in <#f72a4c>%seconds%</#f72a4c> second%plural%.</white>");
-        plugin.getServer().broadcast(MM.deserialize(template,
+        plugin.messageActions().run(plugin.getServer().getOnlinePlayers(),
+            plugin.getServer().getOnlinePlayers(), settings, "messages.warning", "broadcast",
+            "<white>Ground items will be cleared in <#f72a4c>%seconds%</#f72a4c> second%plural%.</white>",
             Placeholder.unparsed("seconds", Integer.toString(seconds)),
-            Placeholder.unparsed("plural", seconds == 1 ? "" : "s")));
+            Placeholder.unparsed("plural", seconds == 1 ? "" : "s"));
     }
 
     private CleanupResult clearGroundItems() {
@@ -140,13 +140,13 @@ final class LaggModule {
         Component details = MM.deserialize(settings.getString("messages.hover-label",
             "<#f72a4c>[Hover for more info]</#f72a4c>"))
             .hoverEvent(HoverEvent.showText(hover));
-        String template = settings.getString("messages.cleanup",
+        plugin.messageActions().run(plugin.getServer().getOnlinePlayers(),
+            plugin.getServer().getOnlinePlayers(), settings, "messages.cleanup", "broadcast",
             "<white>Cleared <#f72a4c>%count%</#f72a4c> ground item entities "
-                + "(<#f72a4c>%amount%</#f72a4c> items). %details%</white>");
-        plugin.getServer().broadcast(MM.deserialize(template,
+                + "(<#f72a4c>%amount%</#f72a4c> items). %details%</white>",
             Placeholder.unparsed("count", Integer.toString(result.entityCount())),
             Placeholder.unparsed("amount", Long.toString(result.itemCount())),
-            Placeholder.component("details", details)));
+            Placeholder.component("details", details));
     }
 
     private Component cleanupHover(CleanupResult result) {
@@ -169,7 +169,7 @@ final class LaggModule {
     }
 
     private void message(CommandSender sender, String path, String fallback) {
-        sender.sendMessage(MM.deserialize(settings.getString(path, fallback)));
+        plugin.messageActions().run(sender, settings, path, fallback);
     }
 
     static long cleanupIntervalSeconds(long configured) {

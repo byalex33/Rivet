@@ -1,15 +1,15 @@
 # Saved player homes are stored in ../data/homes.yml.
 
 messages:
-  usage-set: "<white>Usage: /sethome [name]</white>"
-  usage-teleport: "<white>Usage: /home [name]</white>"
-  usage-delete: "<white>Usage: /delhome [name]</white>"
-  set: "<white>Home <#f72a4c>%name%</#f72a4c> set.</white>"
-  missing: "<white>No %name% is set.</white>"
-  deleted: "<white>Home <#f72a4c>%name%</#f72a4c> deleted.</white>"
-  world-unavailable: "<white>The world for <#f72a4c>%name%</#f72a4c> is unavailable.</white>"
-  teleported: "<white>Teleported to <#f72a4c>%name%</#f72a4c>.</white>"
-  save-failed: "<white>Could not save the change. Check the console.</white>"
+  usage-set: { enabled: true, actions: ['[message] <white>Usage: /sethome [name]</white>'] }
+  usage-teleport: { enabled: true, actions: ['[message] <white>Usage: /home [name]</white>'] }
+  usage-delete: { enabled: true, actions: ['[message] <white>Usage: /delhome [name]</white>'] }
+  set: { enabled: true, actions: ['[message] <white>Home <#f72a4c>%name%</#f72a4c> set.</white>'] }
+  missing: { enabled: true, actions: ['[message] <white>No %name% is set.</white>'] }
+  deleted: { enabled: true, actions: ['[message] <white>Home <#f72a4c>%name%</#f72a4c> deleted.</white>'] }
+  world-unavailable: { enabled: true, actions: ['[message] <white>The world for <#f72a4c>%name%</#f72a4c> is unavailable.</white>'] }
+  teleported: { enabled: true, actions: ['[message] <white>Teleported to <#f72a4c>%name%</#f72a4c>.</white>'] }
+  save-failed: { enabled: true, actions: ['[message] <white>Could not save the change. Check the console.</white>'] }
 
 effects:
   teleport:

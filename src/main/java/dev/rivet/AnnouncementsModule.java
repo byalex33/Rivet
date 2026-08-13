@@ -1,6 +1,5 @@
 package dev.rivet;
 
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -9,7 +8,6 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.List;
 
 final class AnnouncementsModule {
-    private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
     private List<String> announcements = List.of();
@@ -27,7 +25,8 @@ final class AnnouncementsModule {
         ConfigurationSection section = settings.getConfigurationSection("announcements");
         announcements = section == null ? List.of() : section.getKeys(false).stream()
             .filter(key -> section.getBoolean(key + ".enabled", true))
-            .filter(key -> section.isString(key + ".message")).toList();
+            .filter(key -> section.isList(key + ".actions") || section.isString(key + ".message"))
+            .toList();
         long interval = Math.max(1, settings.getLong("interval-seconds", 300)) * 20L;
         task = announcements.isEmpty() ? null
             : plugin.getServer().getScheduler().runTaskTimer(plugin, this::announce, interval, interval);
@@ -47,8 +46,9 @@ final class AnnouncementsModule {
             return;
         }
         String key = announcements.get(index++ % announcements.size());
-        plugin.getServer().broadcast(MM.deserialize(
-            settings.getString("announcements." + key + ".message", "")));
+        plugin.messageActions().run(plugin.getServer().getOnlinePlayers(),
+            plugin.getServer().getOnlinePlayers(), settings, "announcements." + key,
+            "broadcast", "");
         if (!settings.getBoolean("sound.enabled", false)) {
             return;
         }

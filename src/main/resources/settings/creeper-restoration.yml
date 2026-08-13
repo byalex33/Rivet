@@ -30,14 +30,14 @@ explosion-debris:
   vertical-speed: 0.27
 
 messages:
-  usage: "<white>Usage: /restorationcore [player] [amount]</white>"
-  player-not-online: "<white>That player is not online.</white>"
-  invalid-amount: "<white>Amount must be a whole number from 1 to 2304.</white>"
-  given: "<white>Gave <#f72a4c>%amount% Restoration Core%plural%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.</white>"
-  received: "<white>You received <#f72a4c>%amount% Restoration Core%plural%</#f72a4c>.</white>"
-  no-crater: "<white>No repairable creeper crater was found nearby.</white>"
-  restoring: "<white>Reconstructing <#f72a4c>%blocks%</#f72a4c> blocks.</white>"
-  restored: "<white>Restored <#f72a4c>%blocks%</#f72a4c> blocks.</white>"
+  usage: { enabled: true, actions: ['[message] <white>Usage: /restorationcore [player] [amount]</white>'] }
+  player-not-online: { enabled: true, actions: ['[message] <white>That player is not online.</white>'] }
+  invalid-amount: { enabled: true, actions: ['[message] <white>Amount must be a whole number from 1 to 2304.</white>'] }
+  given: { enabled: true, actions: ['[message] <white>Gave <#f72a4c>%amount% Restoration Core%plural%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.</white>'] }
+  received: { enabled: true, actions: ['[message] <white>You received <#f72a4c>%amount% Restoration Core%plural%</#f72a4c>.</white>'] }
+  no-crater: { enabled: true, actions: ['[actionbar] <white>No repairable creeper crater was found nearby.</white>'] }
+  restoring: { enabled: true, actions: ['[actionbar] <white>Reconstructing <#f72a4c>%blocks%</#f72a4c> blocks.</white>'] }
+  restored: { enabled: true, actions: ['[actionbar] <white>Restored <#f72a4c>%blocks%</#f72a4c> blocks.</white>'] }
 
 effects:
   throw-sound:

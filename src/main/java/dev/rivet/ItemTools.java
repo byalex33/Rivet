@@ -266,10 +266,10 @@ final class ItemTools {
                 repaired++;
             }
         }
-        player.sendMessage(MM.deserialize(settings.getString("messages.repair-all",
-                "<white>Repaired <#f72a4c>%count%</#f72a4c> items."),
+        plugin.messageActions().run(player, settings, "messages.repair-all",
+            "<white>Repaired <#f72a4c>%count%</#f72a4c> items.",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed(
-                "count", Integer.toString(repaired))));
+                "count", Integer.toString(repaired)));
         return true;
     }
 
@@ -388,10 +388,10 @@ final class ItemTools {
     }
 
     private void invalid(Player player, int maximum) {
-        player.sendMessage(MM.deserialize(settings.getString("messages.invalid-text",
-                "<white>Text must be 1-%max% visible characters without control characters."),
+        plugin.messageActions().run(player, settings, "messages.invalid-text",
+            "<white>Text must be 1-%max% visible characters without control characters.",
             net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.unparsed(
-                "max", Integer.toString(maximum))));
+                "max", Integer.toString(maximum)));
     }
 
     private static int positiveInt(String value) {
@@ -407,7 +407,7 @@ final class ItemTools {
     }
 
     private void message(Player player, String key, String fallback) {
-        player.sendMessage(MM.deserialize(settings.getString("messages." + key, fallback)));
+        plugin.messageActions().run(player, settings, "messages." + key, fallback);
     }
 
     static ClearItem parseClearItem(String input) {

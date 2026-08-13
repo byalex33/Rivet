@@ -1,5 +1,8 @@
 messages:
-  cannot-capture: "<white>That creature cannot be captured.</white>"
+  cannot-capture:
+    enabled: true
+    actions:
+      - '[actionbar] <white>That creature cannot be captured.</white>'
 
 captured-egg:
   name: "<white>Captured <#f72a4c>%mob%</#f72a4c></white>"

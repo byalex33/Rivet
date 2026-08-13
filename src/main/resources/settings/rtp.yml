@@ -24,8 +24,23 @@ worlds:
     maximum-radius: 5000
 
 messages:
-  searching: "<white>Searching for a safe location...</white>"
-  cooldown: "<white>You can use RTP again in <#f72a4c>%seconds%s</#f72a4c>."
-  success: "<white>Teleported to a safe random location.</white>"
-  failed: "<white>Could not find a safe location. Try again later.</white>"
-  world-disabled: "<white>Random teleport is unavailable in that world.</white>"
+  searching:
+    enabled: true
+    actions:
+      - '[message] <white>Searching for a safe location...</white>'
+  cooldown:
+    enabled: true
+    actions:
+      - '[message] <white>You can use RTP again in <#f72a4c>%seconds%s</#f72a4c>.'
+  success:
+    enabled: true
+    actions:
+      - '[message] <white>Teleported to a safe random location.</white>'
+  failed:
+    enabled: true
+    actions:
+      - '[message] <white>Could not find a safe location. Try again later.</white>'
+  world-disabled:
+    enabled: true
+    actions:
+      - '[message] <white>Random teleport is unavailable in that world.</white>'

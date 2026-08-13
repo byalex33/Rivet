@@ -1,5 +1,6 @@
-# MiniMessage formats. %player% and %message% are safe component placeholders.
-format: "<#f72a4c>%player%:</#f72a4c> <white>%message%</white>"
+# The placeholders are inserted as safe components; a player's style affects %message% only.
+# %prefix% and %suffix% use Rivet group metadata when the optional permissions module is enabled.
+format: "%prefix%%tag% %player%%suffix%<dark_gray>: </dark_gray>%message%"
 me:
   # %player% and %message% are safe component placeholders.
   format: "<#f72a4c>* %player%</#f72a4c> <white>%message%</white>"
@@ -7,22 +8,56 @@ private-messages:
   sent: "<#f72a4c>[you → %player%]</#f72a4c> <white>%message%</white>"
   received: "<#f72a4c>[%player% → you]</#f72a4c> <white>%message%</white>"
 
-chat-colors:
-  allow-hex: true
-  allow-gradients: true
+chat-styles:
+  # Each key becomes rivet.chat.color.<key> or rivet.chat.gradient.<key>.
+  colors:
+    red: "<red>"
+    gold: "<gold>"
+    aqua: "<aqua>"
+    pink: "<#ff5f91>"
+  gradients:
+    sunset: "<gradient:#ff512f:#f09819>"
+    ocean: "<gradient:#2193b0:#6dd5ed>"
+    fire: "<gradient:#ff0000:#ffaa00>"
+  allow-custom-hex: true
+  allow-custom-gradients: true
   allow-rainbow: true
+
+tags:
+  enabled: true
+  # Each key becomes rivet.chat.tag.<key>.
+  list:
+    og:
+      display: "<gold>[OG]</gold>"
+    builder:
+      display: "<aqua>[Builder]</aqua>"
+    aviation:
+      display: "<gradient:#00aaff:#ffffff>[Aviation]</gradient>"
+
+mentions:
+  enabled: true
+  format: "<yellow>@%player%</yellow>"
+  # Leave blank to disable the notification sound.
+  sound: BLOCK_NOTE_BLOCK_PLING
+
+anti-spam:
+  enabled: true
+  cooldown: 1s
+  similarity:
+    enabled: true
+    threshold: 85
 
 social-spy:
   format: "<#f72a4c>[spy] %sender% → %recipient%:</#f72a4c> <white>%message%</white>"
   messages:
-    enabled: "<white>Social spy enabled.</white>"
-    disabled: "<white>Social spy disabled.</white>"
+    enabled: { enabled: true, actions: ['[message] <white>Social spy enabled.</white>'] }
+    disabled: { enabled: true, actions: ['[message] <white>Social spy disabled.</white>'] }
 
 ignore:
   messages:
-    added: "<white>You now ignore <#f72a4c>%player%</#f72a4c>."
-    removed: "<white>You no longer ignore <#f72a4c>%player%</#f72a4c>."
-    list: "<#f72a4c>Ignored players:</#f72a4c> <#f72a4c>%players%</#f72a4c>"
-    cleared: "<white>Your ignore list was cleared.</white>"
-    self: "<white>You cannot ignore yourself.</white>"
-    blocked: "<white>That private message could not be delivered.</white>"
+    added: { enabled: true, actions: ['[message] <white>You now ignore <#f72a4c>%player%</#f72a4c>.'] }
+    removed: { enabled: true, actions: ['[message] <white>You no longer ignore <#f72a4c>%player%</#f72a4c>.'] }
+    list: { enabled: true, actions: ['[message] <#f72a4c>Ignored players:</#f72a4c> <#f72a4c>%players%</#f72a4c>'] }
+    cleared: { enabled: true, actions: ['[message] <white>Your ignore list was cleared.</white>'] }
+    self: { enabled: true, actions: ['[message] <white>You cannot ignore yourself.</white>'] }
+    blocked: { enabled: true, actions: ['[message] <white>That private message could not be delivered.</white>'] }

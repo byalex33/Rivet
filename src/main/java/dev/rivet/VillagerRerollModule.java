@@ -277,10 +277,7 @@ final class VillagerRerollModule implements Listener {
     }
 
     private void message(Player player, String path, String fallback) {
-        if (!settings.getBoolean(path + ".enabled", true)) {
-            return;
-        }
-        player.sendMessage(MM.deserialize(settings.getString(path + ".text", fallback)));
+        plugin.messageActions().run(player, settings, path, fallback);
     }
 
     static boolean hasBeenTraded(int level, int experience, int... recipeUses) {

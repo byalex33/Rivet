@@ -15,8 +15,8 @@ final class RivetMiniMessage {
         "food", "id", "item", "items", "jumps", "kit", "kits", "matches", "material",
         "max", "maximum", "message", "mob", "mob_kills", "name", "page", "pages", "ping",
         "player", "player_kills", "players", "playtime", "plural", "quality", "radius", "reason",
-        "recipient", "requester", "seconds", "sender", "since_first_join", "speed", "staff",
-        "streak", "target", "text", "time", "timestamp", "weather", "world", "x", "y", "z");
+        "prefix", "recipient", "requester", "seconds", "sender", "since_first_join", "speed", "staff",
+        "streak", "suffix", "tag", "target", "text", "time", "timestamp", "weather", "world", "x", "y", "z");
     private static final Pattern PERCENT_PLACEHOLDER = Pattern.compile(
         "%([a-z][a-z0-9_-]*)%", Pattern.CASE_INSENSITIVE);
     private static final MiniMessage MINI_MESSAGE = builder().build();

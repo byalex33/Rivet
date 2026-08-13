@@ -21,12 +21,12 @@ ignore:
 # cleanup: %count% (entities), %amount% (total stack contents), %details% (hover label)
 # hover-entry: %item%, %amount%, %count%
 messages:
-  warning: "<white>Ground items will be cleared in <#f72a4c>%seconds%</#f72a4c> second%plural%.</white>"
-  cleanup: "<white>Cleared <#f72a4c>%count%</#f72a4c> ground item entities (<#f72a4c>%amount%</#f72a4c> items). %details%</white>"
+  warning: { enabled: true, actions: ['[broadcast] <white>Ground items will be cleared in <#f72a4c>%seconds%</#f72a4c> second%plural%.</white>'] }
+  cleanup: { enabled: true, actions: ['[broadcast] <white>Cleared <#f72a4c>%count%</#f72a4c> ground item entities (<#f72a4c>%amount%</#f72a4c> items). %details%</white>'] }
   hover-label: "<#f72a4c>[Hover for more info]</#f72a4c>"
   hover-header: "<#f72a4c><bold>Removed ground items</bold></#f72a4c>"
   hover-entry: "<white>%item%:</white> <#f72a4c>%amount%</#f72a4c> items in <#f72a4c>%count%</#f72a4c> entities"
   hover-empty: "<white>No eligible item entities were found.</white>"
-  reloaded: "<white>Ground-item cleanup configuration reloaded.</white>"
-  reload-failed: "<white>Could not reload settings/lagg.yml. Check the console.</white>"
-  usage: "<white>Usage: /lagg <clear|reload></white>"
+  reloaded: { enabled: true, actions: ['[message] <white>Ground-item cleanup configuration reloaded.</white>'] }
+  reload-failed: { enabled: true, actions: ['[message] <white>Could not reload settings/lagg.yml. Check the console.</white>'] }
+  usage: { enabled: true, actions: ['[message] <white>Usage: /lagg <clear|reload></white>'] }

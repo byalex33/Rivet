@@ -57,8 +57,8 @@ final class EggCapture implements Listener {
         Material material = Bukkit.getItemFactory().getSpawnEgg(mob.getType());
         AttributeInstance scale = mob.getAttribute(Attribute.SCALE);
         if (snapshot == null || material == null || scale == null) {
-            player.sendActionBar(MM.deserialize(settings.getString("messages.cannot-capture",
-                "<white>That creature cannot be captured.</white>")));
+            plugin.messageActions().run(player, settings, "messages.cannot-capture", "actionbar",
+                "<white>That creature cannot be captured.</white>");
             return;
         }
 

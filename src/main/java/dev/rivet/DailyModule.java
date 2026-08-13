@@ -93,8 +93,8 @@ final class DailyModule {
     }
 
     private void message(Player player, String key, String fallback, String placeholder, String value) {
-        player.sendMessage(MM.deserialize(settings.getString("messages." + key, fallback),
-            Placeholder.unparsed(placeholder, value)));
+        plugin.messageActions().run(player, settings, "messages." + key, fallback,
+            Placeholder.unparsed(placeholder, value));
     }
 
     private static long hours(double hours) {

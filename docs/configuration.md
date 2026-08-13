@@ -99,6 +99,16 @@ This file contains feature switches only. Every value must be `true` or `false`.
 
 Substantial modules own a file under `settings/`. Small mechanics are grouped in `gameplay.yml`, while cross-feature rules such as teleport timing live in a dedicated policy file. On startup, Rivet adds newly introduced default keys without replacing existing values. Messages use MiniMessage formatting and `%placeholder%` variables.
 
+### Chat
+
+`settings/chat.yml` keeps public chat in one compact file. The `format` value supports `%prefix%`, `%suffix%`, `%tag%`, `%player%`, and `%message%`; the first two are filled from Rivet group metadata only when the optional permissions module is active. Tags remain independent cosmetic selections. A selected color, gradient, or rainbow style wraps `%message%` only.
+
+Named colors and gradients under `chat-styles` become permission names such as `rivet.chat.color.red` and `rivet.chat.gradient.sunset`. Custom six-digit hex colors, custom two-color gradients, and rainbow share `rivet.chat.style.custom` and can each be disabled. Tags follow `rivet.chat.tag.<name>`. Player selectors show only choices the player may use.
+
+Mentions are rendered per viewer: a matching player sees their own highlighted `@Name`, while other viewers keep the ordinary message style. The optional sound is resolved like other Rivet sounds. The anti-spam section intentionally contains only a cooldown and a similarity percentage; `rivet.chat.antispam.bypass` skips both checks.
+
+Style and tag displays use a visual-only MiniMessage parser. Colors, gradients, rainbow, reset, and safe decorations are supported, but player-controlled cosmetics cannot create clicks, hovers, commands, URLs, insertions, NBT, fonts, or selectors. Rivet-generated `[item]` hover data remains intact.
+
 ### Gameplay mechanics
 
 `settings/gameplay.yml` contains small switches that do not need full module lifecycle management: crop-trample protection, water-harvest replanting, Iron Golem poppy drops, and faster hoppers. Hopper transfers use a 2-tick cooldown by default; vanilla uses 8 ticks.
@@ -121,11 +131,15 @@ Operators receive `rivet.tp.nocooldown` by default. It bypasses shared and featu
 
 High-volume entries are written asynchronously in batches to `plugins/Rivet/logs.db`. SQLite WAL mode and location, player, action, and time indexes keep gameplay writes and inspector queries lightweight. Records include before/after data and item metadata so rollback and restore can be added later without changing the basic schema; those operations are not currently exposed.
 
+### Built-in permissions
+
+When the `permissions` module is enabled, `settings/permissions.yml` stores human-readable group definitions with integer weights, `parents` lists, boolean permission maps, and MiniMessage `prefix`/`suffix` metadata. `data/permissions.yml` stores UUID-keyed user `groups` lists and direct boolean permission maps. A missing permission key means unset and therefore inherited or handled by Paper's default.
+
 Sound and particle fields accept Minecraft registry keys with or without the `minecraft:` prefix. Sound fields also accept legacy Bukkit names such as `ENTITY_ENDERMAN_TELEPORT` or `entity_enderman_teleport`. Invalid configured effects fall back to safe defaults and produce a warning in the server log.
 
 ## Runtime data
 
-Files under `data/` contain generated state such as homes, warps, graves, teleport history, breeders, holograms, permission users, ignored players, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, not YAML.
+Files under `data/` contain generated state such as homes, warps, graves, teleport history, breeders, holograms, permission users, ignored players, chat styles and tags, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, not YAML.
 
 Do not hand-edit runtime data while the server is running. Rivet may overwrite an external change the next time it saves that module.
 
@@ -149,10 +163,34 @@ Tagged module output uses the shared `messages.tag` MiniMessage value in `config
 
 Rivet also accepts `<lime>` as an alias for MiniMessage's bright-green `<green>` color.
 
+## Message actions
+
+Player-facing output is configured as an event with an `enabled` switch and an ordered
+`actions` list. This lets the same event send more than one kind of feedback:
+
+```yaml
+messages:
+  received:
+    enabled: true
+    actions:
+      - '[message] <white>Reward received.</white>'
+      - '[sound] entity.player.levelup 0.8 1.2'
+```
+
+Supported actions are `[message]`, `[broadcast]`, `[actionbar]`, `[title]`, `[sound]`,
+`[particle]`, `[firework]`, `[bossbar]`, `[toast]`, `[lightning]`, and `[close]`.
+Titles use `title | subtitle | fade-in ticks | stay ticks | fade-out ticks`. Fireworks use
+`#RRGGBB,#RRGGBB | type | power | count | gap ticks`. Rivet upgrades legacy message strings
+and action lists to this structure on startup without replacing customized text.
+
 Commands that accept player-supplied formatting limit which tags can be used. Formatting permissions do not grant click, hover, command, insertion, or other unsafe interactive tags.
 
 ## Upgrading
 
 Rivet migrates supported legacy files before modules start. Existing values in the new destination take priority, and conflicting legacy files are retained rather than overwritten. Missing module switches and settings keys are added without replacing administrator choices.
 
+Legacy `chat-color` selections are copied to the new `chat-style` storage on startup and remain available in memory even if saving fails. Their original keys are retained for recovery. Existing `chat-colors` feature switches are copied to the corresponding `chat-styles` switches only when the new value is absent, and an unchanged old default chat format is upgraded to include the new placeholders.
+
 When upgrading to the grouped gameplay settings, Rivet copies supported values from `settings/worlds.yml`, a legacy `settings/hoppers.yml`, and a legacy `hoppers` module switch. Those old entries are deliberately left untouched for recoverability but are no longer read after migration.
+
+When the built-in permissions module first reads legacy permission files, it converts each user `group` value to a `groups` list, each group `parent` to a `parents` list, and permission grant lists to boolean maps with `true` values. Existing names, UUID assignments, grants, and inheritance are retained; the same files are upgraded in place and no live configuration file needs to be removed.

@@ -1,6 +1,6 @@
 # Permissions
 
-Rivet declares 121 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
+Rivet declares 142 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
 
 The command permission is checked by Paper before Rivet handles the command. Additional `.others`, formatting, bypass, row, and wildcard nodes enable narrower capabilities inside a command.
 
@@ -31,6 +31,27 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.chatcolor` | `true` | [`/chatcolor`](commands.md#chatcolor) |
 | `rivet.chatcolor.others` | `op` | Allows targeting another player in the related command. |
 | `rivet.chatcolor.advanced` | `op` | Allows additional safe MiniMessage formatting. |
+| `rivet.chat.color.red` | `true` | Selects the named red chat style. |
+| `rivet.chat.color.gold` | `true` | Selects the named gold chat style. |
+| `rivet.chat.color.aqua` | `true` | Selects the named aqua chat style. |
+| `rivet.chat.color.pink` | `true` | Selects the named pink chat style. |
+| `rivet.chat.color.*` | `op` | Selects every configured named color. |
+| `rivet.chat.gradient.sunset` | `op` | Selects the sunset gradient. |
+| `rivet.chat.gradient.ocean` | `op` | Selects the ocean gradient. |
+| `rivet.chat.gradient.fire` | `op` | Selects the fire gradient. |
+| `rivet.chat.gradient.*` | `op` | Selects every configured named gradient. |
+| `rivet.chat.style.custom` | `op` | Allows custom hex colors, two-color gradients, and rainbow. |
+| `rivet.chat.style.others` | `op` | Allows changing another player's chat style. |
+| `rivet.chat.tag` | `true` | [`/tag`](commands.md#tag) |
+| `rivet.chat.tag.og` | `false` | Selects the OG tag. |
+| `rivet.chat.tag.builder` | `false` | Selects the Builder tag. |
+| `rivet.chat.tag.aviation` | `false` | Selects the Aviation tag. |
+| `rivet.chat.tag.*` | `op` | Selects every configured tag. |
+| `rivet.chat.tag.others` | `op` | Allows changing another player's selected tag. |
+| `rivet.chat.mention` | `true` | Allows mentioning players in public chat. |
+| `rivet.chat.mention.notify` | `true` | Receives highlighted mentions and their configured sound. |
+| `rivet.chat.mention.everyone` | `op` | Allows `@everyone`. |
+| `rivet.chat.antispam.bypass` | `op` | Bypasses the lightweight chat cooldown and similarity check. |
 | `rivet.teleport` | `op` | [`/tp`](commands.md#tp) |
 | `rivet.tppos` | `op` | [`/tppos`](commands.md#tppos) |
 | `rivet.tp.nocooldown` | `op` | Bypasses shared and feature-specific teleport cooldowns. |
@@ -47,7 +68,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.god` | `op` | [`/god`](commands.md#god) |
 | `rivet.god.others` | `op` | Allows targeting another player in the related command. |
 | `rivet.bossbarmsg` | `op` | [`/bossbarmsg`](commands.md#bossbarmsg) |
-| `rivet.permissions.manage` | `op` | [`/perm`](commands.md#perm), [`/group`](commands.md#group) |
+| `rivet.permissions.manage` | `op` | [`/perm`](commands.md#perm) |
 | `rivet.holograms` | `op` | [`/hologram`](commands.md#hologram) |
 | `rivet.holograms.view.*` | `false` | Wildcard parent for the related permission family. |
 | `rivet.eggcapture` | `true` | Additional capability used by the related feature. |
@@ -132,11 +153,18 @@ The command permission is checked by Paper before Rivet handles the command. Add
 
 ## Rivet permission module
 
-The optional `permissions` module provides local users, groups, inheritance, and wildcard matching. It is disabled by default so Rivet can coexist with an existing permission plugin.
+The optional `permissions` module provides UUID-based users, multiple groups per user, multiple parents per group, weights, prefix/suffix metadata, and `true`/`false` permission rules. It is disabled by default so Rivet does not add attachments or alter display names on servers using an external permission plugin.
 
-- Use [`/perm`](commands.md#perm) to add, remove, list, check, or reload user permissions.
-- Use [`/group`](commands.md#group) to assign users and inspect configured groups.
-- Configure groups in `settings/permissions.yml`.
-- User assignments and direct nodes are stored under `data/permissions.yml`.
+Resolution is deliberately small and deterministic:
 
-Permission changes are applied to online players immediately when the module is active.
+1. A matching direct user rule wins over every group rule.
+2. Otherwise, the matching rule from the highest-weight assigned or inherited group wins.
+3. Within one source, an exact node beats a wildcard; the longer wildcard beats a broader wildcard.
+4. Equal-weight, equally specific conflicts prefer `false` so explicit denial is safe.
+5. With no configured match, Paper's permission default is used.
+
+Wildcards include `*`, `rivet.*`, and narrower forms such as `rivet.inventory.*`. Rivet expands configured results into Bukkit/Paper permission attachments, including explicit `false` values, so denies override wildcard grants and Paper permissions whose defaults are `true`.
+
+Configure group weights, parents, permissions, prefixes, and suffixes in `settings/permissions.yml`. User memberships and direct permission states are stored in `data/permissions.yml`. Prefixes and suffixes accept safe visual MiniMessage formatting and fill the chat format's independent `%prefix%` and `%suffix%` placeholders while the module is enabled.
+
+Use [`/perm`](commands.md#perm) for all management and debugging. Permission and group changes recalculate affected online players immediately; group-wide changes recalculate every online player.

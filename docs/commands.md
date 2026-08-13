@@ -16,13 +16,13 @@ Rivet registers 98 commands. Every command below has a stable link used by the d
 |---|---|
 | Homes and warps | [`/sethome`](#sethome), [`/home`](#home), [`/delhome`](#delhome), [`/setwarp`](#setwarp), [`/warp`](#warp), [`/delwarp`](#delwarp) |
 | Teleportation | [`/spawn`](#spawn), [`/setspawn`](#setspawn), [`/tpa`](#tpa), [`/tpahere`](#tpahere), [`/tpaccept`](#tpaccept), [`/tpdeny`](#tpdeny), [`/rtp`](#rtp), [`/near`](#near), [`/back`](#back), [`/tp`](#tp), [`/tppos`](#tppos) |
-| Chat and identity | [`/msg`](#msg), [`/r`](#r), [`/socialspy`](#socialspy), [`/ignore`](#ignore), [`/chatcolor`](#chatcolor), [`/me`](#me), [`/nick`](#nick), [`/afk`](#afk), [`/afkcheck`](#afkcheck) |
+| Chat and identity | [`/msg`](#msg), [`/r`](#r), [`/socialspy`](#socialspy), [`/ignore`](#ignore), [`/chatcolor`](#chatcolor), [`/tag`](#tag), [`/me`](#me), [`/nick`](#nick), [`/afk`](#afk), [`/afkcheck`](#afkcheck) |
 | Inventory and items | [`/clear`](#clear), [`/i`](#i), [`/condense`](#condense), [`/donate`](#donate), [`/giveall`](#giveall), [`/scan`](#scan), [`/invsee`](#invsee), [`/enderchest`](#enderchest), [`/repair`](#repair), [`/rename`](#rename), [`/lore`](#lore), [`/hat`](#hat), [`/trash`](#trash), [`/backpack`](#backpack) |
 | World and environment | [`/flat`](#flat), [`/flatworld`](#flatworld), [`/voidworld`](#voidworld), [`/worldspawn`](#worldspawn), [`/setworldspawn`](#setworldspawn), [`/killall`](#killall), [`/findbiome`](#findbiome), [`/top`](#top), [`/tree`](#tree), [`/day`](#day), [`/night`](#night), [`/noon`](#noon), [`/midnight`](#midnight), [`/sun`](#sun), [`/rain`](#rain), [`/thunder`](#thunder) |
 | Gameplay systems | [`/givebreeder`](#givebreeder), [`/restorationcore`](#restorationcore), [`/kit`](#kit), [`/daily`](#daily), [`/filter`](#filter), [`/head`](#head) |
 | Player information and utilities | [`/stats`](#stats), [`/playtime`](#playtime), [`/seen`](#seen), [`/craft`](#craft), [`/anvil`](#anvil), [`/smithing`](#smithing), [`/stonecutter`](#stonecutter), [`/grindstone`](#grindstone), [`/jump`](#jump), [`/list`](#list), [`/ping`](#ping), [`/ride`](#ride), [`/sit`](#sit), [`/lay`](#lay), [`/crawl`](#crawl) |
 | Staff and moderation | [`/gmc`](#gmc), [`/gms`](#gms), [`/vanish`](#vanish), [`/fly`](#fly), [`/flyspeed`](#flyspeed), [`/commandspy`](#commandspy), [`/heal`](#heal), [`/feed`](#feed), [`/god`](#god), [`/bossbarmsg`](#bossbarmsg), [`/note`](#note), [`/sameip`](#sameip), [`/toast`](#toast) |
-| Server administration | [`/perm`](#perm), [`/group`](#group), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/lagg`](#lagg), [`/log`](#log), [`/help`](#help), [`/rivet`](#rivet) |
+| Server administration | [`/perm`](#perm), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/lagg`](#lagg), [`/log`](#log), [`/help`](#help), [`/rivet`](#rivet) |
 
 ## Homes and warps
 
@@ -295,14 +295,25 @@ Use a player name to toggle an ignore, `list` to view ignored players, or `clear
 
 ### `/chatcolor`
 
-- **Syntax:** `/chatcolor [player] <color|reset>`
+- **Syntax:** `/chatcolor [player] <color|#hex|gradient start end|rainbow|reset>`
 - **Permission:** `rivet.chatcolor`
 - **Default:** `true`
 - **Aliases:** None
 
-Set a persistent chat color or gradient.
+Choose a persistent style for the message body. With no arguments, the command opens a simple inventory selector. Named colors and gradients use their matching `rivet.chat.color.<name>` or `rivet.chat.gradient.<name>` permission. Custom hex colors, custom two-color gradients, and rainbow use `rivet.chat.style.custom`; targeting another player uses `rivet.chat.style.others`.
 
-Safe color formatting is supported. Gradients and rainbow formatting require `rivet.chatcolor.advanced`; targeting another player requires `rivet.chatcolor.others`.
+The legacy `rivet.chatcolor.advanced` and `rivet.chatcolor.others` nodes remain accepted for existing installations.
+
+<a id="tag"></a>
+
+### `/tag`
+
+- **Syntax:** `/tag <set [player] tag|reset [player]|list>`
+- **Permission:** `rivet.chat.tag`
+- **Default:** `true`
+- **Aliases:** None
+
+Choose a cosmetic tag kept separate from permission-group prefixes and suffixes. `/tag` opens a GUI containing only tags the player may use; `/tag list` provides the text equivalent. A tag requires `rivet.chat.tag.<name>` or `rivet.chat.tag.*`, and changing another player's tag requires `rivet.chat.tag.others`.
 
 <a id="me"></a>
 
@@ -1158,27 +1169,40 @@ Requires `i:<icon>` and `t:<title>`. The optional `type:<task|goal|challenge>` c
 
 ### `/perm`
 
-- **Syntax:** `/perm <add|remove|list|check|reload>`
+- **Syntax:** `/perm <user|group|check|tree|listgroups|reload>`
 - **Permission:** `rivet.permissions.manage`
 - **Default:** `op`
 - **Aliases:** None
 
-Manage user permissions.
+Manage Rivet's built-in users, groups, inheritance, metadata, and tri-state permissions.
 
-Supports `add`, `remove`, `list`, `check`, and `reload`. Permission users are stored by UUID.
+```text
+/perm user <player> info
+/perm user <player> group add <group>
+/perm user <player> group remove <group>
+/perm user <player> group set <group>
+/perm user <player> permission set <node> <true|false>
+/perm user <player> permission unset <node>
 
-<a id="group"></a>
+/perm group <group> create
+/perm group <group> delete
+/perm group <group> info
+/perm group <group> members
+/perm group <group> parent add <group>
+/perm group <group> parent remove <group>
+/perm group <group> weight set <number>
+/perm group <group> permission set <node> <true|false>
+/perm group <group> permission unset <node>
+/perm group <group> meta prefix set <MiniMessage>
+/perm group <group> meta suffix set <MiniMessage>
 
-### `/group`
+/perm check <player> <node>
+/perm tree <player>
+/perm listgroups
+/perm reload
+```
 
-- **Syntax:** `/group <set|list|info>`
-- **Permission:** `rivet.permissions.manage`
-- **Default:** `op`
-- **Aliases:** None
-
-Manage permission groups.
-
-Supports `set`, `list`, and `info` for Rivet permission groups.
+`/perm check` shows the final result, winning direct or group rule, wildcard used, relevant group weights, inherited memberships, and Paper-default fallback. `/perm tree` prints each directly assigned group and its parent hierarchy. All changes recalculate affected online players immediately.
 
 <a id="hologram"></a>
 

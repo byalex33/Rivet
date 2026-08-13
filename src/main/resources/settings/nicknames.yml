@@ -1,6 +1,6 @@
 maximum-length: 24
 
 messages:
-  set: "<white>Nickname updated.</white>"
-  removed: "<white>Nickname removed.</white>"
-  invalid: "<white>Nicknames must be 1-%max% visible characters with no control characters.</white>"
+  set: { enabled: true, actions: ['[message] <white>Nickname updated.</white>'] }
+  removed: { enabled: true, actions: ['[message] <white>Nickname removed.</white>'] }
+  invalid: { enabled: true, actions: ['[message] <white>Nicknames must be 1-%max% visible characters with no control characters.</white>'] }

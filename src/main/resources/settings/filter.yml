@@ -13,5 +13,11 @@ gui:
   open_commands: []
 
 messages:
-  blocked-pickup: "<white>Pickup blocked: <#f72a4c>%item%</#f72a4c>"
-  list: "<#f72a4c>Filtered items:</#f72a4c> <#f72a4c>%items%</#f72a4c>"
+  blocked-pickup:
+    enabled: true
+    actions:
+      - '[actionbar] <white>Pickup blocked: <#f72a4c>%item%</#f72a4c>'
+  list:
+    enabled: true
+    actions:
+      - '[message] <#f72a4c>Filtered items:</#f72a4c> <#f72a4c>%items%</#f72a4c>'

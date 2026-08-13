@@ -195,8 +195,8 @@ public final class RivetPluginTest {
                 "veinminer.message", "veinminer.particles.name"),
             "villager-reroll", List.of("permission", "allow-after-trading",
                 "require-workstation", "trade.ingredient.material", "trade.result.material",
-                "trade.result.name", "messages.rerolled.text", "messages.trades-locked.text",
-                "messages.no-workstation.text", "effects.sound.name"),
+                "trade.result.name", "messages.rerolled.actions", "messages.trades-locked.actions",
+                "messages.no-workstation.actions", "effects.sound.name"),
             "warps", List.of("messages.set", "messages.teleported",
                 "effects.teleport.sound", "effects.teleport.particle"));
         required.forEach((module, paths) -> {
@@ -251,7 +251,7 @@ public final class RivetPluginTest {
         List.of("times.day", "times.night", "weather.rain", "weather.thunder", "weather.sun")
             .forEach(path -> {
                 List<GuiActions.Action> actions = environment
-                    .getStringList(path + ".commands_when_ran").stream()
+                    .getStringList(path + ".commands_when_ran.actions").stream()
                     .map(GuiActions::parseAction).toList();
                 assertEquals(path, List.of("actionbar", "sound"),
                     actions.stream().map(GuiActions.Action::tag).toList());
@@ -362,6 +362,7 @@ public final class RivetPluginTest {
         assertEquals("staff", RivetPlugin.moduleForCommand("tppos"));
         assertEquals("filter", RivetPlugin.moduleForCommand("filter"));
         assertEquals("chat", RivetPlugin.moduleForCommand("chatcolor"));
+        assertEquals("chat", RivetPlugin.moduleForCommand("tag"));
         assertEquals("staff", RivetPlugin.moduleForCommand("bossbarmsg"));
         assertEquals("staff", RivetPlugin.moduleForCommand("commandspy"));
         assertEquals("inventory", RivetPlugin.moduleForCommand("condense"));
@@ -370,6 +371,7 @@ public final class RivetPluginTest {
         assertEquals("help", RivetPlugin.moduleForCommand("help"));
         assertEquals("lagg", RivetPlugin.moduleForCommand("lagg"));
         assertEquals("logs", RivetPlugin.moduleForCommand("log"));
+        assertNull(RivetPlugin.moduleForCommand("group"));
         assertNull(RivetPlugin.moduleForCommand("rivet"));
         assertNull(RivetPlugin.moduleForCommand("unknown"));
     }
@@ -792,6 +794,82 @@ public final class RivetPluginTest {
     }
 
     @Test
+    public void supportsFriendlyChatFormattingPlaceholders() {
+        Component formatted = ChatModule.format(
+            "%prefix%%tag% %player%%suffix%: %message%",
+            ChatModule.safeFormatting("<red>[Admin] </red>"),
+            ChatModule.safeFormatting(" <gray>[AFK]</gray>"),
+            ChatModule.safeFormatting("<gold>[OG]</gold>"),
+            Component.text("Alex"), Component.text("hello"));
+        assertEquals("[Admin] [OG] Alex [AFK]: hello",
+            PlainTextComponentSerializer.plainText().serialize(formatted));
+    }
+
+    @Test
+    public void safeChatCosmeticsCannotCreateInteractiveEvents() {
+        Component cosmetic = ChatModule.safeFormatting(
+            "<gold>[OG]</gold><click:run_command:'/op me'>unsafe</click>");
+        assertEquals(false, hasRunCommand(cosmetic, "/op me"));
+        assertEquals(true, PlainTextComponentSerializer.plainText().serialize(cosmetic).contains("unsafe"));
+    }
+
+    @Test
+    public void highlightsMentionsAtPlayerNameBoundaries() {
+        Component message = Component.text("Hi @Alex, not @Alexander or email@Alex");
+        Component highlighted = ChatModule.replaceMention(message, "alex",
+            ChatModule.safeFormatting("<yellow>@Alex</yellow>"));
+        assertEquals("Hi @Alex, not @Alexander or email@Alex",
+            PlainTextComponentSerializer.plainText().serialize(highlighted));
+        assertEquals(true, ChatModule.containsMention("Hi @aLeX!", "Alex"));
+        assertEquals(false, ChatModule.containsMention("Hi @Alexander", "Alex"));
+        assertEquals(false, ChatModule.containsMention("email@Alex", "Alex"));
+        assertEquals(true, hasColor(highlighted));
+    }
+
+    @Test
+    public void calculatesLightweightChatSimilarityAndDurations() {
+        assertEquals(100, ChatModule.similarity("repeat", "repeat"));
+        assertEquals(true, ChatModule.similarity("hello world", "hello world!") >= 85);
+        assertEquals(false, ChatModule.similarity("hello", "goodbye") >= 85);
+        assertEquals("hello world", ChatModule.normalizeMessage("  HELLO   world "));
+        assertEquals(1_000L, ChatModule.parseDurationMillis("1s", 50));
+        assertEquals(120_000L, ChatModule.parseDurationMillis("2m", 50));
+        assertEquals(50L, ChatModule.parseDurationMillis("invalid", 50));
+    }
+
+    @Test
+    public void migratesLegacyChatSettingsWithoutOverwritingNewSelections() {
+        YamlConfiguration chat = new YamlConfiguration();
+        chat.set("chat-colors.allow-hex", false);
+        chat.set("chat-colors.allow-gradients", false);
+        chat.set("chat-styles.allow-custom-gradients", true);
+        assertEquals(true, RivetConfig.migrateLegacyChatSettings(chat));
+        assertEquals(false, chat.getBoolean("chat-styles.allow-custom-hex"));
+        assertEquals(true, chat.getBoolean("chat-styles.allow-custom-gradients"));
+        chat.set("format", "<#f72a4c>%player%:</#f72a4c> <white>%message%</white>");
+        assertEquals(true, RivetConfig.migrateChatFormat(chat));
+        assertEquals(true, chat.getString("format").contains("%prefix%"));
+        assertEquals(true, chat.getString("format").contains("%tag%"));
+    }
+
+    @Test
+    public void packagesCompactChatControlStyleDefaultsAndPermissions() {
+        YamlConfiguration chat = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/settings/chat.yml"), StandardCharsets.UTF_8));
+        YamlConfiguration plugin = YamlConfiguration.loadConfiguration(new InputStreamReader(
+            getClass().getResourceAsStream("/plugin.yml"), StandardCharsets.UTF_8));
+        assertEquals("<red>", chat.getString("chat-styles.colors.red"));
+        assertEquals("<gradient:#ff512f:#f09819>",
+            chat.getString("chat-styles.gradients.sunset"));
+        assertEquals("<gold>[OG]</gold>", chat.getString("tags.list.og.display"));
+        assertEquals(85, chat.getInt("anti-spam.similarity.threshold"));
+        assertEquals(false, chat.contains("channels"));
+        assertEquals(true, plugin.getBoolean("permissions.rivet.chat.mention.default"));
+        assertEquals("op", plugin.getString("permissions.rivet.chat.style.custom.default"));
+        assertEquals(false, plugin.getBoolean("permissions.rivet.chat.tag.og.default"));
+    }
+
+    @Test
     public void appliesChatColorsWithoutDroppingItemHoverEvents() {
         Component message = Component.text("Diamond")
             .hoverEvent(Component.text("A very shiny item"));
@@ -1069,18 +1147,6 @@ public final class RivetPluginTest {
         assertEquals("Look: [Diamond Sword] / [Diamond Sword] / [info]",
             PlainTextComponentSerializer.plainText().serialize(message));
         assertEquals(true, hasHover(message));
-    }
-
-    @Test
-    public void resolvesPermissionHierarchyAndWildcards() {
-        YamlConfiguration groups = new YamlConfiguration();
-        groups.set("groups.default.permissions", List.of("rivet.message"));
-        groups.set("groups.staff.parent", "default");
-        groups.set("groups.staff.permissions", List.of("rivet.vanish", "rivet.world.*"));
-        Set<String> permissions = PermissionModule.groupPermissions(groups, "staff");
-        assertEquals(true, permissions.contains("rivet.message"));
-        assertEquals(true, PermissionModule.grants(permissions, "rivet.world.reset"));
-        assertEquals(false, PermissionModule.grants(permissions, "other.permission"));
     }
 
     private static boolean hasHover(Component component) {

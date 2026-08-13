@@ -55,9 +55,9 @@ final class RtpModule {
             + cooldown - now;
         if (remaining > 0 && !player.hasPermission("rivet.rtp.cooldown.bypass")
             && !player.hasPermission("rivet.tp.nocooldown")) {
-            player.sendMessage(MM.deserialize(settings.getString("messages.cooldown",
-                    "<white>You can use RTP again in <#f72a4c>%seconds%s</#f72a4c>."),
-                Placeholder.unparsed("seconds", Long.toString((remaining + 999) / 1000))));
+            plugin.messageActions().run(player, settings, "messages.cooldown",
+                "<white>You can use RTP again in <#f72a4c>%seconds%s</#f72a4c>.",
+                Placeholder.unparsed("seconds", Long.toString((remaining + 999) / 1000)));
             return true;
         }
         if (!searching.add(player.getUniqueId())) {
@@ -177,7 +177,7 @@ final class RtpModule {
     }
 
     private void message(Player player, String key, String fallback) {
-        player.sendMessage(MM.deserialize(settings.getString("messages." + key, fallback)));
+        plugin.messageActions().run(player, settings, "messages." + key, fallback);
     }
 
     static boolean validRadius(int minimum, int maximum) {

@@ -388,8 +388,8 @@ final class AutoBreeder implements Listener {
         } else if (args.length >= 2 && args.length <= 3) {
             target = plugin.getServer().getPlayerExact(args[0]);
             if (target == null) {
-                sender.sendMessage(text("messages.player-not-online",
-                    "<white>That player is not online.</white>"));
+                message(sender, "messages.player-not-online",
+                    "<white>That player is not online.</white>");
                 return true;
             }
             animal = supportedAnimal(args[1]);
@@ -402,14 +402,14 @@ final class AutoBreeder implements Listener {
         }
 
         if (animal == null) {
-            sender.sendMessage(text("messages.unsupported-animal",
-                "<white>Choose a supported animal type.</white>"));
+            message(sender, "messages.unsupported-animal",
+                "<white>Choose a supported animal type.</white>");
             return true;
         }
         int amount = amountArgument == null ? 1 : RivetPlugin.itemAmount(amountArgument);
         if (amount < 1 || amount > 2304) {
-            sender.sendMessage(text("messages.invalid-amount",
-                "<white>Amount must be a whole number from 1 to 2304.</white>"));
+            message(sender, "messages.invalid-amount",
+                "<white>Amount must be a whole number from 1 to 2304.</white>");
             return true;
         }
 
@@ -425,14 +425,14 @@ final class AutoBreeder implements Listener {
 
         String description = amount + " " + displayName(animal) + " Auto Breeder"
             + (amount == 1 ? "" : "s");
-        sender.sendMessage(text("messages.given",
+        message(sender, "messages.given",
             "<white>Gave <#f72a4c>%description%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.</white>",
             Placeholder.unparsed("description", description),
-            Placeholder.unparsed("player", target.getName())));
+            Placeholder.unparsed("player", target.getName()));
         if (!sender.equals(target)) {
-            target.sendMessage(text("messages.received",
+            message(target, "messages.received",
                 "<white>You received <#f72a4c>%description%</#f72a4c>.</white>",
-                Placeholder.unparsed("description", description)));
+                Placeholder.unparsed("description", description));
         }
         return true;
     }
@@ -527,8 +527,8 @@ final class AutoBreeder implements Listener {
     }
 
     private void usage(CommandSender sender) {
-        sender.sendMessage(text("messages.usage", "<white>Usage: /givebreeder &lt;animal&gt; [amount] or "
-            + "/givebreeder &lt;player&gt; &lt;animal&gt; [amount]</white>"));
+        message(sender, "messages.usage", "<white>Usage: /givebreeder &lt;animal&gt; [amount] or "
+            + "/givebreeder &lt;player&gt; &lt;animal&gt; [amount]</white>");
     }
 
     private void registerRecipes() {
@@ -942,6 +942,11 @@ final class AutoBreeder implements Listener {
         return MM.deserialize(settings.getString(path, fallback), placeholders);
     }
 
+    private void message(CommandSender recipient, String path, String fallback,
+                         TagResolver... placeholders) {
+        plugin.messageActions().run(recipient, settings, path, fallback, placeholders);
+    }
+
     private String nearestBreeder(Location source, EntityType animal) {
         return breeders.stream().filter(key -> animal(key) == animal).filter(key -> {
             Location location = location(key);
@@ -988,9 +993,9 @@ final class AutoBreeder implements Listener {
         renderExperience(inventory, 0);
         save();
         player.giveExp(experience);
-        player.sendActionBar(text("messages.experience-collected",
+        plugin.messageActions().run(player, settings, "messages.experience-collected", "actionbar",
             "<white>Collected <#f72a4c>%amount% XP</#f72a4c>.</white>",
-            Placeholder.unparsed("amount", Integer.toString(experience))));
+            Placeholder.unparsed("amount", Integer.toString(experience)));
     }
 
     private int storedExperience(String key) {

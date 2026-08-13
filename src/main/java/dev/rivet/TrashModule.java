@@ -45,7 +45,7 @@ final class TrashModule implements Listener {
                 "<#f72a4c>Trash — items are destroyed</#f72a4c>")));
         addConfiguredItems(holder);
         player.openInventory(holder.inventory);
-        guiActions.run(player, settings.getStringList("gui.open_commands"));
+        plugin.messageActions().run(player, settings, "gui.open_commands", List.of());
         return true;
     }
 

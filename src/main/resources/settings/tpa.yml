@@ -3,19 +3,19 @@ cooldown-seconds: 30
 
 # Messages support MiniMessage and the placeholders used in each default.
 messages:
-  usage-request: "<white>Use /tpa &lt;player&gt; or /tpahere &lt;player&gt;.</white>"
-  usage-answer: "<white>Use /tpaccept [player] or /tpdeny [player].</white>"
-  sent: "<white>Teleport request sent to <#f72a4c>%player%</#f72a4c>.</white>"
-  received: "<white>%player% wants to teleport to you. Use <#f72a4c>/tpaccept %player%</#f72a4c>.</white>"
-  received-here: "<white>%player% wants you to teleport to them. Use <#f72a4c>/tpaccept %player%</#f72a4c>.</white>"
-  accepted: "<white>Accepted <#f72a4c>%player%</#f72a4c>'s request.</white>"
-  accepted-requester: "<white>%player% accepted your teleport request.</white>"
-  denied: "<white>Denied <#f72a4c>%player%</#f72a4c>'s request.</white>"
-  denied-requester: "<white>%player% denied your teleport request.</white>"
-  expired: "<white>Your teleport request to <#f72a4c>%player%</#f72a4c> expired.</white>"
-  multiple: "<white>You have multiple requests: <#f72a4c>%players%</#f72a4c>. Specify a player.</white>"
-  none: "<white>No matching teleport request was found.</white>"
-  self: "<white>You cannot send a teleport request to yourself.</white>"
-  not-online: "<white>That player is not online.</white>"
-  cooldown: "<white>Wait %seconds% seconds before sending another request.</white>"
-  teleported: "<white>Teleport complete.</white>"
+  usage-request: { enabled: true, actions: ['[message] <white>Use /tpa &lt;player&gt; or /tpahere &lt;player&gt;.</white>'] }
+  usage-answer: { enabled: true, actions: ['[message] <white>Use /tpaccept [player] or /tpdeny [player].</white>'] }
+  sent: { enabled: true, actions: ['[message] <white>Teleport request sent to <#f72a4c>%player%</#f72a4c>.</white>'] }
+  received: { enabled: true, actions: ['[message] <white>%player% wants to teleport to you. Use <#f72a4c>/tpaccept %player%</#f72a4c>.</white>'] }
+  received-here: { enabled: true, actions: ['[message] <white>%player% wants you to teleport to them. Use <#f72a4c>/tpaccept %player%</#f72a4c>.</white>'] }
+  accepted: { enabled: true, actions: ["[message] <white>Accepted <#f72a4c>%player%</#f72a4c>'s request.</white>"] }
+  accepted-requester: { enabled: true, actions: ['[message] <white>%player% accepted your teleport request.</white>'] }
+  denied: { enabled: true, actions: ["[message] <white>Denied <#f72a4c>%player%</#f72a4c>'s request.</white>"] }
+  denied-requester: { enabled: true, actions: ['[message] <white>%player% denied your teleport request.</white>'] }
+  expired: { enabled: true, actions: ['[message] <white>Your teleport request to <#f72a4c>%player%</#f72a4c> expired.</white>'] }
+  multiple: { enabled: true, actions: ['[message] <white>You have multiple requests: <#f72a4c>%players%</#f72a4c>. Specify a player.</white>'] }
+  none: { enabled: true, actions: ['[message] <white>No matching teleport request was found.</white>'] }
+  self: { enabled: true, actions: ['[message] <white>You cannot send a teleport request to yourself.</white>'] }
+  not-online: { enabled: true, actions: ['[message] <white>That player is not online.</white>'] }
+  cooldown: { enabled: true, actions: ['[message] <white>Wait %seconds% seconds before sending another request.</white>'] }
+  teleported: { enabled: true, actions: ['[message] <white>Teleport complete.</white>'] }

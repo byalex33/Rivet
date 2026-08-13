@@ -135,13 +135,13 @@ final class StaffTools implements Listener {
         }
         String fallback = enabled ? "<white>God mode enabled for <#f72a4c>%target%</#f72a4c>."
             : "<white>God mode disabled for <#f72a4c>%target%</#f72a4c>.";
-        actor.sendMessage(MM.deserialize(settings.getString("messages.god-" +
-                (enabled ? "enabled" : "disabled"), fallback),
-            Placeholder.unparsed("target", target.getName())));
+        plugin.messageActions().run(actor, settings,
+            "messages.god-" + (enabled ? "enabled" : "disabled"), fallback,
+            Placeholder.unparsed("target", target.getName()));
         if (actor != target) {
-            target.sendMessage(MM.deserialize(settings.getString("messages.god-target-" +
-                (enabled ? "enabled" : "disabled"), enabled
-                ? "<white>God mode was enabled.</white>" : "<white>God mode was disabled.</white>")));
+            plugin.messageActions().run(target, settings,
+                "messages.god-target-" + (enabled ? "enabled" : "disabled"), enabled
+                    ? "<white>God mode was enabled.</white>" : "<white>God mode was disabled.</white>");
         }
         return true;
     }
@@ -194,9 +194,9 @@ final class StaffTools implements Listener {
             actor.sendMessage(MM.deserialize("<white>Command spy could not be saved safely.</white>"));
             return true;
         }
-        actor.sendMessage(MM.deserialize(settings.getString("messages.command-spy-" +
-            (enabled ? "enabled" : "disabled"), enabled
-            ? "<white>Command spy enabled.</white>" : "<white>Command spy disabled.</white>")));
+        plugin.messageActions().run(actor, settings,
+            "messages.command-spy-" + (enabled ? "enabled" : "disabled"), enabled
+                ? "<white>Command spy enabled.</white>" : "<white>Command spy disabled.</white>");
         return true;
     }
 
@@ -713,12 +713,12 @@ final class StaffTools implements Listener {
     }
 
     private void feedback(Player actor, Player target, String key, String fallback) {
-        actor.sendMessage(MM.deserialize(settings.getString("messages." + key, fallback),
-            Placeholder.unparsed("target", target.getName())));
+        plugin.messageActions().run(actor, settings, "messages." + key, fallback,
+            Placeholder.unparsed("target", target.getName()));
         if (actor != target) {
-            target.sendMessage(MM.deserialize(settings.getString("messages." + key + "-target",
-                "<white>You were restored by <#f72a4c>%player%</#f72a4c>."),
-                Placeholder.unparsed("player", actor.getName())));
+            plugin.messageActions().run(target, settings, "messages." + key + "-target",
+                "<white>You were restored by <#f72a4c>%player%</#f72a4c>.",
+                Placeholder.unparsed("player", actor.getName()));
         }
     }
 

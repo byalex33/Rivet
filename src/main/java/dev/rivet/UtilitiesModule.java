@@ -113,12 +113,11 @@ final class UtilitiesModule implements Listener {
         if (visible.isEmpty()) {
             names = Component.text("none");
         }
-        String format = plugin.settings("utilities").getString("list.format",
-            "<#f72a4c>Online (%count%/%maximum%):</#f72a4c> <#f72a4c>%players%</#f72a4c>");
-        viewer.sendMessage(MM.deserialize(format,
+        plugin.messageActions().run(viewer, plugin.settings("utilities"), "list.output",
+            "<#f72a4c>Online (%count%/%maximum%):</#f72a4c> <#f72a4c>%players%</#f72a4c>",
             Placeholder.unparsed("count", Integer.toString(visible.size())),
             Placeholder.unparsed("maximum", Integer.toString(plugin.getServer().getMaxPlayers())),
-            Placeholder.component("players", names)));
+            Placeholder.component("players", names));
         return true;
     }
 
@@ -135,11 +134,11 @@ final class UtilitiesModule implements Listener {
         }
         int ping = target.getPing();
         String quality = pingQuality(ping);
-        actor.sendMessage(MM.deserialize(plugin.settings("utilities").getString("ping.format",
-                "<#f72a4c>%player%'s ping:</#f72a4c> <#f72a4c>%ping% ms</#f72a4c> <white>(%quality%)</white>"),
+        plugin.messageActions().run(actor, plugin.settings("utilities"), "ping.output",
+            "<#f72a4c>%player%'s ping:</#f72a4c> <#f72a4c>%ping% ms</#f72a4c> <white>(%quality%)</white>",
             Placeholder.unparsed("player", target.getName()),
             Placeholder.unparsed("ping", Integer.toString(ping)),
-            Placeholder.unparsed("quality", quality)));
+            Placeholder.unparsed("quality", quality));
         return true;
     }
 

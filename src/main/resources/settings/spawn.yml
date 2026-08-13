@@ -4,6 +4,15 @@ join:
   teleport-first-join: false
 
 messages:
-  set: "<white>Spawn set to your location.</white>"
-  not-set: "<white>The server spawn has not been set.</white>"
-  teleported: "<white>Teleported to spawn.</white>"
+  set:
+    enabled: true
+    actions:
+      - '[message] <white>Spawn set to your location.</white>'
+  not-set:
+    enabled: true
+    actions:
+      - '[message] <white>The server spawn has not been set.</white>'
+  teleported:
+    enabled: true
+    actions:
+      - '[message] <white>Teleported to spawn.</white>'

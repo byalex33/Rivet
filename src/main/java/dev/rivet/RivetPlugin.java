@@ -372,6 +372,21 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         return guiActions;
     }
 
+    ChatMetadata chatMetadata(Player player) {
+        return permissions == null ? ChatMetadata.empty() : permissions.chatMetadata(player.getUniqueId());
+    }
+
+    Component chatDisplayName(Player player, Component externalName) {
+        if (permissions == null) {
+            return externalName;
+        }
+        Component name = nicknames == null ? Component.text(player.getName()) : nicknames.displayName(player);
+        if (afk != null && afk.isAfk(player.getUniqueId()) && afk.showIndicator()) {
+            name = name.append(afk.indicator());
+        }
+        return name;
+    }
+
     MessageActions messageActions() {
         return messageActions;
     }
@@ -549,8 +564,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (name.equals("log")) {
             return audit.command(sender, args);
         }
-        if (name.equals("perm") || name.equals("group")) {
-            return permissions.command(sender, name, args);
+        if (name.equals("perm")) {
+            return permissions.command(sender, args);
         }
         if (name.equals("hologram")) {
             return holograms.command(sender, args);
@@ -621,6 +636,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "socialspy" -> chat.socialSpy(player, args);
             case "ignore" -> chat.ignore(player, args);
             case "chatcolor" -> chat.chatColor(player, args);
+            case "tag" -> chat.tag(player, args);
             case "me" -> chat.me(player, args);
             case "tp" -> teleportPlayer(player, args);
             case "tppos" -> teleportPosition(player, args);
@@ -673,7 +689,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         List<String> choices;
         try {
             choices = switch (command.getName()) {
-                case "perm", "group" -> permissions.completions(command.getName(), args);
+                case "perm" -> permissions.completions(args);
                 case "hologram" -> holograms.completions(args);
                 case "flatworld" -> args.length == 1 ? List.of("create", "list", "reset", "tp")
                     : args.length == 2 && args[0].equalsIgnoreCase("tp") ? testWorlds(null)
@@ -697,6 +713,8 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     ? chat.ignoreCompletions(player, args) : List.of();
                 case "chatcolor" -> sender instanceof Player player
                     ? chat.chatColorCompletions(player, args) : List.of();
+                case "tag" -> sender instanceof Player player
+                    ? chat.tagCompletions(player, args) : List.of();
                 case "tpa", "tpahere", "tpaccept", "tpdeny" -> sender instanceof Player player
                     ? tpa.completions(player, command.getName(), args) : List.of();
                 case "kit" -> sender instanceof Player player ? kits.completions(player, args) : List.of();
@@ -1666,6 +1684,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     void refreshDisplayName(Player player) {
         Component name = nicknames == null ? Component.text(player.getName()) : nicknames.displayName(player);
+        if (permissions != null) {
+            name = permissions.decorateName(player, name);
+        }
         if (afk != null && afk.isAfk(player.getUniqueId()) && afk.showIndicator()) {
             name = name.append(afk.indicator());
         }
@@ -1772,18 +1793,15 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     private void runEnvironmentActions(Player player, String section, String command) {
         String path = section + "." + command + ".commands_when_ran";
-        List<String> actions = settings("environment").contains(path)
-            ? settings("environment").getStringList(path)
-            : List.of(
+        messageActions.run(player, settings("environment"), path, List.of(
                 "[actionbar] <white>" + (section.equals("times") ? "Time" : "Weather")
                     + " set to <green>" + titleCase(command) + "</green></white>",
-                "[sound] ui_button_click");
-        guiActions.run(player, actions);
+                "[sound] ui_button_click"));
     }
 
     private void moduleMessage(Player player, String module, String path, String fallback,
                                TagResolver... placeholders) {
-        player.sendMessage(MM.deserialize(settings(module).getString(path, fallback), placeholders));
+        messageActions.run(player, settings(module), path, fallback, placeholders);
     }
 
     private void configuredEffect(Player player, String module, String path,
@@ -2059,7 +2077,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     static String moduleForCommand(String command) {
         return switch (command) {
-            case "msg", "r", "socialspy", "ignore", "chatcolor", "me" -> "chat";
+            case "msg", "r", "socialspy", "ignore", "chatcolor", "tag", "me" -> "chat";
             case "sethome", "home", "delhome" -> "homes";
             case "setwarp", "warp", "delwarp" -> "warps";
             case "hologram" -> "holograms";
@@ -2080,7 +2098,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "near" -> "near";
             case "givebreeder", "clearhologram" -> "breeders";
             case "restorationcore" -> "creeper-restoration";
-            case "perm", "group" -> "permissions";
+            case "perm" -> "permissions";
             case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall", "findbiome", "top", "tree" -> "worlds";
             case "gmc", "gms", "tp", "tppos", "vanish", "fly", "heal", "feed", "god", "flyspeed", "commandspy", "bossbarmsg",
                  "note", "sameip", "toast" -> "staff";

@@ -10,7 +10,9 @@ sound:
 announcements:
   discord:
     enabled: true
-    message: "<white>Join our Discord at <#f72a4c>discord.example.com</#f72a4c>"
+    actions:
+      - '[broadcast] <white>Join our Discord at <#f72a4c>discord.example.com</#f72a4c>'
   homes:
     enabled: true
-    message: "<white>Remember to use <#f72a4c>/sethome</#f72a4c>!</white>"
+    actions:
+      - '[broadcast] <white>Remember to use <#f72a4c>/sethome</#f72a4c>!</white>'

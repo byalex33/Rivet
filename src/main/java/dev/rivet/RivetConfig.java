@@ -67,12 +67,24 @@ final class RivetConfig {
         for (String name : SETTINGS) {
             saveResource("settings/" + name + ".yml");
             YamlConfiguration configured = loadChecked(settingsFile(name));
-            boolean settingsChanged = migrateMessageActions(name, configured);
+            if (name.equals("permissions")) {
+                configured.options().pathSeparator('/');
+            }
+            boolean settingsChanged = name.equals("permissions")
+                && PermissionModule.migrateGroups(configured);
+            settingsChanged |= migrateRenamedMessageActions(name, configured);
+            settingsChanged |= migrateMessageActions(name, configured);
+            if (name.equals("chat") && migrateLegacyChatSettings(configured)) {
+                settingsChanged = true;
+            }
             settingsChanged |= mergeBundledDefaults(name, configured);
             if (migrateMessagePalette && migrateMessagePalette(configured, name)) {
                 settingsChanged = true;
             }
             if (migratePlaceholderSyntax(configured, name)) {
+                settingsChanged = true;
+            }
+            if (name.equals("chat") && migrateChatFormat(configured)) {
                 settingsChanged = true;
             }
             if (settingsChanged) {
@@ -127,7 +139,11 @@ final class RivetConfig {
         validateModules(nextModules, new File(plugin.getDataFolder(), "modules.yml"));
         Map<String, YamlConfiguration> nextSettings = new HashMap<>();
         for (String name : SETTINGS) {
-            nextSettings.put(name, loadChecked(settingsFile(name)));
+            YamlConfiguration configured = loadChecked(settingsFile(name));
+            if (name.equals("permissions")) {
+                configured.options().pathSeparator('/');
+            }
+            nextSettings.put(name, configured);
         }
 
         List<String> changedModules = changedModules(activeModules, nextModules);
@@ -201,6 +217,9 @@ final class RivetConfig {
             }
             YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
                 new InputStreamReader(resource, StandardCharsets.UTF_8));
+            if (module.equals("permissions")) {
+                defaults.options().pathSeparator('/');
+            }
             boolean changed = false;
             for (Map.Entry<String, Object> entry : defaults.getValues(true).entrySet()) {
                 if (!(entry.getValue() instanceof ConfigurationSection)
@@ -226,23 +245,104 @@ final class RivetConfig {
             for (String actionsPath : defaults.getValues(true).keySet().stream()
                  .filter(path -> path.endsWith(".actions") && defaults.isList(path)).toList()) {
                 String eventPath = actionsPath.substring(0, actionsPath.length() - ".actions".length());
-                String legacy = configured.isString(eventPath) ? configured.getString(eventPath) : null;
-                if (legacy == null) {
+                String legacyTextPath = eventPath + ".text";
+                String legacyMessagePath = eventPath + ".message";
+                String legacy = configured.isString(eventPath) ? configured.getString(eventPath)
+                    : configured.isString(legacyTextPath) ? configured.getString(legacyTextPath)
+                    : configured.isString(legacyMessagePath) ? configured.getString(legacyMessagePath) : null;
+                List<String> legacyActions = configured.isList(eventPath)
+                    ? List.copyOf(configured.getStringList(eventPath)) : null;
+                if (legacy == null && legacyActions == null) {
                     continue;
                 }
                 List<String> defaultActions = defaults.getStringList(actionsPath);
                 String tag = defaultActions.isEmpty() ? "message"
                     : java.util.Optional.ofNullable(GuiActions.parseAction(defaultActions.getFirst()))
                         .map(GuiActions.Action::tag).orElse("message");
+                boolean enabled = configured.getBoolean(eventPath + ".enabled", true);
                 configured.set(eventPath, null);
-                configured.set(eventPath + ".enabled", true);
-                configured.set(actionsPath, List.of("[" + tag + "] " + legacy));
+                configured.set(eventPath + ".enabled", enabled);
+                configured.set(actionsPath, legacyActions != null
+                    ? legacyActions : List.of("[" + tag + "] " + legacy));
                 changed = true;
             }
             return changed;
         } catch (IOException exception) {
             throw new IllegalStateException("Could not read bundled settings for " + module, exception);
         }
+    }
+
+    private static boolean migrateRenamedMessageActions(String module,
+                                                        YamlConfiguration configured) {
+        boolean changed = false;
+        if (module.equals("statistics")) {
+            if (!configured.isConfigurationSection("statistics")
+                && (configured.isString("header") || configured.isList("lines"))) {
+                java.util.ArrayList<String> actions = new java.util.ArrayList<>();
+                if (configured.isString("header")) {
+                    actions.add("[message] " + configured.getString("header"));
+                }
+                configured.getStringList("lines").forEach(line -> actions.add("[message] " + line));
+                configured.set("header", null);
+                configured.set("lines", null);
+                configured.set("statistics.enabled", true);
+                configured.set("statistics.actions", actions);
+                changed = true;
+            }
+            if (configured.isString("playtime-format")
+                && !configured.isConfigurationSection("playtime")) {
+                String legacy = configured.getString("playtime-format");
+                configured.set("playtime-format", null);
+                configured.set("playtime.enabled", true);
+                configured.set("playtime.actions", List.of("[message] " + legacy));
+                changed = true;
+            }
+        } else if (module.equals("utilities")) {
+            changed |= migrateRenamedMessage(configured, "list.format", "list.output");
+            changed |= migrateRenamedMessage(configured, "ping.format", "ping.output");
+        } else if (module.equals("join-leave")) {
+            changed |= migrateRenamedMessage(configured, "join.message", "join", "broadcast");
+            changed |= migrateRenamedMessage(configured, "leave.message", "leave", "broadcast");
+            changed |= migrateRenamedMessage(configured, "first-join.message", "first-join", "broadcast");
+            changed |= migrateRenamedMessage(configured, "welcome-chat.message", "welcome-chat");
+            if (!configured.contains("welcome-title.actions")
+                && (configured.isString("welcome-title.title")
+                    || configured.isString("welcome-title.subtitle"))) {
+                String title = configured.getString("welcome-title.title", "");
+                String subtitle = configured.getString("welcome-title.subtitle", "");
+                configured.set("welcome-title.title", null);
+                configured.set("welcome-title.subtitle", null);
+                configured.set("welcome-title.actions", List.of(
+                    "[title] " + title + " | " + subtitle + " | 5 | 30 | 10"));
+                changed = true;
+            }
+            if (configured.isList("motd.lines") && !configured.contains("motd.actions")) {
+                List<String> actions = configured.getStringList("motd.lines").stream()
+                    .map(line -> "[message] " + line).toList();
+                configured.set("motd.lines", null);
+                configured.set("motd.actions", actions);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    private static boolean migrateRenamedMessage(YamlConfiguration configured,
+                                                 String legacyPath, String eventPath) {
+        return migrateRenamedMessage(configured, legacyPath, eventPath, "message");
+    }
+
+    private static boolean migrateRenamedMessage(YamlConfiguration configured,
+                                                 String legacyPath, String eventPath,
+                                                 String actionTag) {
+        if (!configured.isString(legacyPath) || configured.isConfigurationSection(eventPath)) {
+            return false;
+        }
+        String legacy = configured.getString(legacyPath);
+        configured.set(legacyPath, null);
+        configured.set(eventPath + ".enabled", true);
+        configured.set(eventPath + ".actions", List.of("[" + actionTag + "] " + legacy));
+        return true;
     }
 
     private void addMissingModuleSwitches(File file)
@@ -402,6 +502,36 @@ final class RivetConfig {
     static String migratePlaceholders(String module, String path, String message) {
         return path.toLowerCase(java.util.Locale.ROOT).contains("usage")
             ? message : RivetMiniMessage.toPercentPlaceholders(message);
+    }
+
+    static boolean migrateChatFormat(YamlConfiguration configuration) {
+        String old = "<#f72a4c>%player%:</#f72a4c> <white>%message%</white>";
+        if (!old.equals(configuration.getString("format"))) {
+            return false;
+        }
+        configuration.set("format",
+            "%prefix%%tag% %player%%suffix%<dark_gray>: </dark_gray>%message%");
+        return true;
+    }
+
+    static boolean migrateLegacyChatSettings(YamlConfiguration configuration) {
+        boolean changed = false;
+        changed |= copyLegacyChatSetting(configuration, "chat-colors.allow-hex",
+            "chat-styles.allow-custom-hex");
+        changed |= copyLegacyChatSetting(configuration, "chat-colors.allow-gradients",
+            "chat-styles.allow-custom-gradients");
+        changed |= copyLegacyChatSetting(configuration, "chat-colors.allow-rainbow",
+            "chat-styles.allow-rainbow");
+        return changed;
+    }
+
+    private static boolean copyLegacyChatSetting(YamlConfiguration configuration,
+                                                 String oldPath, String newPath) {
+        if (!configuration.isBoolean(oldPath) || configuration.contains(newPath)) {
+            return false;
+        }
+        configuration.set(newPath, configuration.getBoolean(oldPath));
+        return true;
     }
 
     static String migrateMessage(String module, String path, String message) {

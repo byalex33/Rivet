@@ -25,9 +25,12 @@ public final class LaggModuleTest {
         assertEquals(List.of(60, 30, 10), settings.getIntegerList("warning-seconds"));
         assertEquals(true, settings.getBoolean("ignore.custom-names"));
         assertEquals(true, settings.getBoolean("ignore.persistent-data"));
-        List.of("messages.warning", "messages.cleanup", "messages.hover-label",
-            "messages.hover-header", "messages.hover-entry", "messages.hover-empty",
-            "messages.reloaded", "messages.reload-failed", "messages.usage")
+        List.of("messages.warning.actions", "messages.cleanup.actions",
+            "messages.reloaded.actions", "messages.reload-failed.actions",
+            "messages.usage.actions")
+            .forEach(path -> assertEquals(path, true, settings.isList(path)));
+        List.of("messages.hover-label", "messages.hover-header", "messages.hover-entry",
+            "messages.hover-empty")
             .forEach(path -> assertEquals(path, true, settings.isString(path)));
         assertEquals("<details>", RivetMiniMessage.toResolverTags("%details%"));
     }

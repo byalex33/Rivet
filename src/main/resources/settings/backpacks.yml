@@ -3,11 +3,19 @@ default-rows: 3
 title: "<#f72a4c>Backpack"
 
 gui:
-  open_commands: []
+  open_commands:
+    enabled: true
+    actions: []
 
 # World names are matched case-insensitively. Leave empty to allow every world.
 blocked-worlds: []
 
 messages:
-  blocked-world: "<white>Backpacks are disabled in this world.</white>"
-  overflow: "<white>Items above your current backpack size are safely retained until you regain more rows.</white>"
+  blocked-world:
+    enabled: true
+    actions:
+      - '[message] <white>Backpacks are disabled in this world.</white>'
+  overflow:
+    enabled: true
+    actions:
+      - '[message] <white>Items above your current backpack size are safely retained until you regain more rows.</white>'

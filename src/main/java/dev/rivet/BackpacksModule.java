@@ -47,7 +47,7 @@ final class BackpacksModule implements Listener {
         }
         Inventory inventory = open.computeIfAbsent(player.getUniqueId(), ignored -> load(player));
         player.openInventory(inventory);
-        plugin.guiActions().run(player, settings.getStringList("gui.open_commands"));
+        plugin.messageActions().run(player, settings, "gui.open_commands", List.of());
         return true;
     }
 
@@ -139,7 +139,7 @@ final class BackpacksModule implements Listener {
     }
 
     private void message(Player player, String key, String fallback) {
-        player.sendMessage(MM.deserialize(settings.getString("messages." + key, fallback)));
+        plugin.messageActions().run(player, settings, "messages." + key, fallback);
     }
 
     private static String path(UUID player) {

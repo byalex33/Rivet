@@ -133,10 +133,10 @@ final class TreeFeller implements Listener {
         ItemStack dropTool = axe.clone();
         player.getInventory().setItemInMainHand(axe.damage(logs.size(), player));
         animate(tree, dropTool, player);
-        player.sendActionBar(MM.deserialize(settings.getString("tree-feller.message",
-                "<white>Felled <#f72a4c>%count%</#f72a4c> × <#f72a4c>%material%</#f72a4c></white>"),
+        plugin.messageActions().run(player, settings, "tree-feller.message", "actionbar",
+            "<white>Felled <#f72a4c>%count%</#f72a4c> × <#f72a4c>%material%</#f72a4c></white>",
             Placeholder.unparsed("count", Integer.toString(logs.size())),
-            Placeholder.component("material", Component.translatable(wood.translationKey()))));
+            Placeholder.component("material", Component.translatable(wood.translationKey())));
     }
 
     private void mineVein(BlockBreakEvent event, Player player, Block base, ItemStack pickaxe) {
@@ -166,10 +166,10 @@ final class TreeFeller implements Listener {
                 dropVeinClump(collector);
             }
         }
-        player.sendActionBar(MM.deserialize(settings.getString("veinminer.message",
-                "<white>Mined <#f72a4c>%count%</#f72a4c> of <#f72a4c>%material%</#f72a4c></white>"),
+        plugin.messageActions().run(player, settings, "veinminer.message", "actionbar",
+            "<white>Mined <#f72a4c>%count%</#f72a4c> of <#f72a4c>%material%</#f72a4c></white>",
             Placeholder.unparsed("count", Integer.toString(vein.size())),
-            Placeholder.component("material", Component.translatable(mined.translationKey()))));
+            Placeholder.component("material", Component.translatable(mined.translationKey())));
         veinEffect(player, base);
     }
 

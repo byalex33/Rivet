@@ -33,8 +33,7 @@ final class PosesModule implements Listener {
             return true;
         }
         if (!allowed(player)) {
-            player.sendMessage(MM.deserialize(plugin.settings("poses").getString("messages.not-allowed",
-                "<white>Poses are not allowed in this world.")));
+            message(player, "messages.not-allowed", "<white>Poses are not allowed in this world.");
             return true;
         }
         PoseMode mode = modeFor(command);
@@ -50,8 +49,8 @@ final class PosesModule implements Listener {
             player.sendMessage(MM.deserialize("<white>Could not enable that pose here.</white>"));
             return true;
         }
-        player.sendMessage(MM.deserialize(plugin.settings("poses").getString("messages.enabled",
-            "<white>Pose enabled. Move, dismount, or run the command again to leave it.")));
+        message(player, "messages.enabled",
+            "<white>Pose enabled. Move, dismount, or run the command again to leave it.");
         return true;
     }
 
@@ -119,9 +118,12 @@ final class PosesModule implements Listener {
         }
         player.setPose(Pose.STANDING, false);
         if (notify && player.isOnline()) {
-            player.sendMessage(MM.deserialize(plugin.settings("poses").getString("messages.disabled",
-                "<white>Pose disabled.")));
+            message(player, "messages.disabled", "<white>Pose disabled.");
         }
+    }
+
+    private void message(Player player, String path, String fallback) {
+        plugin.messageActions().run(player, plugin.settings("poses"), path, fallback);
     }
 
     private boolean activate(Player player, PoseMode mode) {

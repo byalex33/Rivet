@@ -90,9 +90,9 @@ final class FilterModule implements Listener {
         lastFeedback.put(player.getUniqueId(), now);
         var settings = plugin.settings("filter");
         if (settings.getBoolean("feedback.action-bar", true)) {
-            player.sendActionBar(MM.deserialize(settings.getString("messages.blocked-pickup",
-                    "<white>Pickup blocked: <#f72a4c>%item%</#f72a4c>"),
-                Placeholder.unparsed("item", display(event.getItem().getItemStack().getType()))));
+            plugin.messageActions().run(player, settings, "messages.blocked-pickup", "actionbar",
+                "<white>Pickup blocked: <#f72a4c>%item%</#f72a4c>",
+                Placeholder.unparsed("item", display(event.getItem().getItemStack().getType())));
         }
         String configuredSound = settings.getString("feedback.sound", "");
         Sound sound = ConfiguredEffect.resolveSound(configuredSound);
@@ -211,10 +211,10 @@ final class FilterModule implements Listener {
             return true;
         }
         List<Material> materials = sorted(player);
-        player.sendMessage(MM.deserialize(plugin.settings("filter").getString("messages.list",
-                "<#f72a4c>Filtered items:</#f72a4c> <#f72a4c>%items%</#f72a4c>"),
+        plugin.messageActions().run(player, plugin.settings("filter"), "messages.list",
+            "<#f72a4c>Filtered items:</#f72a4c> <#f72a4c>%items%</#f72a4c>",
             Placeholder.unparsed("items", materials.isEmpty() ? "none"
-                : String.join(", ", materials.stream().map(FilterModule::display).toList()))));
+                : String.join(", ", materials.stream().map(FilterModule::display).toList())));
         return true;
     }
 

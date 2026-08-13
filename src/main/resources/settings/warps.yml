@@ -1,15 +1,15 @@
 # Saved warps are stored in ../data/warps.yml.
 
 messages:
-  usage-set: "<white>Usage: /setwarp &lt;name&gt;</white>"
-  usage-teleport: "<white>Usage: /warp &lt;name&gt;</white>"
-  usage-delete: "<white>Usage: /delwarp &lt;name&gt;</white>"
-  set: "<white>Warp <#f72a4c>%name%</#f72a4c> set.</white>"
-  missing: "<white>No %name% is set.</white>"
-  deleted: "<white>Warp <#f72a4c>%name%</#f72a4c> deleted.</white>"
-  world-unavailable: "<white>The world for <#f72a4c>%name%</#f72a4c> is unavailable.</white>"
-  teleported: "<white>Teleported to <#f72a4c>%name%</#f72a4c>.</white>"
-  save-failed: "<white>Could not save the change. Check the console.</white>"
+  usage-set: { enabled: true, actions: ['[message] <white>Usage: /setwarp &lt;name&gt;</white>'] }
+  usage-teleport: { enabled: true, actions: ['[message] <white>Usage: /warp &lt;name&gt;</white>'] }
+  usage-delete: { enabled: true, actions: ['[message] <white>Usage: /delwarp &lt;name&gt;</white>'] }
+  set: { enabled: true, actions: ['[message] <white>Warp <#f72a4c>%name%</#f72a4c> set.</white>'] }
+  missing: { enabled: true, actions: ['[message] <white>No %name% is set.</white>'] }
+  deleted: { enabled: true, actions: ['[message] <white>Warp <#f72a4c>%name%</#f72a4c> deleted.</white>'] }
+  world-unavailable: { enabled: true, actions: ['[message] <white>The world for <#f72a4c>%name%</#f72a4c> is unavailable.</white>'] }
+  teleported: { enabled: true, actions: ['[message] <white>Teleported to <#f72a4c>%name%</#f72a4c>.</white>'] }
+  save-failed: { enabled: true, actions: ['[message] <white>Could not save the change. Check the console.</white>'] }
 
 effects:
   teleport:

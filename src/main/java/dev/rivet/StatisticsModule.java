@@ -63,10 +63,8 @@ final class StatisticsModule {
             Placeholder.unparsed("jumps", Integer.toString(target.getStatistic(Statistic.JUMP))),
             Placeholder.unparsed("since_first_join", firstPlayed <= 0 ? "unknown"
                 : duration(System.currentTimeMillis() - firstPlayed)));
-        sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString("header",
-            "<#f72a4c><bold>%player%'s statistics</bold></#f72a4c>"), placeholders));
-        plugin.settings("statistics").getStringList("lines")
-            .forEach(line -> sender.sendMessage(MM.deserialize(line, placeholders)));
+        plugin.messageActions().run(sender, plugin.settings("statistics"), "statistics", List.of(
+            "[message] <#f72a4c><bold>%player%'s statistics</bold></#f72a4c>"), placeholders);
         return true;
     }
 
@@ -93,17 +91,17 @@ final class StatisticsModule {
             sender.sendMessage(MM.deserialize("<white>That player could not be found."));
             return true;
         }
-        sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString("playtime-format",
-                "<#f72a4c>%player%'s playtime:</#f72a4c> <#f72a4c>%playtime%</#f72a4c>"),
+        plugin.messageActions().run(sender, plugin.settings("statistics"), "playtime",
+            "<#f72a4c>%player%'s playtime:</#f72a4c> <#f72a4c>%playtime%</#f72a4c>",
             Placeholder.unparsed("player", target.getName()),
-            Placeholder.unparsed("playtime", duration(target.getStatistic(Statistic.PLAY_ONE_MINUTE) * 50L))));
+            Placeholder.unparsed("playtime", duration(target.getStatistic(Statistic.PLAY_ONE_MINUTE) * 50L)));
         return true;
     }
 
     boolean seen(CommandSender sender, String[] args) {
         if (args.length != 1) {
-            sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString(
-                "seen.usage", "<white>Usage: /seen &lt;player&gt;</white>")));
+            plugin.messageActions().run(sender, plugin.settings("statistics"), "seen.usage",
+                "<white>Usage: /seen &lt;player&gt;</white>");
             return true;
         }
 
@@ -134,8 +132,8 @@ final class StatisticsModule {
         String fallback = online == null
             ? "<white><#f72a4c>%player%</#f72a4c> was last seen <#f72a4c>%duration%</#f72a4c> ago (%timestamp%).</white>"
             : "<white><#f72a4c>%player%</#f72a4c> is currently online (joined <#f72a4c>%duration%</#f72a4c> ago).</white>";
-        sender.sendMessage(MM.deserialize(
-            plugin.settings("statistics").getString(path, fallback), placeholders));
+        plugin.messageActions().run(sender, plugin.settings("statistics"), path, fallback,
+            placeholders);
         return true;
     }
 
@@ -162,8 +160,8 @@ final class StatisticsModule {
     }
 
     private void notFound(CommandSender sender) {
-        sender.sendMessage(MM.deserialize(plugin.settings("statistics").getString(
-            "seen.not-found", "<white>That player could not be found.</white>")));
+        plugin.messageActions().run(sender, plugin.settings("statistics"), "seen.not-found",
+            "<white>That player could not be found.</white>");
     }
 
     private String timestamp(long millis) {

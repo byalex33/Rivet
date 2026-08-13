@@ -17,7 +17,7 @@ Rivet is a modular utility plugin for Paper servers. It combines survival featur
 Rivet includes:
 
 - Homes, public warps, spawn management, teleport requests, graves, and safe random teleportation.
-- MiniMessage chat, private messages, social spy, ignore lists, chat colors, nicknames, AFK state, playtime, statistics, and last-seen information.
+- Formatted chat, friendly colors and gradients, cosmetic tags, mentions, private messages, social spy, ignore lists, nicknames, AFK state, playtime, statistics, and last-seen information.
 - Kits, backpacks, daily rewards, pickup filters, trash inventories, portable workstations, and native player poses.
 - Auto breeders, faster hoppers, ground-item cleanup, egg capture, villager trade rerolling, tree felling, vein mining, mob heads, holograms, and creeper-crater restoration.
 - Test worlds, biome search, time and weather controls, inventory scanning, and world administration.

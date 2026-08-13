@@ -1,16 +1,33 @@
-# Rivet permission groups. Player assignments and direct grants are saved in
-# ../data/permissions.yml.
+# Rivet permission groups. User group memberships and direct permission states
+# are stored by UUID in ../data/permissions.yml.
 groups:
   default:
+    weight: 0
+    parents: []
     permissions:
-      - rivet.message
+      rivet.message: true
+    meta:
+      prefix: ""
+      suffix: ""
+
   staff:
-    parent: default
+    weight: 50
+    parents:
+      - default
     permissions:
-      - rivet.teleport
-      - rivet.vanish
-      - rivet.vanish.see
+      rivet.teleport: true
+      rivet.vanish: true
+      rivet.vanish.see: true
+    meta:
+      prefix: "<#f72a4c>[Staff] </#f72a4c>"
+      suffix: ""
+
   admin:
-    parent: staff
+    weight: 100
+    parents:
+      - staff
     permissions:
-      - "*"
+      "*": true
+    meta:
+      prefix: "<#f72a4c>[Admin] </#f72a4c>"
+      suffix: ""

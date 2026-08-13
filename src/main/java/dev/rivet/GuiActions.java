@@ -7,6 +7,8 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Registry;
@@ -14,6 +16,8 @@ import org.bukkit.Sound;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Firework;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.time.Duration;
@@ -55,7 +59,8 @@ final class GuiActions {
                 case "toast" -> toast(player, action.value(), placeholders);
                 case "actionbar", "action-bar" -> player.sendActionBar(
                     MM.deserialize(action.value(), placeholders));
-                case "particle" -> particle(player, action.value());
+                case "particle", "particles" -> particle(player, action.value());
+                case "firework" -> firework(player, action.value());
                 case "title" -> title(player, action.value(), placeholders);
                 case "bossbar", "boss-bar" -> bossBar(player, action.value(), placeholders);
                 case "lightning" -> player.getWorld().strikeLightningEffect(player.getLocation());
@@ -71,12 +76,15 @@ final class GuiActions {
     }
 
     private void sound(Player player, String configured) {
-        Sound sound = ConfiguredEffect.resolveSound(configured);
+        String[] arguments = arguments(configured);
+        Sound sound = arguments.length == 0 ? null : ConfiguredEffect.resolveSound(arguments[0]);
         if (sound == null) {
             warn("sound", configured);
             return;
         }
-        player.playSound(player.getLocation(), sound, 1, 1);
+        float volume = positiveFloat(arguments, 1, 1);
+        float pitch = rangedFloat(arguments, 2, 1, 0, 2);
+        player.playSound(player.getLocation(), sound, volume, pitch);
     }
 
     private void particle(Player player, String configured) {
@@ -101,6 +109,57 @@ final class GuiActions {
             return;
         }
         player.spawnParticle(particle, player.getLocation().add(0, 1, 0), count, .35, .5, .35, .02);
+    }
+
+    private void firework(Player player, String configured) {
+        String[] fields = configured.split("\\s*\\|\\s*", -1);
+        List<Color> colors = fields.length == 0 || fields[0].isBlank()
+            ? List.of(Color.LIME, Color.YELLOW)
+            : java.util.Arrays.stream(fields[0].split(",")).map(String::strip)
+                .map(GuiActions::color).filter(java.util.Objects::nonNull).toList();
+        if (colors.isEmpty()) {
+            warn("firework", configured);
+            return;
+        }
+        FireworkEffect.Type type;
+        try {
+            type = fields.length > 1 && !fields[1].isBlank()
+                ? FireworkEffect.Type.valueOf(fields[1].strip().toUpperCase(Locale.ROOT))
+                : FireworkEffect.Type.BALL_LARGE;
+        } catch (IllegalArgumentException exception) {
+            warn("firework", configured);
+            return;
+        }
+        int power = Math.clamp(positiveInt(fields, 2, 1), 0, 2);
+        int count = Math.clamp(positiveInt(fields, 3, 1), 1, 100);
+        int gap = Math.clamp(positiveInt(fields, 4, 10), 0, 1_200);
+        for (int index = 0; index < count; index++) {
+            plugin.getServer().getScheduler().runTaskLater(plugin,
+                () -> spawnFirework(player, colors, type, power), (long) index * gap);
+        }
+    }
+
+    private static void spawnFirework(Player player, List<Color> colors,
+                                      FireworkEffect.Type type, int power) {
+        if (!player.isOnline()) {
+            return;
+        }
+        Firework firework = player.getWorld().spawn(player.getLocation().add(0, 1, 0), Firework.class);
+        FireworkMeta meta = firework.getFireworkMeta();
+        meta.addEffect(FireworkEffect.builder().with(type).withColor(colors)
+            .flicker(true).trail(true).build());
+        meta.setPower(power);
+        firework.setFireworkMeta(meta);
+    }
+
+    private static Color color(String configured) {
+        String hex = configured.startsWith("#") ? configured.substring(1) : configured;
+        try {
+            return hex.matches("[0-9a-fA-F]{6}")
+                ? Color.fromRGB(Integer.parseInt(hex, 16)) : null;
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 
     private void title(Player player, String configured, TagResolver placeholders) {
@@ -221,6 +280,24 @@ final class GuiActions {
         try {
             int parsed = Integer.parseInt(values[index].trim());
             return parsed >= 0 ? parsed : fallback;
+        } catch (NumberFormatException exception) {
+            return fallback;
+        }
+    }
+
+    private static float positiveFloat(String[] values, int index, float fallback) {
+        return rangedFloat(values, index, fallback, 0, Float.MAX_VALUE);
+    }
+
+    private static float rangedFloat(String[] values, int index, float fallback,
+                                     float minimum, float maximum) {
+        if (index >= values.length) {
+            return fallback;
+        }
+        try {
+            float parsed = Float.parseFloat(values[index].trim());
+            return Float.isFinite(parsed) && parsed >= minimum && parsed <= maximum
+                ? parsed : fallback;
         } catch (NumberFormatException exception) {
             return fallback;
         }
