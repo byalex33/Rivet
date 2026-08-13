@@ -144,7 +144,7 @@ Operators receive `rivet.tp.nocooldown` by default. It makes player-facing telep
 
 ### Ground-item cleanup
 
-`settings/lagg.yml` controls the cleanup interval, warning times, protected-item rules, and every cleanup message. Rivet scans loaded worlds only when a cleanup runs. By default, dropped items with custom names, PersistentDataContainer data, or a material in `crop-materials` are protected. The crop list includes ordinary farmland crops, seeds, nether wart, cocoa, berries, melon and pumpkin products, sugar cane, cactus, bamboo, kelp, mushrooms, and chorus harvests. The cleanup result reports both removed entity stacks and their combined item amount; its configurable hover label shows the complete breakdown by material.
+`settings/lagg.yml` controls the cleanup interval, warning times, protected-item rules, and every cleanup message, including the `/lagg timer` response. Rivet scans loaded worlds only when a cleanup runs. By default, dropped items with custom names, PersistentDataContainer data, or a material in `crop-materials` are protected. The crop list includes ordinary farmland crops, seeds, nether wart, cocoa, berries, melon and pumpkin products, sugar cane, cactus, bamboo, kelp, mushrooms, and chorus harvests. The cleanup result reports both removed entity stacks and their combined item amount; its configurable hover label shows the complete breakdown by material.
 
 ### Item pickup filter
 

@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
@@ -40,6 +41,7 @@ final class LaggModule {
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
     private final List<BukkitTask> tasks = new ArrayList<>();
+    private long nextCleanupAtMillis;
 
     LaggModule(RivetPlugin plugin) {
         this.plugin = plugin;
@@ -49,7 +51,7 @@ final class LaggModule {
 
     boolean command(CommandSender sender, String[] args) {
         if (args.length != 1) {
-            message(sender, "messages.usage", "<white>Usage: /lagg clear</white>");
+            message(sender, "messages.usage", "<white>Usage: /lagg <clear|timer></white>");
             return true;
         }
         if (args[0].equalsIgnoreCase("clear")) {
@@ -58,7 +60,15 @@ final class LaggModule {
             reload();
             return true;
         }
-        message(sender, "messages.usage", "<white>Usage: /lagg clear</white>");
+        if (args[0].equalsIgnoreCase("timer")) {
+            long seconds = secondsUntil(nextCleanupAtMillis, System.currentTimeMillis());
+            message(sender, "messages.timer",
+                "<white>Next ground-item cleanup in <#f72a4c>%time%</#f72a4c>.</white>",
+                Placeholder.unparsed("time", formatDuration(seconds)),
+                Placeholder.unparsed("seconds", Long.toString(seconds)));
+            return true;
+        }
+        message(sender, "messages.usage", "<white>Usage: /lagg <clear|timer></white>");
         return true;
     }
 
@@ -67,17 +77,21 @@ final class LaggModule {
         long interval = cleanupIntervalSeconds(settings.getLong(
             "cleanup-interval-seconds", DEFAULT_INTERVAL_SECONDS));
         long periodTicks = interval * 20;
+        nextCleanupAtMillis = nextCleanupAt(System.currentTimeMillis(), interval);
         for (int warning : warningSeconds(settings.getIntegerList("warning-seconds"), interval)) {
             tasks.add(plugin.getServer().getScheduler().runTaskTimer(plugin,
                 () -> broadcastWarning(warning), (interval - warning) * 20, periodTicks));
         }
-        tasks.add(plugin.getServer().getScheduler().runTaskTimer(plugin,
-            () -> broadcastCleanup(clearGroundItems(), false), periodTicks, periodTicks));
+        tasks.add(plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            nextCleanupAtMillis = nextCleanupAt(System.currentTimeMillis(), interval);
+            broadcastCleanup(clearGroundItems(), false);
+        }, periodTicks, periodTicks));
     }
 
     void shutdown() {
         tasks.forEach(BukkitTask::cancel);
         tasks.clear();
+        nextCleanupAtMillis = 0;
     }
 
     private void broadcastWarning(int seconds) {
@@ -159,13 +173,53 @@ final class LaggModule {
         return hover;
     }
 
-    private void message(CommandSender sender, String path, String fallback) {
-        plugin.messageActions().run(sender, settings, path, fallback);
+    private void message(CommandSender sender, String path, String fallback,
+                         TagResolver... placeholders) {
+        plugin.messageActions().run(sender, settings, path, fallback, placeholders);
     }
 
     static long cleanupIntervalSeconds(long configured) {
         return configured <= 0 ? DEFAULT_INTERVAL_SECONDS
             : Math.min(configured, MAX_INTERVAL_SECONDS);
+    }
+
+    static long nextCleanupAt(long nowMillis, long intervalSeconds) {
+        if (intervalSeconds > (Long.MAX_VALUE - nowMillis) / 1_000) {
+            return Long.MAX_VALUE;
+        }
+        return nowMillis + intervalSeconds * 1_000;
+    }
+
+    static long secondsUntil(long targetMillis, long nowMillis) {
+        if (targetMillis <= nowMillis) {
+            return 0;
+        }
+        long difference = targetMillis - nowMillis;
+        return difference / 1_000 + (difference % 1_000 == 0 ? 0 : 1);
+    }
+
+    static String formatDuration(long seconds) {
+        if (seconds <= 0) {
+            return "now";
+        }
+        long days = seconds / 86_400;
+        long hours = seconds % 86_400 / 3_600;
+        long minutes = seconds % 3_600 / 60;
+        long remaining = seconds % 60;
+        List<String> parts = new ArrayList<>(4);
+        if (days > 0) {
+            parts.add(days + "d");
+        }
+        if (hours > 0) {
+            parts.add(hours + "h");
+        }
+        if (minutes > 0) {
+            parts.add(minutes + "m");
+        }
+        if (remaining > 0 || parts.isEmpty()) {
+            parts.add(remaining + "s");
+        }
+        return String.join(" ", parts);
     }
 
     static List<Integer> warningSeconds(List<Integer> configured, long interval) {

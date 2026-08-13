@@ -785,7 +785,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                     ? List.of("all") : List.of();
                 case "rename" -> args.length == 1 ? List.of("clear") : List.of();
                 case "lore" -> args.length == 1 ? List.of("add", "set", "remove", "clear") : List.of();
-                case "lagg" -> args.length == 1 ? List.of("clear") : List.of();
+                case "lagg" -> args.length == 1 ? List.of("clear", "timer") : List.of();
                 case "log" -> audit.completions(sender, args);
                 case "snapshot" -> snapshots.completions(sender, args);
                 case "rivet" -> args.length == 1 ? List.of("reload") : List.of();

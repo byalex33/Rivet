@@ -30,11 +30,12 @@ public final class LaggModuleTest {
         assertEquals(true, settings.getBoolean("ignore.crops"));
         assertTrue(settings.getStringList("crop-materials").contains("WHEAT"));
         assertTrue(settings.getStringList("crop-materials").contains("NETHER_WART"));
-        List.of("messages.warning.actions", "messages.cleanup.actions", "messages.usage.actions")
+        List.of("messages.warning.actions", "messages.cleanup.actions", "messages.timer.actions",
+            "messages.usage.actions")
             .forEach(path -> assertEquals(path, true, settings.isList(path)));
         assertEquals(false, settings.contains("messages.reloaded"));
         assertEquals(false, settings.contains("messages.reload-failed"));
-        assertEquals("[message] <white>Usage: /lagg clear</white>",
+        assertEquals("[message] <white>Usage: /lagg <clear|timer></white>",
             settings.getStringList("messages.usage.actions").getFirst());
         List.of("messages.hover-label", "messages.hover-header", "messages.hover-entry",
             "messages.hover-empty")
@@ -49,6 +50,16 @@ public final class LaggModuleTest {
         assertEquals(List.of(), LaggModule.warningSeconds(List.of(60), 60));
         assertEquals(300, LaggModule.cleanupIntervalSeconds(0));
         assertEquals(45, LaggModule.cleanupIntervalSeconds(45));
+        assertEquals(301, LaggModule.secondsUntil(301_000, 0));
+        assertEquals(301, LaggModule.secondsUntil(300_001, 0));
+        assertEquals(0, LaggModule.secondsUntil(1_000, 1_000));
+        assertEquals(301_000, LaggModule.nextCleanupAt(1_000, 300));
+        assertEquals(Long.MAX_VALUE, LaggModule.nextCleanupAt(Long.MAX_VALUE - 500, 1));
+        assertEquals("now", LaggModule.formatDuration(0));
+        assertEquals("59s", LaggModule.formatDuration(59));
+        assertEquals("5m", LaggModule.formatDuration(300));
+        assertEquals("1h 1m 1s", LaggModule.formatDuration(3_661));
+        assertEquals("2d 3h 4m 5s", LaggModule.formatDuration(183_845));
     }
 
     @Test

@@ -365,8 +365,8 @@ commands:
     usage: /help [page]
     permission: rivet.help
   lagg:
-    description: Clear eligible dropped items
-    usage: /lagg clear
+    description: Clear eligible dropped items or view the cleanup timer
+    usage: /lagg <clear|timer>
     permission: rivet.lagg
   log:
     aliases: [logs]

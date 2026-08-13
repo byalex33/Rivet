@@ -149,7 +149,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.top.others` | `op` | Allows targeting another player in the related command. |
 | `rivet.tree` | `op` | [`/tree`](commands.md#tree) |
 | `rivet.help` | `true` | [`/help`](commands.md#help) |
-| `rivet.lagg` | `op` | [`/lagg clear`](commands.md#lagg) |
+| `rivet.lagg` | `op` | [`/lagg clear`](commands.md#lagg), [`/lagg timer`](commands.md#lagg) |
 | `rivet.logs.lookup` | `op` | Searches audit history and changes lookup pages with [`/log lookup`](commands.md#log) and [`/log page`](commands.md#log). |
 | `rivet.logs.inspect` | `op` | Toggles block and container inspector mode with [`/log inspect`](commands.md#log). |
 | `rivet.logs.reload` | `op` | Reloads `settings/logs.yml` with [`/log reload`](commands.md#log). |
