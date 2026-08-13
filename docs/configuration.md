@@ -128,7 +128,7 @@ Messages accept MiniMessage plus `%player%`, `%killer%`, `%mob%`, `%weapon%`, an
 
 `settings/teleports.yml` applies one policy to `/home`, `/warp`, `/spawn`, `/back`, accepted TPA requests, and `/rtp`. The defaults are a 3-second movement-cancellable warmup and a shared 10-second cooldown. `/back`, TPA requests, and `/rtp` retain their feature-specific cooldowns. Staff and test-world movement commands and automatic join spawning remain immediate.
 
-Operators receive `rivet.tp.nocooldown` by default. It bypasses shared and feature-specific teleport cooldowns, but not the warmup.
+Operators receive `rivet.tp.nocooldown` by default. It makes player-facing teleports immediate by bypassing the shared warmup, movement-cancellation wait, shared cooldown, `/back` cooldown, TPA request cooldown, and RTP cooldown.
 
 `/back` keeps up to eight recent, distinct locations internally in `data/teleports.yml`. Deaths and meaningful command, plugin, or portal teleports are recorded; tiny moves, bed exits, dismounts, spectator movement, chorus fruit, and automatic join spawning are ignored. Players only use `/back`: there are no numbered history commands. Existing saved death locations are imported automatically when no newer history exists.
 

@@ -44,7 +44,7 @@ final class DelayedTeleport implements Listener {
 
     private boolean start(Player player, Location destination, boolean recordHistory,
                           Runnable success) {
-        boolean bypass = player.hasPermission("rivet.tp.nocooldown");
+        boolean bypass = bypassesCooldown(player);
         long cooldownSeconds = Math.max(0, settings.getLong("cooldown-seconds", 10));
         long remaining = cooldownRemaining(data.getLong(cooldownPath(player)),
             cooldownSeconds, System.currentTimeMillis());
@@ -54,7 +54,7 @@ final class DelayedTeleport implements Listener {
                 Placeholder.unparsed("seconds", Long.toString(remaining)));
             return false;
         }
-        int warmup = Math.max(0, settings.getInt("warmup-seconds", 3));
+        int warmup = effectiveWarmup(settings.getInt("warmup-seconds", 3), bypass);
         Runnable waiting = () -> plugin.messageActions().run(player, settings, "messages.warmup",
             "<white>Teleporting in <#f72a4c>%seconds%</#f72a4c> seconds. Do not move.</white>",
             Placeholder.unparsed("seconds", Integer.toString(warmup)));
@@ -206,6 +206,14 @@ final class DelayedTeleport implements Listener {
 
     static long cooldownRemaining(long lastUse, long cooldownSeconds, long now) {
         return Math.max(0, (lastUse + cooldownSeconds * 1000L - now + 999) / 1000);
+    }
+
+    static boolean bypassesCooldown(Player player) {
+        return player.hasPermission("rivet.tp.nocooldown");
+    }
+
+    static int effectiveWarmup(int configuredSeconds, boolean bypass) {
+        return bypass ? 0 : Math.max(0, configuredSeconds);
     }
 
     static boolean trackedCause(PlayerTeleportEvent.TeleportCause cause) {

@@ -1,5 +1,6 @@
 # Shared policy for player-facing teleports: /home, /warp, /spawn, /back,
 # accepted TPA requests, and /rtp. Staff and test-world commands stay immediate.
+# Operators and players with rivet.tp.nocooldown skip the warmup and every cooldown.
 warmup-seconds: 3
 cooldown-seconds: 10
 cancel-on-move: true

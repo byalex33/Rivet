@@ -164,7 +164,7 @@ final class GraveModule implements Listener {
         long now = System.currentTimeMillis();
         long remaining = cooldownRemaining(teleports.lastBack(player),
             Math.max(0, settings.getLong("back.cooldown-seconds", 30)), now);
-        if (remaining > 0 && !player.hasPermission("rivet.tp.nocooldown")) {
+        if (remaining > 0 && !DelayedTeleport.bypassesCooldown(player)) {
             plugin.messageActions().run(player, settings, "back.messages.cooldown",
                 "<white>You can use /back again in <#f72a4c>%seconds%</#f72a4c> seconds.</white>",
                 Placeholder.unparsed("seconds", Long.toString(remaining)));
@@ -172,7 +172,7 @@ final class GraveModule implements Listener {
         }
         teleports.startBack(player, destination.location(), () -> {
             teleports.completeBack(player, destination,
-                !player.hasPermission("rivet.tp.nocooldown"));
+                !DelayedTeleport.bypassesCooldown(player));
             plugin.messageActions().run(player, settings, "back.messages.teleported",
                 "<white>Returned to your previous location.</white>");
             plugin.teleportFeedback(player, "Previous location");

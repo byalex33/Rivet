@@ -100,7 +100,7 @@ Delete a public warp.
 
 ## Teleportation
 
-Player-facing destination commands use the warmup, movement cancellation, and shared cooldown configured in `settings/teleports.yml`. `/back`, TPA requests, and `/rtp` also keep their feature-specific cooldowns. `rivet.tp.nocooldown` bypasses all teleport cooldowns. Staff and test-world movement commands remain immediate.
+Player-facing destination commands use the warmup, movement cancellation, and shared cooldown configured in `settings/teleports.yml`. `/back`, TPA requests, and `/rtp` also keep their feature-specific cooldowns. `rivet.tp.nocooldown`, granted to operators by default, bypasses the warmup and every shared or feature-specific teleport cooldown. Staff and test-world movement commands remain immediate.
 
 <a id="spawn"></a>
 

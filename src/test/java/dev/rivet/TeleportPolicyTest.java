@@ -21,5 +21,8 @@ public final class TeleportPolicyTest {
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(new InputStreamReader(
             getClass().getResourceAsStream("/plugin.yml"), StandardCharsets.UTF_8));
         assertEquals("op", plugin.getString("permissions.rivet.tp.nocooldown.default"));
+        assertEquals(0, DelayedTeleport.effectiveWarmup(3, true));
+        assertEquals(3, DelayedTeleport.effectiveWarmup(3, false));
+        assertEquals(0, DelayedTeleport.effectiveWarmup(-4, false));
     }
 }

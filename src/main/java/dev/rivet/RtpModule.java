@@ -54,7 +54,7 @@ final class RtpModule {
         long remaining = data.getLong("players." + player.getUniqueId() + ".last-use")
             + cooldown - now;
         if (remaining > 0 && !player.hasPermission("rivet.rtp.cooldown.bypass")
-            && !player.hasPermission("rivet.tp.nocooldown")) {
+            && !DelayedTeleport.bypassesCooldown(player)) {
             plugin.messageActions().run(player, settings, "messages.cooldown",
                 "<white>You can use RTP again in <#f72a4c>%seconds%s</#f72a4c>.",
                 Placeholder.unparsed("seconds", Long.toString((remaining + 999) / 1000)));
@@ -154,7 +154,7 @@ final class RtpModule {
 
     private void success(Player player) {
         if (!player.hasPermission("rivet.rtp.cooldown.bypass")
-            && !player.hasPermission("rivet.tp.nocooldown")) {
+            && !DelayedTeleport.bypassesCooldown(player)) {
             data.set("players." + player.getUniqueId() + ".last-use", System.currentTimeMillis());
             try {
                 plugin.saveData("rtp");

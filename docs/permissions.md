@@ -54,7 +54,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.chat.antispam.bypass` | `op` | Bypasses the lightweight chat cooldown and similarity check. |
 | `rivet.teleport` | `op` | [`/tp`](commands.md#tp) |
 | `rivet.tppos` | `op` | [`/tppos`](commands.md#tppos) |
-| `rivet.tp.nocooldown` | `op` | Bypasses shared and feature-specific teleport cooldowns. |
+| `rivet.tp.nocooldown` | `op` | Makes player-facing teleports immediate by bypassing their warmup and every shared or feature-specific cooldown. |
 | `rivet.vanish` | `op` | [`/vanish`](commands.md#vanish) |
 | `rivet.vanish.see` | `op` | Additional capability used by the related feature. |
 | `rivet.fly` | `op` | [`/fly`](commands.md#fly) |

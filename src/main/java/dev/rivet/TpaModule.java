@@ -84,7 +84,7 @@ final class TpaModule implements Listener {
         long now = System.currentTimeMillis();
         long remaining = cooldownRemaining(cooldowns.getOrDefault(requester.getUniqueId(), 0L),
             setting("cooldown-seconds", 30), now);
-        if (remaining > 0 && !requester.hasPermission("rivet.tp.nocooldown")) {
+        if (remaining > 0 && !DelayedTeleport.bypassesCooldown(requester)) {
             send(requester, "cooldown", "<white>Wait %seconds% seconds before sending another request.",
                 Placeholder.unparsed("seconds", Long.toString(remaining)));
             return true;
@@ -93,7 +93,7 @@ final class TpaModule implements Listener {
         List<Request> incoming = requests.computeIfAbsent(target.getUniqueId(), ignored -> new ArrayList<>());
         incoming.removeIf(request -> request.requester.equals(requester));
         incoming.add(new Request(requester, target, here, now));
-        if (!requester.hasPermission("rivet.tp.nocooldown")) {
+        if (!DelayedTeleport.bypassesCooldown(requester)) {
             cooldowns.put(requester.getUniqueId(), now);
         }
         send(requester, "sent", "<white>Teleport request sent to <#f72a4c>%player%</#f72a4c>.", player(target));
