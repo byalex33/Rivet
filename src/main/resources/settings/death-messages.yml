@@ -1,0 +1,53 @@
+# Broadcast death messages use MiniMessage and the placeholders
+# %player%, %killer%, %mob%, %weapon%, and %world%.
+enabled: true
+killer-health: false
+rare-chance: 0.02
+
+player:
+  - "%player% was slain by %killer% using %weapon%."
+  - "%killer% defeated %player% with %weapon%."
+
+mob:
+  - "%player% was slain by %mob% using %weapon%."
+  - "%player% picked a fight with %mob% and lost."
+
+fall:
+  - "%player% forgot about gravity."
+  - "%player% hit the ground a little too hard."
+
+fire:
+  - "%player% went up in flames."
+  - "%player% discovered that lava is still hot."
+
+drowning:
+  - "%player% forgot to come up for air."
+  - "%player% drowned."
+
+explosion:
+  - "%player% was caught in an explosion."
+  - "%player% went out with a bang."
+
+projectile:
+  - "%player% was struck by a projectile."
+  - "%player% failed to dodge."
+
+void:
+  - "%player% fell out of the world."
+  - "%player% vanished into the void."
+
+suffocation:
+  - "%player% suffocated in a wall."
+  - "%player% needed a little more breathing room."
+
+magic:
+  - "%player% was killed by magic."
+  - "%player% met a mysterious end."
+
+# Used for causes without a more specific configured pool.
+generic:
+  - "%player% died."
+
+# Rare entries can be selected for any cause according to rare-chance.
+rare:
+  - "%player% experienced an unfortunate skill issue."

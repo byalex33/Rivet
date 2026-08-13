@@ -14,6 +14,7 @@ plugins/Rivet/
 |   |-- chat.yml
 |   |-- creeper-restoration.yml
 |   |-- daily.yml
+|   |-- death-messages.yml
 |   |-- egg-capture.yml
 |   |-- environment.yml
 |   |-- filter.yml
@@ -66,6 +67,7 @@ This file contains feature switches only. Every value must be `true` or `false`.
 | `chat` | Enabled |
 | `creeper-restoration` | Enabled |
 | `daily` | Disabled |
+| `death-messages` | Enabled |
 | `egg-capture` | Enabled |
 | `environment` | Enabled |
 | `filter` | Enabled |
@@ -108,6 +110,12 @@ Named colors and gradients under `chat-styles` become permission names such as `
 Mentions are rendered per viewer: a matching player sees their own highlighted `@Name`, while other viewers keep the ordinary message style. The optional sound is resolved like other Rivet sounds. The anti-spam section intentionally contains only a cooldown and a similarity percentage; `rivet.chat.antispam.bypass` skips both checks.
 
 Style and tag displays use a visual-only MiniMessage parser. Colors, gradients, rainbow, reset, and safe decorations are supported, but player-controlled cosmetics cannot create clicks, hovers, commands, URLs, insertions, NBT, fonts, or selectors. Rivet-generated `[item]` hover data remains intact.
+
+### Death messages
+
+`settings/death-messages.yml` contains a short list for each supported cause. Rivet chooses randomly within the matching list. `rare` is a global optional pool selected according to `rare-chance`; set the chance to `0` or leave the list empty to disable it. `killer-health` appends the remaining health of a player killer.
+
+Messages accept MiniMessage plus `%player%`, `%killer%`, `%mob%`, `%weapon%`, and `%world%`. Player, entity, world, and item names are inserted safely rather than parsed as formatting. Weapons preserve custom names and include a real-item hover. Empty cause lists fall back to `generic`; when both are empty, the original vanilla death message is retained.
 
 ### Gameplay mechanics
 

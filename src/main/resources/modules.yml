@@ -35,3 +35,4 @@ filter: true
 help: true
 lagg: true
 logs: true
+death-messages: true

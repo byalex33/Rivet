@@ -29,11 +29,12 @@ final class RivetConfig {
         "mob-heads", "villager-reroll", "holograms", "permissions", "worlds", "staff",
         "environment", "inventory", "spawn", "tpa", "kits", "afk", "join-leave",
         "announcements", "nicknames", "statistics", "trash", "utilities", "poses",
-        "backpacks", "daily", "rtp", "near", "filter", "help", "lagg", "logs");
+        "backpacks", "daily", "rtp", "near", "filter", "help", "lagg", "logs", "death-messages");
     static final Set<String> ENABLED_BY_DEFAULT = Set.of(
         "chat", "homes", "warps", "graves", "breeders", "egg-capture", "creeper-restoration", "tree-feller",
         "mob-heads", "villager-reroll", "holograms", "environment", "spawn", "afk", "join-leave",
-        "nicknames", "statistics", "trash", "utilities", "filter", "help", "lagg", "logs");
+        "nicknames", "statistics", "trash", "utilities", "filter", "help", "lagg", "logs",
+        "death-messages");
     static final List<String> SETTINGS = settingsFiles();
 
     private final RivetPlugin plugin;

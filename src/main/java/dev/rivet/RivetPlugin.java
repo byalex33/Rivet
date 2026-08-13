@@ -128,6 +128,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private HopperModule hoppers;
     private LaggModule lagg;
     private AuditModule audit;
+    private DeathMessagesModule deathMessages;
     private GuiActions guiActions;
     private MessageActions messageActions;
     private RivetConfig files;
@@ -231,6 +232,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 getServer().getPluginManager().disablePlugin(this);
                 return;
             }
+        }
+        if (moduleEnabled("death-messages")) {
+            deathMessages = new DeathMessagesModule(this);
+            getServer().getPluginManager().registerEvents(deathMessages, this);
         }
         if (moduleEnabled("statistics")) {
             statistics = new StatisticsModule(this);
