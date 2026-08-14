@@ -13,7 +13,9 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.block.data.type.Leaves;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -43,10 +45,17 @@ final class TreeFeller implements Listener {
     // ponytail: hard caps protect one server tick; batch larger custom trees/veins if they become a real use case.
     private static final int MAX_LOGS = 96;
     private static final int MAX_LEAVES = 512;
+    private static final int MAX_LARGE_JUNGLE_LOGS = 256;
+    private static final int MAX_LARGE_JUNGLE_LEAVES = 1024;
+    private static final int MAX_ATTACHED_BLOCKS = 512;
     private static final int MAX_ORES = 64;
     private static final int MIN_LOGS = 4;
     private static final int MIN_LEAVES = 10;
     private static final int MAX_HORIZONTAL_LOG_RUN = 6;
+    private static final List<BlockFace> HORIZONTAL_TREE_FACES = List.of(
+        BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST);
+    private static final List<BlockFace> VINE_ANCHOR_FACES = List.of(
+        BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.DOWN);
 
     private final RivetPlugin plugin;
     private final YamlConfiguration settings;
@@ -106,8 +115,17 @@ final class TreeFeller implements Listener {
 
     private void fellTree(BlockBreakEvent event, Player player, Block base, ItemStack axe) {
         Material wood = base.getType();
-        Set<Block> logs = connectedLogs(base);
-        Set<Block> leaves = connectedLeaves(logs);
+        boolean largeJungle = isLargeJungleTrunk(base);
+        int maximumLogs = positiveSetting("tree-feller.maximum-logs", MAX_LOGS);
+        int maximumLeaves = positiveSetting("tree-feller.maximum-leaves", MAX_LEAVES);
+        if (largeJungle) {
+            maximumLogs = Math.max(maximumLogs, positiveSetting(
+                "tree-feller.large-jungle.maximum-logs", MAX_LARGE_JUNGLE_LOGS));
+            maximumLeaves = Math.max(maximumLeaves, positiveSetting(
+                "tree-feller.large-jungle.maximum-leaves", MAX_LARGE_JUNGLE_LEAVES));
+        }
+        Set<Block> logs = connectedLogs(base, maximumLogs);
+        Set<Block> leaves = connectedLeaves(logs, maximumLeaves);
         int vertical = 0;
         int horizontal = 0;
         for (Block log : logs) {
@@ -125,6 +143,7 @@ final class TreeFeller implements Listener {
         }
         Set<Block> tree = new HashSet<>(logs);
         tree.addAll(leaves);
+        tree.addAll(attachedJungleGrowth(logs, leaves));
         if (!canBreak(tree, base, player)) {
             return;
         }
@@ -185,7 +204,7 @@ final class TreeFeller implements Listener {
         }
     }
 
-    private Set<Block> connectedLogs(Block base) {
+    private Set<Block> connectedLogs(Block base, int maximumLogs) {
         Set<Block> logs = new HashSet<>();
         ArrayDeque<Block> queue = new ArrayDeque<>();
         queue.add(base);
@@ -195,7 +214,7 @@ final class TreeFeller implements Listener {
             if (block.getY() < base.getY() || block.getType() != base.getType() || !logs.add(block)) {
                 continue;
             }
-            if (logs.size() > positiveSetting("tree-feller.maximum-logs", MAX_LOGS)) {
+            if (logs.size() > maximumLogs) {
                 return Set.of();
             }
             for (int x = -1; x <= 1; x++) {
@@ -211,7 +230,7 @@ final class TreeFeller implements Listener {
         return logs;
     }
 
-    private Set<Block> connectedLeaves(Set<Block> logs) {
+    private Set<Block> connectedLeaves(Set<Block> logs, int maximumLeaves) {
         Set<Block> leaves = new HashSet<>();
         ArrayDeque<LeafCandidate> queue = new ArrayDeque<>();
         for (Block log : logs) {
@@ -226,8 +245,7 @@ final class TreeFeller implements Listener {
             }
         }
 
-        while (!queue.isEmpty()
-            && leaves.size() < positiveSetting("tree-feller.maximum-leaves", MAX_LEAVES)) {
+        while (!queue.isEmpty() && leaves.size() < maximumLeaves) {
             LeafCandidate candidate = queue.removeFirst();
             Block block = candidate.block();
             if (!(block.getBlockData() instanceof Leaves data) || data.isPersistent()
@@ -245,6 +263,73 @@ final class TreeFeller implements Listener {
             }
         }
         return leaves;
+    }
+
+    private Set<Block> attachedJungleGrowth(Set<Block> logs, Set<Block> leaves) {
+        int maximum = positiveSetting(
+            "tree-feller.maximum-attached-blocks", MAX_ATTACHED_BLOCKS);
+        Set<Block> attached = new HashSet<>();
+        for (Block log : logs) {
+            for (BlockFace face : HORIZONTAL_TREE_FACES) {
+                Block candidate = log.getRelative(face);
+                if (candidate.getType() == Material.COCOA) {
+                    attached.add(candidate);
+                    if (attached.size() >= maximum) {
+                        return attached;
+                    }
+                }
+            }
+        }
+        Set<Block> anchors = new HashSet<>(logs);
+        anchors.addAll(leaves);
+        for (Block anchor : anchors) {
+            for (BlockFace face : VINE_ANCHOR_FACES) {
+                if (attached.size() >= maximum) {
+                    return attached;
+                }
+                Block vine = anchor.getRelative(face);
+                if (!vineFaces(vine, face.getOppositeFace())) {
+                    continue;
+                }
+                do {
+                    attached.add(vine);
+                    vine = vine.getRelative(BlockFace.DOWN);
+                } while (attached.size() < maximum && vine.getType() == Material.VINE);
+            }
+        }
+        return attached;
+    }
+
+    private static boolean vineFaces(Block block, BlockFace anchorFace) {
+        return block.getType() == Material.VINE
+            && block.getBlockData() instanceof MultipleFacing vine
+            && vine.hasFace(anchorFace);
+    }
+
+    private static boolean isLargeJungleTrunk(Block base) {
+        if (base.getType() != Material.JUNGLE_LOG) {
+            return false;
+        }
+        for (int cornerX = -1; cornerX <= 0; cornerX++) {
+            for (int cornerZ = -1; cornerZ <= 0; cornerZ++) {
+                boolean square = true;
+                for (int x = 0; x <= 1 && square; x++) {
+                    for (int z = 0; z <= 1; z++) {
+                        if (base.getRelative(cornerX + x, 0, cornerZ + z).getType()
+                            != Material.JUNGLE_LOG
+                            || base.getRelative(cornerX + x, 1, cornerZ + z).getType()
+                            != Material.JUNGLE_LOG) {
+                            square = false;
+                            break;
+                        }
+                    }
+                }
+                if (square) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static int longestHorizontalRun(Set<Block> logs) {

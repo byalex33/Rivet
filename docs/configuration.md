@@ -134,6 +134,14 @@ saved copy rather than risk duplication.
 
 `settings/gameplay.yml` contains small switches that do not need full module lifecycle management: crop-trample protection, water-harvest replanting, Iron Golem poppy drops, and faster hoppers. Hopper transfers use a 2-tick cooldown by default; vanilla uses 8 ticks.
 
+### Tree felling and vein mining
+
+`settings/tree-feller.yml` controls tree and vein size limits, animation timing, messages,
+sounds, and particles. Large 2×2 jungle trees use separate, higher log and leaf limits;
+their attached cocoa and naturally anchored hanging vines are removed with the tree. The
+attached-block limit bounds that extra growth scan. Existing settings files receive these
+new defaults automatically without replacing customized values.
+
 ### Teleport policy
 
 `settings/teleports.yml` applies one policy to `/home`, `/warp`, `/spawn`, `/back`, accepted TPA requests, and `/rtp`. The defaults are a 3-second movement-cancellable warmup and a shared 10-second cooldown. `/back`, TPA requests, and `/rtp` retain their feature-specific cooldowns. Staff and test-world movement commands and automatic join spawning remain immediate.

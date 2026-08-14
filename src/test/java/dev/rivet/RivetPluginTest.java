@@ -191,8 +191,10 @@ public final class RivetPluginTest {
                 "drop-effects.particles.burst.name"),
             "statistics", List.of("seen.usage", "seen.online", "seen.offline",
                 "seen.staff-location", "seen.staff-death", "seen.date-format"),
-            "tree-feller", List.of("tree-feller.message", "tree-feller.sound.name",
-                "veinminer.message", "veinminer.particles.name"),
+            "tree-feller", List.of("tree-feller.maximum-attached-blocks",
+                "tree-feller.large-jungle.maximum-logs",
+                "tree-feller.large-jungle.maximum-leaves", "tree-feller.message",
+                "tree-feller.sound.name", "veinminer.message", "veinminer.particles.name"),
             "villager-reroll", List.of("permission", "allow-after-trading",
                 "require-workstation", "trade.ingredient.material", "trade.result.material",
                 "trade.result.name", "messages.rerolled.actions", "messages.trades-locked.actions",
@@ -206,6 +208,11 @@ public final class RivetPluginTest {
                 new InputStreamReader(resource, StandardCharsets.UTF_8));
             paths.forEach(path -> assertEquals(module + ": " + path,
                 true, settings.contains(path)));
+            if (module.equals("tree-feller")) {
+                assertEquals(512, settings.getInt("tree-feller.maximum-attached-blocks"));
+                assertEquals(256, settings.getInt("tree-feller.large-jungle.maximum-logs"));
+                assertEquals(1024, settings.getInt("tree-feller.large-jungle.maximum-leaves"));
+            }
         });
     }
 

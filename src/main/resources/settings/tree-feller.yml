@@ -3,6 +3,10 @@ tree-feller:
   autoToInventory: true
   maximum-logs: 96
   maximum-leaves: 512
+  maximum-attached-blocks: 512
+  large-jungle:
+    maximum-logs: 256
+    maximum-leaves: 1024
   minimum-logs: 4
   minimum-leaves: 10
   maximum-horizontal-log-run: 6

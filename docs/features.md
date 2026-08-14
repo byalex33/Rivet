@@ -38,7 +38,7 @@ Templates support `%player%`, `%killer%`, `%mob%`, `%weapon%`, and `%world%`. Na
 | Creeper restoration | `creeper-restoration` | Enabled | Visual creeper debris and throwable Restoration Cores that reconstruct saved craters. |
 | Ground-item cleanup | `lagg` | Enabled | Periodically removes eligible dropped item entities from loaded worlds, with configurable warnings, protected named, plugin-tagged, or crop items, and hoverable removal details. |
 | Faster hoppers | Core gameplay | Enabled | Shortens block-hopper transfer cooldowns from vanilla's 8 ticks to a configurable 2 ticks by default. |
-| Tree felling | `tree-feller` | Enabled | Whole-tree cutting and connected ore or Glowstone vein mining with drops and XP clumped at the initially mined block. |
+| Tree felling | `tree-feller` | Enabled | Whole-tree cutting, including large 2×2 jungle trees and their attached growth, plus connected ore or Glowstone vein mining with clumped drops and XP. |
 | Mob heads | `mob-heads` | Enabled | Configurable, Looting-aware mob-head drops and cached player heads, with vanilla Wither Skeleton skull drops preserved by default. |
 | Villager reroll | `villager-reroll` | Enabled | Adds a non-consuming reroll offer to the vanilla trade screen using Paper's native trade generation. Untraded villagers with workstations are eligible by default. |
 | Environment | `environment` | Enabled | Animated time changes and weather controls. |
