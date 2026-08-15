@@ -5,6 +5,7 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
@@ -19,6 +20,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -48,7 +50,17 @@ final class ChatModule implements Listener {
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
     private static final Pattern ITEM_TOKEN = Pattern.compile("\\[(?:i|item)]", Pattern.CASE_INSENSITIVE);
     private static final Pattern STYLE_NAME = Pattern.compile("[a-z0-9_-]{1,32}");
+    private static final Pattern HEX_IN_STYLE = Pattern.compile("#[0-9a-fA-F]{6}");
     private static final long SIMILARITY_MEMORY_MILLIS = 30_000;
+    private static final List<DyeIcon> DYE_ICONS = List.of(
+        new DyeIcon(Material.BLACK_DYE, 0x1D1D21), new DyeIcon(Material.RED_DYE, 0xB02E26),
+        new DyeIcon(Material.GREEN_DYE, 0x5E7C16), new DyeIcon(Material.BROWN_DYE, 0x835432),
+        new DyeIcon(Material.BLUE_DYE, 0x3C44AA), new DyeIcon(Material.PURPLE_DYE, 0x8932B8),
+        new DyeIcon(Material.CYAN_DYE, 0x169C9C), new DyeIcon(Material.LIGHT_GRAY_DYE, 0x9D9D97),
+        new DyeIcon(Material.GRAY_DYE, 0x474F52), new DyeIcon(Material.PINK_DYE, 0xF38BAA),
+        new DyeIcon(Material.LIME_DYE, 0x80C71F), new DyeIcon(Material.YELLOW_DYE, 0xFED83D),
+        new DyeIcon(Material.LIGHT_BLUE_DYE, 0x3AB3DA), new DyeIcon(Material.MAGENTA_DYE, 0xC74EBD),
+        new DyeIcon(Material.ORANGE_DYE, 0xF9801D), new DyeIcon(Material.WHITE_DYE, 0xF9FFFE));
 
     private final RivetPlugin plugin;
     private final Map<UUID, UUID> replies = new HashMap<>();
@@ -150,6 +162,19 @@ final class ChatModule implements Listener {
         }
         String choice = holder.choices.get(event.getRawSlot());
         if (choice == null) {
+            if (event.getRawSlot() == 45 && holder.page > 0) {
+                openGui(player, holder.type, holder.options, holder.page - 1);
+            } else if (event.getRawSlot() == 50) {
+                player.closeInventory();
+                if (holder.type == GuiType.STYLE) {
+                    applyStyle(player, player, null);
+                } else {
+                    applyTag(player, player, null);
+                }
+            } else if (event.getRawSlot() == 53
+                && (holder.page + 1) * RivetGui.CONTENT_SLOTS.length < holder.options.size()) {
+                openGui(player, holder.type, holder.options, holder.page + 1);
+            }
             return;
         }
         player.closeInventory();
@@ -157,6 +182,13 @@ final class ChatModule implements Listener {
             applyStyle(player, player, choice.equals("reset") ? null : choice);
         } else {
             applyTag(player, player, choice.equals("reset") ? null : choice);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof ChatGuiHolder) {
+            event.setCancelled(true);
         }
     }
 
@@ -534,47 +566,106 @@ final class ChatModule implements Listener {
     }
 
     private void openStyleGui(Player player) {
-        ChatGuiHolder holder = new ChatGuiHolder(player.getUniqueId(), GuiType.STYLE);
         List<GuiOption> options = new ArrayList<>();
-        options.add(new GuiOption("reset", Component.text("Reset style", NamedTextColor.WHITE), Material.MILK_BUCKET));
         colors.values().stream().filter(style -> permittedStyle(player,
                 new ParsedStyle("color:" + style.name, style.permission)))
+            .sorted(Comparator.comparing(StyleDefinition::name))
             .forEach(style -> options.add(new GuiOption("color:" + style.name,
-                SAFE_FORMATTING.deserialize(style.tag + titleCase(style.name)), Material.RED_DYE)));
+                SAFE_FORMATTING.deserialize(style.tag + titleCase(style.name)), Material.RED_DYE,
+                "Solid colour")));
         gradients.values().stream().filter(style -> permittedStyle(player,
                 new ParsedStyle("gradient:" + style.name, style.permission)))
+            .sorted(Comparator.comparing(StyleDefinition::name))
             .forEach(style -> options.add(new GuiOption("gradient:" + style.name,
-                SAFE_FORMATTING.deserialize(style.tag + titleCase(style.name)), Material.GLOW_INK_SAC)));
+                SAFE_FORMATTING.deserialize(style.tag + styleLabel(style.name)), styleIcon(style.tag),
+                style.name.startsWith("birdflop-") ? "Birdflop community preset" : "Gradient preset")));
         if (allowRainbow
             && player.hasPermission("rivet.chat.style.custom")) {
-            options.add(new GuiOption("rainbow", SAFE_FORMATTING.deserialize("<rainbow>Rainbow"), Material.NETHER_STAR));
+            options.add(new GuiOption("rainbow", SAFE_FORMATTING.deserialize("<rainbow>Rainbow spectrum"),
+                Material.NETHER_STAR, "Dynamic style"));
         }
-        openGui(player, holder, options, Component.text("Chat style"));
+        openGui(player, GuiType.STYLE, options, 0);
     }
 
     private void openTagGui(Player player) {
-        ChatGuiHolder holder = new ChatGuiHolder(player.getUniqueId(), GuiType.TAG);
         List<GuiOption> options = new ArrayList<>();
-        options.add(new GuiOption("reset", Component.text("No tag", NamedTextColor.WHITE), Material.BARRIER));
         tags.values().stream().filter(tag -> permittedTag(player, tag.name))
+            .sorted(Comparator.comparing(TagDefinition::name))
             .forEach(tag -> options.add(new GuiOption(tag.name,
-                SAFE_FORMATTING.deserialize(tag.display), Material.NAME_TAG)));
-        openGui(player, holder, options, Component.text("Chat tag"));
+                SAFE_FORMATTING.deserialize(tag.display), Material.NAME_TAG, "Chat tag")));
+        openGui(player, GuiType.TAG, options, 0);
     }
 
-    private void openGui(Player player, ChatGuiHolder holder, List<GuiOption> options, Component title) {
-        int size = Math.max(9, Math.min(54, ((options.size() + 8) / 9) * 9));
-        holder.inventory = plugin.getServer().createInventory(holder, size, title);
-        for (int slot = 0; slot < Math.min(size, options.size()); slot++) {
-            GuiOption option = options.get(slot);
+    private void openGui(Player player, GuiType type, List<GuiOption> options, int requestedPage) {
+        int pageSize = RivetGui.CONTENT_SLOTS.length;
+        int pages = Math.max(1, (options.size() + pageSize - 1) / pageSize);
+        int page = Math.clamp(requestedPage, 0, pages - 1);
+        ChatGuiHolder holder = new ChatGuiHolder(player.getUniqueId(), type, List.copyOf(options), page);
+        holder.inventory = plugin.getServer().createInventory(holder, 54,
+            RivetGui.title(type == GuiType.STYLE ? "Chat Styles" : "Chat Tags"));
+        RivetGui.frame(holder.inventory);
+        String selected = type == GuiType.STYLE
+            ? styles.get(player.getUniqueId()) : selectedTags.get(player.getUniqueId());
+        int start = page * pageSize;
+        for (int offset = 0; offset < pageSize && start + offset < options.size(); offset++) {
+            GuiOption option = options.get(start + offset);
+            int slot = RivetGui.CONTENT_SLOTS[offset];
             ItemStack item = new ItemStack(option.material);
             ItemMeta meta = item.getItemMeta();
-            meta.displayName(option.display);
+            boolean active = option.value.equals(selected);
+            meta.displayName(option.display.decoration(TextDecoration.ITALIC, false));
+            meta.lore(List.of(
+                Component.text(option.description, NamedTextColor.DARK_GRAY)
+                    .decoration(TextDecoration.ITALIC, false),
+                Component.empty(),
+                Component.text(active ? "✓ Currently selected" : "Click to apply",
+                    active ? NamedTextColor.GREEN : RivetPalette.SECONDARY)
+                    .decoration(TextDecoration.ITALIC, false)));
+            meta.setEnchantmentGlintOverride(active);
             item.setItemMeta(meta);
             holder.inventory.setItem(slot, item);
             holder.choices.put(slot, option.value);
         }
+        if (page > 0) {
+            holder.inventory.setItem(45, RivetGui.button(Material.ARROW, "Previous page",
+                "View earlier choices"));
+        }
+        String current = selected == null ? (type == GuiType.STYLE ? "Default" : "No tag")
+            : styleLabel(selected.substring(selected.indexOf(':') + 1));
+        holder.inventory.setItem(49, RivetGui.button(Material.BOOK,
+            "Page " + (page + 1) + " of " + pages, options.size() + " available choices",
+            "Current: " + current));
+        holder.inventory.setItem(50, RivetGui.button(
+            type == GuiType.STYLE ? Material.MILK_BUCKET : Material.BARRIER,
+            type == GuiType.STYLE ? "Reset to default" : "Remove chat tag",
+            "Clear your current selection"));
+        if (page + 1 < pages) {
+            holder.inventory.setItem(53, RivetGui.button(Material.ARROW, "Next page",
+                "View more choices"));
+        }
         player.openInventory(holder.inventory);
+    }
+
+    private static String styleLabel(String name) {
+        return titleCase(name.startsWith("birdflop-")
+            ? name.substring("birdflop-".length()) : name);
+    }
+
+    static Material styleIcon(String tag) {
+        java.util.regex.Matcher matcher = HEX_IN_STYLE.matcher(tag);
+        if (!matcher.find()) {
+            return Material.GLOW_INK_SAC;
+        }
+        int rgb = Integer.parseInt(matcher.group().substring(1), 16);
+        return DYE_ICONS.stream().min(Comparator.comparingLong(icon -> colorDistance(rgb, icon.rgb)))
+            .map(DyeIcon::material).orElse(Material.GLOW_INK_SAC);
+    }
+
+    private static long colorDistance(int first, int second) {
+        long red = (first >> 16 & 0xff) - (second >> 16 & 0xff);
+        long green = (first >> 8 & 0xff) - (second >> 8 & 0xff);
+        long blue = (first & 0xff) - (second & 0xff);
+        return red * red + green * green + blue * blue;
     }
 
     private boolean applyStyle(Player actor, Player target, String storage) {
@@ -1038,7 +1129,10 @@ final class ChatModule implements Listener {
     private record RecentMessage(String message, long time) {
     }
 
-    private record GuiOption(String value, Component display, Material material) {
+    private record DyeIcon(Material material, int rgb) {
+    }
+
+    private record GuiOption(String value, Component display, Material material, String description) {
     }
 
     private enum GuiType {
@@ -1049,12 +1143,16 @@ final class ChatModule implements Listener {
     private static final class ChatGuiHolder implements InventoryHolder {
         private final UUID owner;
         private final GuiType type;
+        private final List<GuiOption> options;
+        private final int page;
         private final Map<Integer, String> choices = new HashMap<>();
         private Inventory inventory;
 
-        private ChatGuiHolder(UUID owner, GuiType type) {
+        private ChatGuiHolder(UUID owner, GuiType type, List<GuiOption> options, int page) {
             this.owner = owner;
             this.type = type;
+            this.options = options;
+            this.page = page;
         }
 
         @Override

@@ -884,12 +884,30 @@ public final class RivetPluginTest {
         assertEquals("<red>", chat.getString("chat-styles.colors.red"));
         assertEquals("<gradient:#ff512f:#f09819>",
             chat.getString("chat-styles.gradients.sunset"));
+        assertEquals("<gradient:#54daf4:#545eb6>",
+            chat.getString("chat-styles.gradients.birdflop-rgbirdflop"));
+        assertEquals(true,
+            chat.getConfigurationSection("chat-styles.gradients").getKeys(false).size() >= 40);
+        chat.getConfigurationSection("chat-styles.gradients").getValues(false).values()
+            .forEach(value -> assertEquals(true,
+                ChatModule.validChatColor(String.valueOf(value), true)));
         assertEquals("<gold>[OG]</gold>", chat.getString("tags.list.og.display"));
         assertEquals(85, chat.getInt("anti-spam.similarity.threshold"));
         assertEquals(false, chat.contains("channels"));
         assertEquals(true, plugin.getBoolean("permissions.rivet.chat.mention.default"));
         assertEquals("op", plugin.getString("permissions.rivet.chat.style.custom.default"));
         assertEquals(false, plugin.getBoolean("permissions.rivet.chat.tag.og.default"));
+    }
+
+    @Test
+    public void professionalGuiContentGridIsStableAndUnique() {
+        assertEquals(28, RivetGui.CONTENT_SLOTS.length);
+        assertEquals(28, Arrays.stream(RivetGui.CONTENT_SLOTS).boxed()
+            .collect(Collectors.toSet()).size());
+        assertEquals(true, Arrays.stream(RivetGui.CONTENT_SLOTS)
+            .allMatch(slot -> slot >= 9 && slot < 45 && slot % 9 != 0 && slot % 9 != 8));
+        assertEquals(Material.RED_DYE, ChatModule.styleIcon("<gradient:#FF0000:#000000>"));
+        assertEquals(Material.GLOW_INK_SAC, ChatModule.styleIcon("<gradient:red:blue>"));
     }
 
     @Test

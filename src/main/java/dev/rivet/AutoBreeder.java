@@ -622,13 +622,19 @@ final class AutoBreeder implements Listener {
         return inventories.computeIfAbsent(key, ignored -> {
             BreederHolder holder = new BreederHolder(key);
             EntityType animal = animal(key);
-            Inventory inventory = Bukkit.createInventory(holder, GUI_SIZE,
-                MM.deserialize(settings.getString("display.inventory-title", "%animal% Auto Breeder"),
-                    Placeholder.unparsed("animal", displayName(animal))));
+            String configuredTitle = settings.getString("display.inventory-title", "%animal% Auto Breeder");
+            Component title = configuredTitle.equals("%animal% Auto Breeder")
+                ? RivetGui.title(displayName(animal) + " Breeder")
+                : MM.deserialize(configuredTitle, Placeholder.unparsed("animal", displayName(animal)));
+            Inventory inventory = Bukkit.createInventory(holder, GUI_SIZE, title);
             holder.inventory = inventory;
             fill(inventory, food(key), Math.max(0, data.getInt(path(key) + ".food")),
                 0, INPUT_END);
             renderEggs(inventory, Math.max(0, data.getInt(path(key) + ".eggs")));
+            ItemStack footer = RivetGui.pane(Material.GRAY_STAINED_GLASS_PANE);
+            for (int slot = EGG_END; slot < GUI_SIZE; slot++) {
+                inventory.setItem(slot, footer);
+            }
             renderExperience(inventory, storedExperience(key));
             return inventory;
         });

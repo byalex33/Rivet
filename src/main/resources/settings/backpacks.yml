@@ -1,6 +1,6 @@
 # Personal persistent storage. Rows are clamped to the standard 1-6 range.
 default-rows: 3
-title: "<#f72a4c>Backpack"
+title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Backpack</white>"
 
 gui:
   open_commands:

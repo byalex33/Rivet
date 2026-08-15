@@ -300,7 +300,7 @@ Use a player name to toggle an ignore, `list` to view ignored players, or `clear
 - **Default:** `true`
 - **Aliases:** None
 
-Choose a persistent style for the message body. With no arguments, the command opens a simple inventory selector. Named colors and gradients use their matching `rivet.chat.color.<name>` or `rivet.chat.gradient.<name>` permission. Custom hex colors, custom two-color gradients, and rainbow use `rivet.chat.style.custom`; targeting another player uses `rivet.chat.style.others`.
+Choose a persistent style for the message body. With no arguments, the command opens a paginated inventory selector with live previews, the current selection, reset and navigation controls. Rivet includes its original styles plus a large curated collection of popular [RGBirdflop community presets](https://www.birdflop.com/resources/rgb/presets/). Named colors and gradients use their matching `rivet.chat.color.<name>` or `rivet.chat.gradient.<name>` permission. Custom hex colors, custom two-color gradients, and rainbow use `rivet.chat.style.custom`; targeting another player uses `rivet.chat.style.others`.
 
 The legacy `rivet.chatcolor.advanced` and `rivet.chatcolor.others` nodes remain accepted for existing installations.
 
@@ -313,7 +313,7 @@ The legacy `rivet.chatcolor.advanced` and `rivet.chatcolor.others` nodes remain 
 - **Default:** `true`
 - **Aliases:** None
 
-Choose a cosmetic tag kept separate from permission-group prefixes and suffixes. `/tag` opens a GUI containing only tags the player may use; `/tag list` provides the text equivalent. A tag requires `rivet.chat.tag.<name>` or `rivet.chat.tag.*`, and changing another player's tag requires `rivet.chat.tag.others`.
+Choose a cosmetic tag kept separate from permission-group prefixes and suffixes. `/tag` opens a paginated GUI containing only tags the player may use, marks the active tag, and provides a remove control; `/tag list` provides the text equivalent. A tag requires `rivet.chat.tag.<name>` or `rivet.chat.tag.*`, and changing another player's tag requires `rivet.chat.tag.others`.
 
 <a id="me"></a>
 

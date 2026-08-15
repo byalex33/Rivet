@@ -40,7 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 final class SnapshotModule implements Listener {
-    private static final int LIST_PAGE_SIZE = 45;
+    private static final int LIST_PAGE_SIZE = RivetGui.CONTENT_SLOTS.length;
     private static final DateTimeFormatter EXACT_TIME = DateTimeFormatter
         .ofPattern("d MMM uuuu 'at' HH:mm z", Locale.UK).withZone(ZoneId.systemDefault());
     private final RivetPlugin plugin;
@@ -192,11 +192,12 @@ final class SnapshotModule implements Listener {
         int page = Math.clamp(requestedPage, 0, pages - 1);
         SnapshotListHolder holder = new SnapshotListHolder(target, records, page);
         holder.inventory = plugin.getServer().createInventory(holder, 54,
-            Component.text(target.name() + "'s snapshots", RivetPalette.SECONDARY));
+            RivetGui.title(target.name() + "'s Snapshots"));
+        RivetGui.frame(holder.inventory);
         int start = page * LIST_PAGE_SIZE;
         for (int index = start; index < Math.min(records.size(), start + LIST_PAGE_SIZE); index++) {
             SnapshotRecord record = records.get(index);
-            holder.inventory.setItem(index - start, snapshotIcon(record));
+            holder.inventory.setItem(RivetGui.CONTENT_SLOTS[index - start], snapshotIcon(record));
         }
         if (page > 0) {
             holder.inventory.setItem(45, button(Material.ARROW, "Previous page"));
@@ -219,8 +220,9 @@ final class SnapshotModule implements Listener {
             openList(viewer, holder.target, holder.records, holder.page + 1);
             return;
         }
-        int index = holder.page * LIST_PAGE_SIZE + slot;
-        if (slot >= LIST_PAGE_SIZE || index >= holder.records.size()) {
+        int contentIndex = RivetGui.contentIndex(slot);
+        int index = holder.page * LIST_PAGE_SIZE + contentIndex;
+        if (contentIndex < 0 || index >= holder.records.size()) {
             return;
         }
         long id = holder.records.get(index).id();
@@ -241,7 +243,7 @@ final class SnapshotModule implements Listener {
     private void openPreview(Player viewer, SnapshotTarget target, SnapshotRecord record) {
         SnapshotPreviewHolder holder = new SnapshotPreviewHolder(target, record);
         holder.inventory = plugin.getServer().createInventory(holder, 54,
-            Component.text("Snapshot #" + record.id(), RivetPalette.SECONDARY));
+            RivetGui.title("Snapshot #" + record.id()));
         SnapshotState state = record.state();
         ItemStack[] inventory = state.inventory();
         for (int savedSlot = 9; savedSlot < Math.min(36, inventory.length); savedSlot++) {
@@ -249,6 +251,10 @@ final class SnapshotModule implements Listener {
         }
         for (int savedSlot = 0; savedSlot < Math.min(9, inventory.length); savedSlot++) {
             holder.inventory.setItem(27 + savedSlot, inventory[savedSlot]);
+        }
+        ItemStack separator = RivetGui.pane(Material.BLACK_STAINED_GLASS_PANE);
+        for (int slot = 36; slot < 45; slot++) {
+            holder.inventory.setItem(slot, separator);
         }
         ItemStack[] armour = state.armour();
         for (int index = 0; index < Math.min(4, armour.length); index++) {
@@ -290,8 +296,14 @@ final class SnapshotModule implements Listener {
         }
         SnapshotConfirmHolder holder = new SnapshotConfirmHolder(target, record);
         holder.inventory = plugin.getServer().createInventory(holder, 27,
-            Component.text("Confirm snapshot restore", NamedTextColor.RED));
-        holder.inventory.setItem(11, button(Material.ARROW, "Back"));
+            RivetGui.title("Confirm Restore"));
+        ItemStack background = RivetGui.pane(Material.GRAY_STAINED_GLASS_PANE);
+        for (int slot = 0; slot < holder.inventory.getSize(); slot++) {
+            holder.inventory.setItem(slot, background);
+        }
+        holder.inventory.setItem(11, item(Material.RED_CONCRETE,
+            Component.text("Cancel", NamedTextColor.RED).decorate(TextDecoration.BOLD),
+            List.of(Component.text("Return without changing anything", NamedTextColor.GRAY))));
         holder.inventory.setItem(13, item(Material.PAPER,
             Component.text("This replaces current state", NamedTextColor.YELLOW), List.of(
                 Component.text("Inventory, armour, offhand, XP,", NamedTextColor.GRAY),

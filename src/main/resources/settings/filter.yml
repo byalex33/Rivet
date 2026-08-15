@@ -9,7 +9,7 @@ feedback:
   sound: ""
 
 gui:
-  title: "<white>Item Filter"
+  title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Item Filter</white>"
   open_commands: []
 
 messages:

@@ -1,7 +1,7 @@
 gui:
   # Inventory rows, from 1 to 6. Slots are numbered from 1.
   rows: 6
-  title: "<#f72a4c>Trash — items are destroyed</#f72a4c>"
+  title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Trash Bin</white>"
   # GUI actions support:
   # [message] <text>
   # [broadcast] <text>
@@ -25,10 +25,10 @@ gui:
       name: ''
       lore: ''
     'closeMenu':
-      material: REDSTONE_BLOCK
+      material: BARRIER
       slot: 50
-      name: '<red>Close Menu</red>'
-      lore: '<white>Close the trash menu.</white>'
+      name: '<red><bold>Close Trash</bold></red>'
+      lore: '<gray>Items left above are destroyed on close.</gray>'
     'fillerItems2':
       material: GRAY_STAINED_GLASS_PANE
       slots: 51-54

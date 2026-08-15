@@ -19,7 +19,7 @@ display:
   item-name: "<#f72a4c>%animal% Auto Breeder</#f72a4c>"
   item-lore:
     - "<white>Stores %food% and breeds nearby %animal%.</white>"
-  inventory-title: "%animal% Auto Breeder"
+  inventory-title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>%animal% Breeder</white>"
   hologram: "<#f72a4c>%animal% Auto Breeder</#f72a4c><newline><white>%food%: <#f72a4c>%amount%</#f72a4c></white><newline><white>Animals bred: <#f72a4c>%bred%</#f72a4c></white>"
   # Set to an empty string to hide the live countdown line.
   next-breed: "<white>Next breed in: <#f72a4c>%seconds%s</#f72a4c></white>"

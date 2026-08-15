@@ -1,6 +1,7 @@
 package dev.rivet;
 
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -40,9 +41,11 @@ final class TrashModule implements Listener {
         }
         int rows = Math.max(1, Math.min(6, settings.getInt("gui.rows", 6)));
         TrashHolder holder = new TrashHolder();
-        holder.inventory = plugin.getServer().createInventory(holder, rows * 9,
-            MM.deserialize(settings.getString("gui.title",
-                "<#f72a4c>Trash — items are destroyed</#f72a4c>")));
+        String configuredTitle = settings.getString("gui.title",
+            "<#f72a4c>Trash — items are destroyed</#f72a4c>");
+        Component title = configuredTitle.equals("<#f72a4c>Trash — items are destroyed</#f72a4c>")
+            ? RivetGui.title("Trash Bin") : MM.deserialize(configuredTitle);
+        holder.inventory = plugin.getServer().createInventory(holder, rows * 9, title);
         addConfiguredItems(holder);
         player.openInventory(holder.inventory);
         plugin.messageActions().run(player, settings, "gui.open_commands", List.of());

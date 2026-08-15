@@ -108,7 +108,9 @@ Substantial modules own a file under `settings/`. Small mechanics are grouped in
 
 `settings/chat.yml` keeps public chat in one compact file. The `format` value supports `%prefix%`, `%suffix%`, `%tag%`, `%player%`, and `%message%`; the first two are filled from Rivet group metadata only when the optional permissions module is active. Tags remain independent cosmetic selections. A selected color, gradient, or rainbow style wraps `%message%` only.
 
-Named colors and gradients under `chat-styles` become permission names such as `rivet.chat.color.red` and `rivet.chat.gradient.sunset`. Custom six-digit hex colors, custom two-color gradients, and rainbow share `rivet.chat.style.custom` and can each be disabled. Tags follow `rivet.chat.tag.<name>`. Player selectors show only choices the player may use.
+Named colors and gradients under `chat-styles` become permission names such as `rivet.chat.color.red` and `rivet.chat.gradient.sunset`. The bundled gradients include a curated set of popular published [RGBirdflop community presets](https://www.birdflop.com/resources/rgb/presets/), stored with `birdflop-` keys. Their colour stops are translated to MiniMessage gradients. Newly bundled preset keys are merged into an existing `settings/chat.yml` on startup without replacing server edits. Custom six-digit hex colors, custom two-color gradients, and rainbow share `rivet.chat.style.custom` and can each be disabled. Tags follow `rivet.chat.tag.<name>`. Player selectors show only choices the player may use.
+
+Chat style and tag selectors use a framed, paginated layout with live previews and active-selection feedback. The filter and snapshot tools share the same menu language, while backpacks preserve every storage slot and only apply the branded title treatment.
 
 Mentions are rendered per viewer: a matching player sees their own highlighted `@Name`, while other viewers keep the ordinary message style. The optional sound is resolved like other Rivet sounds. The anti-spam section intentionally contains only a cooldown and a similarity percentage; `rivet.chat.antispam.bypass` skips both checks.
 

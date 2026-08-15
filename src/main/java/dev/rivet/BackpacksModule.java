@@ -1,6 +1,7 @@
 package dev.rivet;
 
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -93,8 +94,10 @@ final class BackpacksModule implements Listener {
     private Inventory load(Player player) {
         int rows = resolvedRows(settings.getInt("default-rows", 3),
             row -> player.hasPermission("rivet.backpack.rows." + row));
-        Inventory inventory = plugin.getServer().createInventory(null, rows * 9,
-            MM.deserialize(settings.getString("title", "<#f72a4c>Backpack")));
+        String configuredTitle = settings.getString("title", "<#f72a4c>Backpack");
+        Component title = configuredTitle.equals("<#f72a4c>Backpack")
+            ? RivetGui.title("Backpack") : MM.deserialize(configuredTitle);
+        Inventory inventory = plugin.getServer().createInventory(null, rows * 9, title);
         List<?> stored = data.getList(path(player.getUniqueId()), List.of());
         for (int slot = 0; slot < Math.min(inventory.getSize(), stored.size()); slot++) {
             if (stored.get(slot) instanceof ItemStack item) {

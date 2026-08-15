@@ -1,5 +1,6 @@
 package dev.rivet;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Material;
@@ -14,7 +15,6 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.UUID;
 
 final class FilterModule implements Listener {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
-    private static final int PAGE_SIZE = 45;
+    private static final int PAGE_SIZE = RivetGui.CONTENT_SLOTS.length;
     private final RivetPlugin plugin;
     private final YamlConfiguration data;
     private final Map<UUID, FilterState> filters = new HashMap<>();
@@ -114,8 +114,9 @@ final class FilterModule implements Listener {
             return;
         }
         int slot = event.getRawSlot();
-        if (slot < holder.items.size()) {
-            Material material = holder.items.get(slot);
+        int contentIndex = RivetGui.contentIndex(slot);
+        if (contentIndex >= 0 && contentIndex < holder.items.size()) {
+            Material material = holder.items.get(contentIndex);
             if (remove(state(player.getUniqueId()).items(), material)) {
                 if (save(player)) {
                     send(player, "<white>Removed <#f72a4c>" + display(material) + "</#f72a4c> from your filter.");
@@ -282,31 +283,49 @@ final class FilterModule implements Listener {
         List<Material> pageItems = new ArrayList<>(all.subList(page * PAGE_SIZE,
             Math.min(all.size(), (page + 1) * PAGE_SIZE)));
         FilterHolder holder = new FilterHolder(player.getUniqueId(), page, pageItems);
-        holder.inventory = plugin.getServer().createInventory(holder, 54,
-            MM.deserialize(plugin.settings("filter").getString("gui.title", "<white>Item Filter")));
-        for (int slot = 0; slot < pageItems.size(); slot++) {
-            ItemStack icon = new ItemStack(pageItems.get(slot));
-            icon.editMeta(meta -> meta.lore(List.of(MM.deserialize("<white>Click to remove"))));
-            holder.inventory.setItem(slot, icon);
+        String configuredTitle = plugin.settings("filter").getString("gui.title", "<white>Item Filter");
+        Component title = configuredTitle.equals("<white>Item Filter")
+            ? RivetGui.title("Item Filter") : MM.deserialize(configuredTitle);
+        holder.inventory = plugin.getServer().createInventory(holder, 54, title);
+        RivetGui.frame(holder.inventory);
+        for (int index = 0; index < pageItems.size(); index++) {
+            Material material = pageItems.get(index);
+            ItemStack icon = RivetGui.item(material,
+                MM.deserialize("<white>" + titleCase(display(material)) + "</white>"),
+                List.of(MM.deserialize("<dark_gray>Blocked from pickup</dark_gray>"),
+                    Component.empty(), MM.deserialize("<#f72a4c>Click to remove</#f72a4c>")));
+            holder.inventory.setItem(RivetGui.CONTENT_SLOTS[index], icon);
         }
-        holder.inventory.setItem(45, button(Material.ARROW, "<white>Previous page"));
-        holder.inventory.setItem(47, button(Material.HOPPER, "<white>Add held item"));
-        holder.inventory.setItem(49, button(state(player.getUniqueId()).enabled()
-            ? Material.LIME_DYE : Material.GRAY_DYE, state(player.getUniqueId()).enabled()
-            ? "<white>Filtering enabled" : "<white>Filtering disabled"));
-        holder.inventory.setItem(51, button(Material.BARRIER, "<white>Shift-click to clear"));
-        holder.inventory.setItem(53, button(Material.ARROW, "<white>Next page"));
+        if (pageItems.isEmpty()) {
+            holder.inventory.setItem(22, RivetGui.button(Material.HOPPER, "No filtered items",
+                "Hold an item and use Add held item below"));
+        }
+        if (page > 0) {
+            holder.inventory.setItem(45, RivetGui.button(Material.ARROW, "Previous page"));
+        }
+        holder.inventory.setItem(47, RivetGui.button(Material.HOPPER, "Add held item",
+            "Adds the item in your main hand"));
+        boolean enabled = state(player.getUniqueId()).enabled();
+        int maximum = Math.max(1, plugin.settings("filter").getInt("maximum-size", 50));
+        holder.inventory.setItem(49, RivetGui.button(enabled ? Material.LIME_DYE : Material.GRAY_DYE,
+            enabled ? "Filtering enabled" : "Filtering paused",
+            "Page " + (page + 1) + " of " + (lastPage + 1), all.size() + " of "
+                + maximum + " slots used", "Click to " + (enabled ? "pause" : "enable")));
+        holder.inventory.setItem(51, RivetGui.button(Material.BARRIER, "Clear all filters",
+            "Shift-click to confirm"));
+        if (page < lastPage) {
+            holder.inventory.setItem(53, RivetGui.button(Material.ARROW, "Next page"));
+        }
         player.openInventory(holder.inventory);
         plugin.guiActions().run(player,
             plugin.settings("filter").getStringList("gui.open_commands"));
     }
 
-    private static ItemStack button(Material material, String name) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.displayName(MM.deserialize(name));
-        item.setItemMeta(meta);
-        return item;
+    private static String titleCase(String value) {
+        return java.util.Arrays.stream(value.split(" "))
+            .map(word -> word.isEmpty() ? word
+                : Character.toUpperCase(word.charAt(0)) + word.substring(1))
+            .collect(java.util.stream.Collectors.joining(" "));
     }
 
     private boolean save(Player player) {
