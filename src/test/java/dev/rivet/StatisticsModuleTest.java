@@ -1,5 +1,6 @@
 package dev.rivet;
 
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.Test;
@@ -32,6 +33,22 @@ public final class StatisticsModuleTest {
         assertEquals("Exact time: 13 Aug 2026 at 01:00 BST",
             PlainTextComponentSerializer.plainText().serialize(
                 (net.kyori.adventure.text.Component) value.hoverEvent().value()));
+    }
+
+    @Test
+    public void rendersEverySeenPlaceholder() {
+        var rendered = RivetMiniMessage.miniMessage().deserialize(
+            "%first_join%|%last_login%|%last_logout%|%session%|%coordinates%|%last_death%|%death_location%",
+            Placeholder.unparsed("first_join", "first"),
+            Placeholder.unparsed("last_login", "login"),
+            Placeholder.unparsed("last_logout", "logout"),
+            Placeholder.unparsed("session", "session"),
+            Placeholder.unparsed("coordinates", "1, 2, 3"),
+            Placeholder.unparsed("last_death", "death"),
+            Placeholder.unparsed("death_location", "world 1, 2, 3"));
+
+        assertEquals("first|login|logout|session|1, 2, 3|death|world 1, 2, 3",
+            PlainTextComponentSerializer.plainText().serialize(rendered));
     }
 
     @Test

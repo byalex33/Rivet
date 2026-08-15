@@ -11,11 +11,12 @@ import java.util.regex.Pattern;
 final class RivetMiniMessage {
     private static final Set<String> PLACEHOLDERS = Set.of(
         "amount", "animal", "biome", "blocks_broken", "blocks_placed", "bred",
-        "command", "commands", "count", "deaths", "description", "details", "distance", "duration",
-        "food", "id", "item", "items", "jumps", "killer", "kit", "kits", "matches", "material",
+        "command", "commands", "coordinates", "count", "death_location", "deaths", "description",
+        "details", "distance", "duration", "first_join", "food", "id", "item", "items", "jumps",
+        "killer", "kit", "kits", "last_death", "last_login", "last_logout", "matches", "material",
         "max", "maximum", "message", "mob", "mob_kills", "name", "page", "pages", "ping",
         "player", "player_kills", "players", "playtime", "plural", "quality", "radius", "reason",
-        "prefix", "recipient", "requester", "seconds", "sender", "since_first_join", "speed", "staff",
+        "prefix", "recipient", "requester", "seconds", "sender", "session", "since_first_join", "speed", "staff",
         "streak", "suffix", "tag", "target", "text", "time", "timestamp", "weapon", "weather", "world", "x", "y", "z");
     private static final Pattern PERCENT_PLACEHOLDER = Pattern.compile(
         "%([a-z][a-z0-9_-]*)%", Pattern.CASE_INSENSITIVE);
