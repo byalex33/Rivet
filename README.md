@@ -19,7 +19,7 @@ Rivet includes:
 - Homes, public warps, spawn management, teleport requests, graves, and safe random teleportation.
 - Formatted chat, modern configurable death messages, friendly colors and gradients, cosmetic tags, mentions, private messages, social spy, ignore lists, nicknames, AFK state, playtime, statistics, and last-seen information.
 - Kits, backpacks, daily rewards, pickup filters, trash inventories, portable workstations, native player poses, and SQLite inventory snapshots with safe restores.
-- Auto breeders, faster hoppers, ground-item cleanup, egg capture, villager trade rerolling, tree felling, vein mining, mob heads, holograms, and creeper-crater restoration.
+- Auto breeders, faster hoppers, ground-item cleanup, egg capture, villager trade rerolling, tree felling, vein mining, mob heads, holograms, chance-based no-grief creeper confetti, and creeper-crater restoration.
 - Test worlds, biome search, time and weather controls, inventory scanning, and world administration.
 - Vanish, flight, coordinate teleportation, god mode, healing, moderation notes, boss bars, toasts, and optional local permissions.
 - Lightweight SQLite gameplay auditing with block/container inspection, filtered lookups, retention, and rollback-ready records.

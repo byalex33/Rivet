@@ -13,6 +13,21 @@ ride:
   maximum-range: 10
   allow-players: false
 
+# Successful rolls preserve vanilla entity damage but prevent all block grief and drops.
+# Chance is a decimal from 0.0 (never) to 1.0 (always).
+creeper-confetti:
+  enabled: true
+  chance: 0.10
+  particles:
+    count: 96
+    spread: 1.5
+    size: 1.0
+  sound:
+    enabled: true
+    name: entity.firework_rocket.blast
+    volume: 1.0
+    pitch: 1.2
+
 list:
   # The count includes only players visible to the viewer.
   output:

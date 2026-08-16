@@ -3,17 +3,22 @@ package dev.rivet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import org.bukkit.Color;
 import org.bukkit.FluidCollisionMode;
+import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -26,9 +31,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 final class UtilitiesModule implements Listener {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
+    private static final Color[] CONFETTI_COLORS = {
+        Color.fromRGB(0xF94144), Color.fromRGB(0xF8961E),
+        Color.fromRGB(0xF9C74F), Color.fromRGB(0x90BE6D),
+        Color.fromRGB(0x43AA8B), Color.fromRGB(0x4D9DE0),
+        Color.fromRGB(0x9B5DE5), Color.fromRGB(0xF15BB5)
+    };
     private final RivetPlugin plugin;
     private final Set<UUID> riders = new java.util.HashSet<>();
 
@@ -237,6 +249,22 @@ final class UtilitiesModule implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onCreeperExplode(EntityExplodeEvent event) {
+        if (!(event.getEntity() instanceof Creeper)
+            || !plugin.settings("utilities").getBoolean("creeper-confetti.enabled", true)
+            || !confettiSelected(plugin.settings("utilities")
+                .getDouble("creeper-confetti.chance", .1),
+                ThreadLocalRandom.current().nextDouble())) {
+            return;
+        }
+
+        // Leave vanilla entity damage intact, but remove all block damage and drops.
+        event.blockList().clear();
+        event.setYield(0);
+        playConfetti(event.getLocation().clone().add(0, .5, 0));
+    }
+
     void shutdown() {
         new java.util.HashSet<>(riders).stream().map(plugin.getServer()::getPlayer)
             .filter(java.util.Objects::nonNull).forEach(Player::leaveVehicle);
@@ -266,6 +294,42 @@ final class UtilitiesModule implements Listener {
 
     static boolean nextNightVisionState(boolean currentlyEnabled) {
         return !currentlyEnabled;
+    }
+
+    static boolean confettiSelected(double chance, double roll) {
+        double boundedChance = Double.isFinite(chance)
+            ? Math.max(0, Math.min(1, chance)) : 0;
+        return roll >= 0 && roll < boundedChance;
+    }
+
+    private void playConfetti(Location center) {
+        var settings = plugin.settings("utilities");
+        if (plugin.getConfig().getBoolean("effects.particles")) {
+            int count = Math.max(0, Math.min(512,
+                settings.getInt("creeper-confetti.particles.count", 96)));
+            double spread = Math.max(0, Math.min(8,
+                settings.getDouble("creeper-confetti.particles.spread", 1.5)));
+            float size = (float) Math.max(.1, Math.min(4,
+                settings.getDouble("creeper-confetti.particles.size", 1)));
+            for (int index = 0; index < CONFETTI_COLORS.length; index++) {
+                int amount = count / CONFETTI_COLORS.length
+                    + (index < count % CONFETTI_COLORS.length ? 1 : 0);
+                if (amount > 0) {
+                    center.getWorld().spawnParticle(Particle.DUST, center, amount,
+                        spread, spread * .75, spread, 0,
+                        new Particle.DustOptions(CONFETTI_COLORS[index], size));
+                }
+            }
+        }
+        if (plugin.getConfig().getBoolean("effects.sounds")
+            && settings.getBoolean("creeper-confetti.sound.enabled", true)) {
+            center.getWorld().playSound(center,
+                ConfiguredEffect.sound(plugin, settings, "creeper-confetti.sound.name",
+                    Sound.ENTITY_FIREWORK_ROCKET_BLAST),
+                Math.max(0, (float) settings.getDouble("creeper-confetti.sound.volume", 1)),
+                Math.max(.01f, Math.min(2,
+                    (float) settings.getDouble("creeper-confetti.sound.pitch", 1.2))));
+        }
     }
 
     private static void send(Player player, String message) {

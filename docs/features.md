@@ -20,7 +20,7 @@
 | Statistics | `statistics` | Enabled | Native statistics, playtime, and compact Seen v2 activity summaries. |
 | Nicknames | `nicknames` | Enabled | Persistent nicknames with controlled MiniMessage formatting. |
 | Trash | `trash` | Enabled | A configurable disposable inventory. |
-| Utilities | `utilities` | Enabled | Portable workstations, player lists, ping, Night Vision, jump, and riding tools. |
+| Utilities | `utilities` | Enabled | Portable workstations, player lists, ping, Night Vision, jump, riding tools, and chance-based no-grief creeper confetti. |
 | Poses | `poses` | Disabled | Native Paper sitting, laying, and crawling poses. |
 
 ## Death messages
@@ -46,6 +46,12 @@ Templates support `%player%`, `%killer%`, `%mob%`, `%weapon%`, and `%world%`. Na
 | Inventory tools | `inventory` | Disabled | Inventory administration, item creation, repair, editing, donation, and scanning. |
 
 Small mechanics such as faster hoppers, crop protection, water replanting, and Iron Golem poppy drops live together in `settings/gameplay.yml` rather than creating one-switch modules.
+
+When creeper confetti is selected, the creeper still deals its ordinary entity damage but
+cannot destroy blocks or produce block drops. A colourful dust burst and firework sound
+replace the griefing result. The utility is enabled with a 10% chance by default; its
+chance, particle burst, and sound are configurable in `settings/utilities.yml`. Confetti
+explosions do not create creeper-restoration craters because no blocks are destroyed.
 
 ## Server administration features
 
