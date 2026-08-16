@@ -15,7 +15,7 @@ final class RivetMiniMessage {
         "details", "distance", "duration", "first_join", "food", "id", "item", "items", "jumps",
         "killer", "kit", "kits", "last_death", "last_login", "last_logout", "matches", "material",
         "max", "maximum", "message", "mob", "mob_kills", "name", "page", "pages", "ping",
-        "player", "player_kills", "players", "playtime", "plural", "quality", "radius", "reason",
+        "percent", "player", "player_kills", "players", "playtime", "plural", "quality", "radius", "reason", "remaining",
         "prefix", "recipient", "requester", "seconds", "sender", "session", "since_first_join", "speed", "staff",
         "streak", "suffix", "tag", "target", "text", "time", "timestamp", "weapon", "weather", "world", "x", "y", "z");
     private static final Pattern PERCENT_PLACEHOLDER = Pattern.compile(

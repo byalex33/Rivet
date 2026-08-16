@@ -13,6 +13,16 @@ ride:
   maximum-range: 10
   allow-players: false
 
+# Warn once when a damageable item crosses below this remaining-durability percentage.
+durability-warning:
+  enabled: true
+  threshold-percent: 10
+  alert:
+    enabled: true
+    actions:
+      - '[message] <#f72a4c>Warning:</#f72a4c> <white>Your %item% is at %percent%% durability (%remaining%/%maximum%).</white>'
+      - '[sound] block.note_block.pling 0.8 1.4'
+
 # Successful rolls preserve vanilla entity damage but prevent all block grief and drops.
 # Chance is a decimal from 0.0 (never) to 1.0 (always).
 creeper-confetti:

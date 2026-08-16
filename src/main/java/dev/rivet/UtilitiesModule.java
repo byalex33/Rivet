@@ -20,9 +20,13 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -249,6 +253,35 @@ final class UtilitiesModule implements Listener {
         }
     }
 
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onItemDamage(PlayerItemDamageEvent event) {
+        var settings = plugin.settings("utilities");
+        if (!settings.getBoolean("durability-warning.enabled", true)) {
+            return;
+        }
+        ItemStack item = event.getItem();
+        ItemMeta itemMeta = item.getItemMeta();
+        if (!(itemMeta instanceof Damageable damageable)) {
+            return;
+        }
+        int maximum = damageable.hasMaxDamage()
+            ? damageable.getMaxDamage() : item.getType().getMaxDurability();
+        int threshold = Math.clamp(
+            settings.getInt("durability-warning.threshold-percent", 10), 1, 100);
+        if (!crossesDurabilityThreshold(maximum, damageable.getDamage(), event.getDamage(), threshold)) {
+            return;
+        }
+        int remaining = Math.max(0, maximum - damageable.getDamage() - event.getDamage());
+        int percent = remaining * 100 / maximum;
+        plugin.messageActions().run(event.getPlayer(), settings, "durability-warning.alert", List.of(
+                "[message] <#f72a4c>Warning:</#f72a4c> <white>Your %item% is at %percent%% durability (%remaining%/%maximum%).</white>",
+                "[sound] block.note_block.pling 0.8 1.4"),
+            Placeholder.component("item", itemName(item)),
+            Placeholder.unparsed("percent", Integer.toString(percent)),
+            Placeholder.unparsed("remaining", Integer.toString(remaining)),
+            Placeholder.unparsed("maximum", Integer.toString(maximum)));
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onCreeperExplode(EntityExplodeEvent event) {
         if (!(event.getEntity() instanceof Creeper)
@@ -296,10 +329,35 @@ final class UtilitiesModule implements Listener {
         return !currentlyEnabled;
     }
 
+    static boolean crossesDurabilityThreshold(int maximum, int currentDamage,
+                                               int additionalDamage, int thresholdPercent) {
+        if (maximum <= 0 || additionalDamage <= 0
+            || thresholdPercent < 1 || thresholdPercent > 100) {
+            return false;
+        }
+        int before = Math.max(0, maximum - currentDamage);
+        int after = Math.max(0, before - additionalDamage);
+        long threshold = (long) maximum * thresholdPercent;
+        return (long) before * 100 >= threshold && (long) after * 100 < threshold;
+    }
+
     static boolean confettiSelected(double chance, double roll) {
         double boundedChance = Double.isFinite(chance)
             ? Math.max(0, Math.min(1, chance)) : 0;
         return roll >= 0 && roll < boundedChance;
+    }
+
+    private static Component itemName(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        Component name;
+        if (meta != null && meta.hasCustomName()) {
+            name = meta.customName();
+        } else if (meta != null && meta.hasItemName()) {
+            name = meta.itemName();
+        } else {
+            name = Component.translatable(item.translationKey());
+        }
+        return DeathMessagesModule.safeWeaponComponent(name.hoverEvent(item.asHoverEvent()));
     }
 
     private void playConfetti(Location center) {

@@ -804,6 +804,20 @@ public final class RivetPluginTest {
             getClass().getResourceAsStream("/settings/utilities.yml"), StandardCharsets.UTF_8));
         assertEquals(true, utilities.isList("night-vision.enabled.actions"));
         assertEquals(true, utilities.isList("night-vision.disabled.actions"));
+        assertEquals(10, utilities.getInt("durability-warning.threshold-percent"));
+        assertEquals(List.of("message", "sound"),
+            utilities.getStringList("durability-warning.alert.actions").stream()
+                .map(GuiActions::parseAction).map(GuiActions.Action::tag).toList());
+    }
+
+    @Test
+    public void warnsOnlyWhenDurabilityCrossesBelowTheConfiguredThreshold() {
+        assertEquals(false, UtilitiesModule.crossesDurabilityThreshold(100, 89, 1, 10));
+        assertEquals(true, UtilitiesModule.crossesDurabilityThreshold(100, 90, 1, 10));
+        assertEquals(false, UtilitiesModule.crossesDurabilityThreshold(100, 91, 1, 10));
+        assertEquals(true, UtilitiesModule.crossesDurabilityThreshold(1561, 1404, 1, 10));
+        assertEquals(false, UtilitiesModule.crossesDurabilityThreshold(100, 50, 0, 10));
+        assertEquals(false, UtilitiesModule.crossesDurabilityThreshold(0, 0, 1, 10));
     }
 
     @Test

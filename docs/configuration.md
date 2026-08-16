@@ -202,6 +202,8 @@ Sound and particle fields accept Minecraft registry keys with or without the `mi
 
 `settings/utilities.yml` contains the shared message actions used when `/nv` enables or
 disables Night Vision, alongside portable-interface, jump, ride, list, and ping settings.
+Its durability warning alerts a player once when a used item crosses below the configured
+remaining-durability percentage (10% by default); both its text and ping sound are actions.
 Its `creeper-confetti` section controls a chance-based no-grief creeper explosion, including
 the decimal chance, particle count, spread and size, and firework sound. Successful rolls
 preserve vanilla entity damage while preventing block damage and block drops.
