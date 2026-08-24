@@ -303,6 +303,10 @@ commands:
     description: Manage your persistent item pickup filter
     usage: /filter [add|remove|list|clear|toggle|help]
     permission: rivet.filter
+  magnet:
+    description: Toggle automatic nearby item collection
+    usage: /magnet
+    permission: rivet.magnet
   hat:
     description: Wear the item in your main hand
     permission: rivet.hat
@@ -615,6 +619,8 @@ permissions:
   rivet.findbiome:
     default: true
   rivet.filter:
+    default: true
+  rivet.magnet:
     default: true
   rivet.filter.admin:
     default: op

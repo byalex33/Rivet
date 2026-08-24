@@ -28,6 +28,7 @@ plugins/Rivet/
 |   |-- kits.yml
 |   |-- lagg.yml
 |   |-- logs.yml
+|   |-- magnet.yml
 |   |-- mob-heads.yml
 |   |-- near.yml
 |   |-- nicknames.yml
@@ -82,6 +83,7 @@ This file contains feature switches only. Every value must be `true` or `false`.
 | `kits` | Disabled |
 | `lagg` | Enabled |
 | `logs` | Enabled |
+| `magnet` | Enabled |
 | `mob-heads` | Enabled |
 | `near` | Disabled |
 | `nicknames` | Enabled |
@@ -164,6 +166,13 @@ Adding an item through `/filter add` or the GUI also enables the filter automati
 players can use `/filter toggle` when they intentionally want to retain but temporarily
 disable their saved list.
 
+### Item magnet
+
+`settings/magnet.yml` controls the straight-line collection radius used by `/magnet`;
+the default is 8 blocks. Each player's toggle is persisted in `data/magnet.yml`. Magnet
+collection fires Paper's cancellable pickup events and requires room for the entire dropped
+stack, so pickup filters and inventory-capacity limits are preserved.
+
 ### Statistics and Seen v2
 
 `settings/statistics.yml` controls the configurable `/stats`, `/playtime`, and `/seen`
@@ -210,7 +219,7 @@ preserve vanilla entity damage while preventing block damage and block drops.
 
 ## Runtime data
 
-Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, and inventory snapshots use `snapshots.db`; neither uses YAML for payload data.
+Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, magnet toggles, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, and inventory snapshots use `snapshots.db`; neither uses YAML for payload data.
 
 Do not hand-edit runtime data while the server is running. Rivet may overwrite an external change the next time it saves that module.
 

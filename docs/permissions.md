@@ -1,6 +1,6 @@
 # Permissions
 
-Rivet declares 148 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
+Rivet declares 149 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
 
 The command permission is checked by Paper before Rivet handles the command. Additional `.others`, formatting, bypass, row, and wildcard nodes enable narrower capabilities inside a command.
 
@@ -125,6 +125,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.findbiome` | `true` | [`/findbiome`](commands.md#findbiome) |
 | `rivet.filter` | `true` | [`/filter`](commands.md#filter) |
 | `rivet.filter.admin` | `op` | Additional capability used by the related feature. |
+| `rivet.magnet` | `true` | Toggles nearby dropped-item collection with [`/magnet`](commands.md#magnet). |
 | `rivet.hat` | `true` | [`/hat`](commands.md#hat) |
 | `rivet.jump` | `op` | [`/jump`](commands.md#jump) |
 | `rivet.list` | `true` | [`/list`](commands.md#list) |

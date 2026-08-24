@@ -70,6 +70,7 @@
     - [/kit](commands.md#kit)
     - [/daily](commands.md#daily)
     - [/filter](commands.md#filter)
+    - [/magnet](commands.md#magnet)
     - [/head](commands.md#head)
   - Player information and utilities
     - [/stats](commands.md#stats)

@@ -339,7 +339,7 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
-        assertEquals(100, plugin.getConfigurationSection("commands").getKeys(false).size());
+        assertEquals(101, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
             .stream().filter(command -> !command.equals("rivet"))
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
@@ -599,6 +599,15 @@ public final class RivetPluginTest {
         assertEquals(true, FilterModule.blocksPickup(true, false, items, Material.EMERALD));
         assertEquals(false, FilterModule.blocksPickup(false, false, items, Material.EMERALD));
         assertEquals(false, FilterModule.blocksPickup(true, true, items, Material.EMERALD));
+    }
+
+    @Test
+    public void magnetRequiresRoomForAnEntireDroppedStack() {
+        assertEquals(true, MagnetModule.fitsWithin(1, 1));
+        assertEquals(false, MagnetModule.fitsWithin(2, 1));
+        assertEquals(true, MagnetModule.fitsWithin(16, 16));
+        assertEquals(false, MagnetModule.fitsWithin(17, 16));
+        assertEquals(false, MagnetModule.fitsWithin(0, 64));
     }
 
     @Test

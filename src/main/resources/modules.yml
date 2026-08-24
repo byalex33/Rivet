@@ -37,3 +37,4 @@ lagg: true
 logs: true
 death-messages: true
 snapshots: true
+magnet: true

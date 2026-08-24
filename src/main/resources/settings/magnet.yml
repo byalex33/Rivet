@@ -1,0 +1,20 @@
+# Maximum straight-line distance at which enabled players collect dropped items.
+radius: 8.0
+
+messages:
+  enabled:
+    enabled: true
+    actions:
+      - "[message] <white>Item magnet enabled within <#f72a4c>%radius%</#f72a4c> blocks.</white>"
+  disabled:
+    enabled: true
+    actions:
+      - "[message] <white>Item magnet disabled.</white>"
+  usage:
+    enabled: true
+    actions:
+      - "[message] <white>Usage: /magnet</white>"
+  save-failed:
+    enabled: true
+    actions:
+      - "[message] <white>Your magnet setting could not be saved safely.</white>"

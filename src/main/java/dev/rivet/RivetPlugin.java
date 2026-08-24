@@ -130,6 +130,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private AuditModule audit;
     private DeathMessagesModule deathMessages;
     private SnapshotModule snapshots;
+    private MagnetModule magnet;
     private GuiActions guiActions;
     private MessageActions messageActions;
     private RivetConfig files;
@@ -286,6 +287,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             filter = new FilterModule(this);
             getServer().getPluginManager().registerEvents(filter, this);
         }
+        if (moduleEnabled("magnet")) {
+            magnet = new MagnetModule(this);
+        }
         if (moduleEnabled("help")) {
             help = new HelpModule(this);
         }
@@ -370,6 +374,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (filter != null) {
             filter.shutdown();
+        }
+        if (magnet != null) {
+            magnet.shutdown();
         }
         if (scans != null) {
             scans.shutdown();
@@ -700,6 +707,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "top" -> top(player, args);
             case "tree" -> tree(player, args);
             case "filter" -> filter.command(player, args);
+            case "magnet" -> magnet.command(player, args);
             default -> false;
         };
     }
@@ -2134,6 +2142,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "clear", "i", "invsee", "enderchest", "repair", "rename", "lore",
                  "condense", "donate", "giveall", "hat", "scan" -> "inventory";
             case "filter" -> "filter";
+            case "magnet" -> "magnet";
             case "help" -> "help";
             case "lagg" -> "lagg";
             case "log" -> "logs";
