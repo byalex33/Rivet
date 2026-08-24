@@ -38,6 +38,22 @@ public class PollModuleTest {
             PollModule.wrap("A short poll description", 8));
     }
 
+    @Test
+    public void resolvesNamedYesAndNoPlaceholderApiTotals() {
+        PollModule.Poll poll = poll("server_event");
+        poll.votes().put(UUID.randomUUID(), true);
+        poll.votes().put(UUID.randomUUID(), true);
+        poll.votes().put(UUID.randomUUID(), false);
+
+        assertEquals("2", PollModule.pollVotePlaceholder(List.of(poll),
+            "poll_server_event_yes"));
+        assertEquals("1", PollModule.pollVotePlaceholder(List.of(poll),
+            "poll_SERVER_EVENT_no"));
+        assertEquals(null, PollModule.pollVotePlaceholder(List.of(poll),
+            "poll_missing_yes"));
+        assertEquals(null, PollModule.pollVotePlaceholder(List.of(poll), "yes"));
+    }
+
     private static PollModule.Poll poll(String id) {
         return new PollModule.Poll(id, id, "Description", 1, new HashMap<>());
     }

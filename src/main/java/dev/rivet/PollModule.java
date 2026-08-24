@@ -2,6 +2,8 @@ package dev.rivet;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -22,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -201,7 +204,7 @@ final class PollModule implements Listener {
             List<Component> lore = new ArrayList<>();
             wrap(poll.description, 38).forEach(line -> lore.add(Component.text(line, NamedTextColor.GRAY)));
             lore.add(Component.empty());
-            lore.add(Component.text(results(poll), NamedTextColor.DARK_GRAY));
+            lore.add(results(poll));
             lore.add(vote == null
                 ? Component.text("Click to vote", RivetPalette.SECONDARY)
                 : Component.text("Your vote: " + (vote ? "Yes" : "No"), RivetPalette.SECONDARY));
@@ -237,7 +240,7 @@ final class PollModule implements Listener {
         List<Component> lore = new ArrayList<>();
         wrap(poll.description, 38).forEach(line -> lore.add(Component.text(line, NamedTextColor.GRAY)));
         lore.add(Component.empty());
-        lore.add(Component.text(results(poll), NamedTextColor.DARK_GRAY));
+        lore.add(results(poll));
         holder.inventory.setItem(13, RivetGui.item(Material.PAPER,
             Component.text(poll.name, NamedTextColor.WHITE), lore));
         holder.inventory.setItem(15, RivetGui.button(Material.RED_CONCRETE, "No",
@@ -347,9 +350,47 @@ final class PollModule implements Listener {
         return lines;
     }
 
-    private static String results(Poll poll) {
+    String placeholder(String params) {
+        return pollVotePlaceholder(polls.values(), params);
+    }
+
+    static String pollVotePlaceholder(Iterable<Poll> polls, String params) {
+        if (params == null) {
+            return null;
+        }
+        String lowered = params.toLowerCase(Locale.ROOT);
+        boolean yes;
+        String suffix;
+        if (lowered.startsWith("poll_") && lowered.endsWith("_yes")) {
+            yes = true;
+            suffix = "_yes";
+        } else if (lowered.startsWith("poll_") && lowered.endsWith("_no")) {
+            yes = false;
+            suffix = "_no";
+        } else {
+            return null;
+        }
+        String name = params.substring("poll_".length(), params.length() - suffix.length());
+        for (Poll poll : polls) {
+            if (poll.name.equalsIgnoreCase(name)) {
+                return Long.toString(poll.votes.values().stream()
+                    .filter(choice -> choice == yes).count());
+            }
+        }
+        return null;
+    }
+
+    private Component results(Poll poll) {
+        String format = plugin.settings("polls").getString("result-format",
+            "<dark_gray>Yes: %yes%  •  No: %no%</dark_gray>");
+        return RivetMiniMessage.miniMessage().deserialize(format, resultTags(poll));
+    }
+
+    private static TagResolver resultTags(Poll poll) {
         long yes = poll.votes.values().stream().filter(Boolean::booleanValue).count();
-        return "Yes: " + yes + "  •  No: " + (poll.votes.size() - yes);
+        return TagResolver.resolver(
+            Placeholder.unparsed("yes", Long.toString(yes)),
+            Placeholder.unparsed("no", Long.toString(poll.votes.size() - yes)));
     }
 
     private static void send(CommandSender sender, String message) {

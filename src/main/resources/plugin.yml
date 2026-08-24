@@ -3,6 +3,7 @@ version: '1.0-SNAPSHOT'
 main: dev.rivet.RivetPlugin
 api-version: '1.21.11'
 description: Everything your Paper server needs, held together
+softdepend: [PlaceholderAPI]
 commands:
   gmc:
     description: Switch to creative mode

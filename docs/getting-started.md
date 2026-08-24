@@ -8,7 +8,9 @@
 4. Start or restart the server.
 5. Confirm that `plugins/Rivet/` was created and that Rivet enabled without errors.
 
-Rivet does not require a database or another plugin at runtime.
+Rivet does not require a database or another plugin at runtime. If PlaceholderAPI is
+installed, Rivet registers `%rivet_poll_<name>_yes%` and
+`%rivet_poll_<name>_no%`, replacing `<name>` with the poll's identifier.
 
 ## First configuration
 

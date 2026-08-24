@@ -1,6 +1,9 @@
 # Delay before reminding a joining player about polls they have not answered.
 reminder-delay-ticks: 40
 
+# Supports %yes% and %no% for the poll currently being rendered.
+result-format: '<dark_gray>Yes: %yes%  •  No: %no%</dark_gray>'
+
 messages:
   reminder:
     enabled: true

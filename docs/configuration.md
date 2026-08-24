@@ -179,7 +179,8 @@ stack, so pickup filters and inventory-capacity limits are preserved.
 
 `settings/polls.yml` controls the delay before a joining player is reminded about any
 poll they have not answered and the clickable reminder message. Poll definitions and
-UUID-keyed yes/no votes are stored in `data/polls.yml`.
+UUID-keyed yes/no votes are stored in `data/polls.yml`. The poll result format supports
+`%yes%` and `%no%`; both contain the current vote totals.
 
 ### Statistics and Seen v2
 

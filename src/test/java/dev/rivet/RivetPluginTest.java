@@ -291,6 +291,7 @@ public final class RivetPluginTest {
         assertEquals("<player> has <count> items and 100% luck",
             RivetMiniMessage.toResolverTags("%player% has %count% items and 100% luck"));
         assertEquals("<plural>", RivetMiniMessage.toResolverTags("%plural%"));
+        assertEquals("<yes> / <no>", RivetMiniMessage.toResolverTags("%yes% / %no%"));
         assertEquals("%unknown%", RivetMiniMessage.toResolverTags("%unknown%"));
         Component rendered = RivetMiniMessage.miniMessage().deserialize(
             "<white>Hello %player%</white>",

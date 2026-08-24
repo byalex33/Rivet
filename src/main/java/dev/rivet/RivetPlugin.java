@@ -319,6 +319,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("staff")) {
             getServer().getScheduler().runTaskTimer(this, this::spawnFlightClouds, 1, 4);
         }
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new RivetPlaceholders(this).register();
+        }
     }
 
     @Override
@@ -1737,6 +1740,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     public boolean isAfk(Player player) {
         return afk != null && afk.isAfk(player.getUniqueId());
+    }
+
+    String pollPlaceholder(String params) {
+        return polls == null ? null : polls.placeholder(params);
     }
 
     private void refreshVanishVisibility(Player viewer) {
