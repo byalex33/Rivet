@@ -2,17 +2,44 @@ package dev.rivet;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
+import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class RivetMenuTest {
+    @Test
+    public void checksForGlintOverrideBeforeReadingOptionalComponent() {
+        assertFalse(RivetMenu.glintOverride(glintMeta(false, true)));
+        assertTrue(RivetMenu.glintOverride(glintMeta(true, true)));
+        assertFalse(RivetMenu.glintOverride(glintMeta(true, false)));
+    }
+
+    private static ItemMeta glintMeta(boolean hasOverride, boolean override) {
+        return (ItemMeta) Proxy.newProxyInstance(
+            ItemMeta.class.getClassLoader(),
+            new Class<?>[]{ItemMeta.class},
+            (proxy, method, args) -> switch (method.getName()) {
+                case "hasEnchantmentGlintOverride" -> hasOverride;
+                case "getEnchantmentGlintOverride" -> {
+                    if (!hasOverride) {
+                        throw new IllegalStateException("Optional glint component is absent");
+                    }
+                    yield override;
+                }
+                default -> throw new UnsupportedOperationException(method.getName());
+            }
+        );
+    }
+
     @Test
     public void parsesDeluxeMenusZeroBasedSlotsAndRanges() {
         YamlConfiguration configuration = new YamlConfiguration();

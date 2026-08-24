@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -117,11 +118,17 @@ final class RivetMenu {
     }
 
     ItemStack item(String key, ItemStack fallback, TagResolver... placeholders) {
-        Component name = fallback.getItemMeta().displayName();
-        List<Component> lore = fallback.getItemMeta().lore();
-        Boolean glow = fallback.getItemMeta().getEnchantmentGlintOverride();
+        ItemMeta fallbackMeta = fallback.getItemMeta();
+        Component name = fallbackMeta.displayName();
+        List<Component> lore = fallbackMeta.lore();
+        boolean glow = glintOverride(fallbackMeta);
         return item(key, fallback.getType(), name == null ? Component.empty() : name,
-            lore == null ? List.of() : lore, glow != null && glow, placeholders);
+            lore == null ? List.of() : lore, glow, placeholders);
+    }
+
+    static boolean glintOverride(ItemMeta meta) {
+        return meta.hasEnchantmentGlintOverride()
+            && Boolean.TRUE.equals(meta.getEnchantmentGlintOverride());
     }
 
     List<Integer> place(Inventory inventory, String key, ItemStack item,
