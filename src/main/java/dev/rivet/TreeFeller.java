@@ -86,8 +86,8 @@ final class TreeFeller implements Listener {
         }
 
         if (settings.getBoolean("tree-feller.enabled", true)
-            && isAxe(tool.getType()) && Tag.LOGS.isTagged(base.getType())
-            && !Tag.LOGS.isTagged(base.getRelative(0, -1, 0).getType())) {
+            && isAxe(tool.getType()) && isTreeTrunk(base.getType())
+            && !isTreeTrunk(base.getRelative(0, -1, 0).getType())) {
             fellTree(event, player, base, tool);
         } else if (settings.getBoolean("veinminer.enabled", true)
             && isPickaxe(tool.getType()) && oreKey(base.getType()) != null
@@ -231,6 +231,14 @@ final class TreeFeller implements Listener {
     }
 
     private Set<Block> connectedLeaves(Set<Block> logs, int maximumLeaves) {
+        if (logs.isEmpty()) {
+            return Set.of();
+        }
+        Material trunk = logs.iterator().next().getType();
+        if (trunk == Material.WARPED_STEM || trunk == Material.CRIMSON_STEM) {
+            return connectedNetherFungusCanopy(logs, maximumLeaves, trunk);
+        }
+
         Set<Block> leaves = new HashSet<>();
         ArrayDeque<LeafCandidate> queue = new ArrayDeque<>();
         for (Block log : logs) {
@@ -263,6 +271,35 @@ final class TreeFeller implements Listener {
             }
         }
         return leaves;
+    }
+
+    private Set<Block> connectedNetherFungusCanopy(Set<Block> stems, int maximumBlocks,
+                                                    Material stem) {
+        Set<Block> canopy = new HashSet<>();
+        ArrayDeque<Block> queue = new ArrayDeque<>();
+        for (Block block : stems) {
+            addNeighbors(queue, block);
+        }
+        while (!queue.isEmpty() && canopy.size() < maximumBlocks) {
+            Block block = queue.removeFirst();
+            if (!isNetherFungusFoliage(stem, block.getType()) || !canopy.add(block)) {
+                continue;
+            }
+            addNeighbors(queue, block);
+        }
+        return canopy;
+    }
+
+    private static void addNeighbors(ArrayDeque<Block> queue, Block block) {
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    if (x != 0 || y != 0 || z != 0) {
+                        queue.add(block.getRelative(x, y, z));
+                    }
+                }
+            }
+        }
     }
 
     private Set<Block> attachedJungleGrowth(Set<Block> logs, Set<Block> leaves) {
@@ -491,6 +528,17 @@ final class TreeFeller implements Listener {
 
     static boolean isAxe(Material material) {
         return material.name().endsWith("_AXE");
+    }
+
+    static boolean isTreeTrunk(Material material) {
+        return material == Material.WARPED_STEM || material == Material.CRIMSON_STEM
+            || Tag.LOGS.isTagged(material);
+    }
+
+    static boolean isNetherFungusFoliage(Material stem, Material material) {
+        return material == Material.SHROOMLIGHT
+            || stem == Material.WARPED_STEM && material == Material.WARPED_WART_BLOCK
+            || stem == Material.CRIMSON_STEM && material == Material.NETHER_WART_BLOCK;
     }
 
     static boolean isPickaxe(Material material) {

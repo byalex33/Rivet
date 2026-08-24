@@ -190,8 +190,9 @@ saved copy rather than risk duplication.
 `settings/tree-feller.yml` controls tree and vein size limits, animation timing, messages,
 sounds, and particles. Large 2×2 jungle trees use separate, higher log and leaf limits;
 their attached cocoa and naturally anchored hanging vines are removed with the tree. The
-attached-block limit bounds that extra growth scan. Existing settings files receive these
-new defaults automatically without replacing customized values.
+attached-block limit bounds that extra growth scan. Warped and crimson stems use their
+matching wart-block canopies and embedded shroomlights in place of ordinary leaves. Existing
+settings files receive new defaults automatically without replacing customized values.
 
 ### Teleport policy
 

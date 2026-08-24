@@ -1082,6 +1082,20 @@ public final class RivetPluginTest {
     }
 
     @Test
+    public void recognizesNetherFungusStemsAndTheirCanopies() {
+        assertEquals(true, TreeFeller.isTreeTrunk(org.bukkit.Material.WARPED_STEM));
+        assertEquals(true, TreeFeller.isTreeTrunk(org.bukkit.Material.CRIMSON_STEM));
+        assertEquals(true, TreeFeller.isNetherFungusFoliage(
+            org.bukkit.Material.WARPED_STEM, org.bukkit.Material.WARPED_WART_BLOCK));
+        assertEquals(true, TreeFeller.isNetherFungusFoliage(
+            org.bukkit.Material.WARPED_STEM, org.bukkit.Material.SHROOMLIGHT));
+        assertEquals(false, TreeFeller.isNetherFungusFoliage(
+            org.bukkit.Material.WARPED_STEM, org.bukkit.Material.NETHER_WART_BLOCK));
+        assertEquals(true, TreeFeller.isNetherFungusFoliage(
+            org.bukkit.Material.CRIMSON_STEM, org.bukkit.Material.NETHER_WART_BLOCK));
+    }
+
+    @Test
     public void groupsOreVariantsAndRejectsOrdinaryBlocks() {
         assertEquals(true, TreeFeller.isPickaxe(org.bukkit.Material.NETHERITE_PICKAXE));
         assertEquals("DIAMOND_ORE", TreeFeller.oreKey(org.bukkit.Material.DIAMOND_ORE));
