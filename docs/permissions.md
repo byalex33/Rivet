@@ -1,6 +1,6 @@
 # Permissions
 
-Rivet declares 151 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
+Rivet declares 152 permission nodes. Nodes with a default of `true` are available to all players. Nodes with a default of `op` are available to server operators. A default of `false` must be granted explicitly.
 
 The command permission is checked by Paper before Rivet handles the command. Additional `.others`, formatting, bypass, row, and wildcard nodes enable narrower capabilities inside a command.
 
@@ -53,6 +53,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.chat.mention.everyone` | `op` | Allows `@everyone`. |
 | `rivet.chat.antispam.bypass` | `op` | Bypasses the lightweight chat cooldown and similarity check. |
 | `rivet.teleport` | `op` | [`/tp`](commands.md#tp) |
+| `rivet.tphere` | `op` | [`/tphere`](commands.md#tphere) |
 | `rivet.tppos` | `op` | [`/tppos`](commands.md#tppos) |
 | `rivet.tp.nocooldown` | `op` | Makes player-facing teleports immediate by bypassing their warmup and every shared or feature-specific cooldown. |
 | `rivet.vanish` | `op` | [`/vanish`](commands.md#vanish) |

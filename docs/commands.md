@@ -1,6 +1,6 @@
 # Command reference
 
-Rivet registers 102 commands. Every command below has a stable link used by the documentation sidebar.
+Rivet registers 103 commands. Every command below has a stable link used by the documentation sidebar.
 
 ## Syntax conventions
 
@@ -15,7 +15,7 @@ Rivet registers 102 commands. Every command below has a stable link used by the 
 | Category | Commands |
 |---|---|
 | Homes and warps | [`/sethome`](#sethome), [`/home`](#home), [`/delhome`](#delhome), [`/setwarp`](#setwarp), [`/warp`](#warp), [`/delwarp`](#delwarp) |
-| Teleportation | [`/spawn`](#spawn), [`/setspawn`](#setspawn), [`/tpa`](#tpa), [`/tpahere`](#tpahere), [`/tpaccept`](#tpaccept), [`/tpdeny`](#tpdeny), [`/rtp`](#rtp), [`/near`](#near), [`/back`](#back), [`/tp`](#tp), [`/tppos`](#tppos) |
+| Teleportation | [`/spawn`](#spawn), [`/setspawn`](#setspawn), [`/tpa`](#tpa), [`/tpahere`](#tpahere), [`/tpaccept`](#tpaccept), [`/tpdeny`](#tpdeny), [`/rtp`](#rtp), [`/near`](#near), [`/back`](#back), [`/tp`](#tp), [`/tphere`](#tphere), [`/tppos`](#tppos) |
 | Chat and identity | [`/msg`](#msg), [`/r`](#r), [`/socialspy`](#socialspy), [`/ignore`](#ignore), [`/chatcolor`](#chatcolor), [`/tag`](#tag), [`/me`](#me), [`/nick`](#nick), [`/afk`](#afk), [`/afkcheck`](#afkcheck) |
 | Inventory and items | [`/clear`](#clear), [`/i`](#i), [`/condense`](#condense), [`/donate`](#donate), [`/giveall`](#giveall), [`/scan`](#scan), [`/invsee`](#invsee), [`/enderchest`](#enderchest), [`/repair`](#repair), [`/rename`](#rename), [`/lore`](#lore), [`/hat`](#hat), [`/trash`](#trash), [`/backpack`](#backpack) |
 | World and environment | [`/flat`](#flat), [`/flatworld`](#flatworld), [`/voidworld`](#voidworld), [`/worldspawn`](#worldspawn), [`/setworldspawn`](#setworldspawn), [`/killall`](#killall), [`/findbiome`](#findbiome), [`/top`](#top), [`/tree`](#tree), [`/day`](#day), [`/night`](#night), [`/noon`](#noon), [`/midnight`](#midnight), [`/sun`](#sun), [`/rain`](#rain), [`/thunder`](#thunder) |
@@ -225,6 +225,18 @@ The history is internal and is never addressed by number. A successful `/back` c
 - **Aliases:** None
 
 Teleport to a player.
+
+
+<a id="tphere"></a>
+
+### `/tphere`
+
+- **Syntax:** `/tphere <player>`
+- **Permission:** `rivet.tphere`
+- **Default:** `op`
+- **Aliases:** None
+
+Immediately teleport a player to your location.
 
 
 <a id="tppos"></a>

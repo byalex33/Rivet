@@ -137,6 +137,10 @@ commands:
     description: Teleport to a player
     usage: /tp <player>
     permission: rivet.teleport
+  tphere:
+    description: Teleport a player to you
+    usage: /tphere <player>
+    permission: rivet.tphere
   tppos:
     description: Teleport to coordinates in the current world
     usage: /tppos <x> <y> <z>
@@ -474,6 +478,8 @@ permissions:
   rivet.chat.antispam.bypass:
     default: op
   rivet.teleport:
+    default: op
+  rivet.tphere:
     default: op
   rivet.tppos:
     default: op

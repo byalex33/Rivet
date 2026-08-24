@@ -681,6 +681,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "tag" -> chat.tag(player, args);
             case "me" -> chat.me(player, args);
             case "tp" -> teleportPlayer(player, args);
+            case "tphere" -> teleportPlayerHere(player, args);
             case "tppos" -> teleportPosition(player, args);
             case "vanish" -> toggleVanish(player);
             case "fly" -> toggleFlight(player, args);
@@ -749,7 +750,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "restorationcore" -> creeperRestoration.completions(sender, args);
                 case "scan" -> scans.completions(sender, args);
                 case "poll" -> polls.completions(sender, args);
-                case "msg", "tp" -> args.length == 1 ? getServer().getOnlinePlayers().stream()
+                case "msg", "tp", "tphere" -> args.length == 1 ? getServer().getOnlinePlayers().stream()
                     .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
                     .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
                 case "tppos" -> playerCoordinateCompletions(sender, args);
@@ -1478,6 +1479,41 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         return true;
     }
 
+    private boolean teleportPlayerHere(Player player, String[] args) {
+        if (args.length != 1) {
+            moduleMessage(player, "staff", "messages.tphere-usage",
+                "<white>Usage: /tphere &lt;player&gt;</white>");
+            return true;
+        }
+        Player target = getServer().getPlayerExact(args[0]);
+        if (target == null || !player.canSee(target)) {
+            moduleMessage(player, "staff", "messages.tphere-unavailable",
+                "<white>That player is not online.</white>");
+            return true;
+        }
+        if (!target.teleport(player)) {
+            moduleMessage(player, "staff", "messages.tphere-failed",
+                "<white>Teleport failed.</white>");
+            return true;
+        }
+        moduleMessage(player, "staff", "messages.tphere-teleported",
+            "<white>Teleported <#f72a4c>%target%</#f72a4c> to you.</white>",
+            Placeholder.unparsed("target", target.getName()));
+        moduleMessage(target, "staff", "messages.tphere-target",
+            "<white>You were teleported to <#f72a4c>%player%</#f72a4c>.</white>",
+            Placeholder.unparsed("player", player.getName()));
+        if (!vanished.contains(player.getUniqueId())) {
+            if (getConfig().getBoolean("effects.sounds")) {
+                target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, .8f, 1.1f);
+            }
+            if (getConfig().getBoolean("effects.particles")) {
+                target.getWorld().spawnParticle(Particle.PORTAL, target.getLocation().add(0, 1, 0),
+                    30, .4, .8, .4);
+            }
+        }
+        return true;
+    }
+
     private boolean teleportPosition(Player player, String[] args) {
         if (args.length != 3) {
             moduleMessage(player, "staff", "messages.tppos-usage",
@@ -2158,7 +2194,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "restorationcore" -> "creeper-restoration";
             case "perm" -> "permissions";
             case "flat", "flatworld", "voidworld", "worldspawn", "setworldspawn", "killall", "findbiome", "top", "tree" -> "worlds";
-            case "gmc", "gms", "tp", "tppos", "vanish", "fly", "heal", "feed", "god", "flyspeed", "commandspy", "bossbarmsg",
+            case "gmc", "gms", "tp", "tphere", "tppos", "vanish", "fly", "heal", "feed", "god", "flyspeed", "commandspy", "bossbarmsg",
                  "note", "sameip", "toast" -> "staff";
             case "day", "night", "noon", "midnight", "sun", "rain", "thunder" -> "environment";
             case "clear", "i", "invsee", "enderchest", "repair", "rename", "lore",

@@ -38,7 +38,7 @@ Rivet creates `plugins/Rivet/` with global configuration, module switches, modul
 
 ## Command documentation
 
-Rivet registers 102 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
+Rivet registers 103 commands. Every command has a stable heading and direct link in the [complete command reference](docs/commands.md). The documentation sidebar also links every command individually.
 
 Common starting points:
 
@@ -48,6 +48,7 @@ Common starting points:
 - [`/setspawn`](docs/commands.md#setspawn) sets the server spawn.
 - [`/seen`](docs/commands.md#seen) shows a compact join, login, logout, and playtime summary.
 - [`/snapshot`](docs/commands.md#snapshot) browses, searches, exports, and safely restores inventory backups.
+- [`/tphere`](docs/commands.md#tphere) immediately brings a player to you.
 - [`/tppos`](docs/commands.md#tppos) teleports to absolute or relative coordinates.
 - [`/restorationcore`](docs/commands.md#restorationcore) gives throwable crater-repair items.
 - [`/log inspect`](docs/commands.md#log) toggles interactive block and container history.

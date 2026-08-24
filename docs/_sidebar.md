@@ -20,6 +20,7 @@
     - [/near](commands.md#near)
     - [/back](commands.md#back)
     - [/tp](commands.md#tp)
+    - [/tphere](commands.md#tphere)
     - [/tppos](commands.md#tppos)
   - Chat and identity
     - [/msg](commands.md#msg)

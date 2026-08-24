@@ -24,6 +24,11 @@ notes:
   maximum-length: 500
 
 messages:
+  tphere-usage: { enabled: true, actions: ['[message] <white>Usage: /tphere &lt;player&gt;</white>'] }
+  tphere-unavailable: { enabled: true, actions: ['[message] <white>That player is not online.</white>'] }
+  tphere-failed: { enabled: true, actions: ['[message] <white>Teleport failed.</white>'] }
+  tphere-teleported: { enabled: true, actions: ['[message] <white>Teleported <#f72a4c>%target%</#f72a4c> to you.</white>'] }
+  tphere-target: { enabled: true, actions: ['[message] <white>You were teleported to <#f72a4c>%player%</#f72a4c>.</white>'] }
   tppos-usage: { enabled: true, actions: ['[message] <white>Usage: /tppos &lt;x&gt; &lt;y&gt; &lt;z&gt;</white>'] }
   tppos-invalid: { enabled: true, actions: ['[message] <white>Coordinates must be finite numbers or relative values such as ~10.</white>'] }
   tppos-out-of-world: { enabled: true, actions: ["[message] <white>Those coordinates are outside the world's usable limits.</white>"] }

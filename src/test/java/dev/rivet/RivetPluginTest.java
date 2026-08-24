@@ -340,7 +340,7 @@ public final class RivetPluginTest {
         assertNotNull(pluginResource);
         YamlConfiguration plugin = YamlConfiguration.loadConfiguration(
             new InputStreamReader(pluginResource, StandardCharsets.UTF_8));
-        assertEquals(102, plugin.getConfigurationSection("commands").getKeys(false).size());
+        assertEquals(103, plugin.getConfigurationSection("commands").getKeys(false).size());
         plugin.getConfigurationSection("commands").getKeys(false)
             .stream().filter(command -> !command.equals("rivet"))
             .forEach(command -> assertNotNull(command, RivetPlugin.moduleForCommand(command)));
@@ -368,6 +368,7 @@ public final class RivetPluginTest {
         assertEquals("creeper-restoration", RivetPlugin.moduleForCommand("restorationcore"));
         assertEquals("statistics", RivetPlugin.moduleForCommand("seen"));
         assertEquals("staff", RivetPlugin.moduleForCommand("tppos"));
+        assertEquals("staff", RivetPlugin.moduleForCommand("tphere"));
         assertEquals("filter", RivetPlugin.moduleForCommand("filter"));
         assertEquals("chat", RivetPlugin.moduleForCommand("chatcolor"));
         assertEquals("chat", RivetPlugin.moduleForCommand("tag"));
