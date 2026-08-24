@@ -25,6 +25,9 @@ display:
   next-breed: "<white>Next breed in: <#f72a4c>%seconds%s</#f72a4c></white>"
 
 gui:
+  # DeluxeMenus-style schema. Slots are zero-based (0-26).
+  menu_title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>%animal% Breeder</white>"
+  size: 27
   open_commands: []
   # Top row: breeding food. Middle row: collected chicken eggs.
   # Click the experience bottle in the bottom row to claim stored XP.
@@ -32,6 +35,22 @@ gui:
     name: "<#f72a4c>Stored XP: %amount%</#f72a4c>"
     lore:
       - "<white>Click to collect stored experience.</white>"
+  items:
+    food-storage:
+      material: '%material%'
+      slots: 0-8
+    egg-storage:
+      material: EGG
+      slots: 9-17
+    filler:
+      material: GRAY_STAINED_GLASS_PANE
+      slots: [18-21, 23-26]
+      display_name: ''
+    experience:
+      material: EXPERIENCE_BOTTLE
+      slot: 22
+      display_name: '<#f72a4c>Stored XP: %amount%</#f72a4c>'
+      lore: ['<white>Click to collect stored experience.</white>']
 
 effects:
   activation:

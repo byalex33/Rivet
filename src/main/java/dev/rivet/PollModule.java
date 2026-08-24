@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.UUID;
 
 final class PollModule implements Listener {
-    private static final int PAGE_SIZE = RivetGui.CONTENT_SLOTS.length;
     private static final int MAX_DESCRIPTION_LENGTH = 240;
     private final RivetPlugin plugin;
     private final YamlConfiguration data;
@@ -91,13 +90,15 @@ final class PollModule implements Listener {
             return;
         }
         if (holder instanceof PollListHolder list) {
-            clickList(player, list, event.getRawSlot());
+            clickList(player, list, event.getRawSlot(), event.getClick());
         } else if (holder instanceof VoteHolder vote) {
-            if (event.getRawSlot() == 11) {
+            String control = vote.controls.get(event.getRawSlot());
+            menu("vote").click(player, control, event.getClick());
+            if ("yes".equals(control)) {
                 vote(player, vote.pollId, true);
-            } else if (event.getRawSlot() == 15) {
+            } else if ("no".equals(control)) {
                 vote(player, vote.pollId, false);
-            } else if (event.getRawSlot() == 22) {
+            } else if ("back".equals(control)) {
                 open(player, vote.returnPage);
             }
         }
@@ -145,10 +146,13 @@ final class PollModule implements Listener {
         return true;
     }
 
-    private void clickList(Player player, PollListHolder holder, int slot) {
-        int contentIndex = RivetGui.contentIndex(slot);
-        if (contentIndex >= 0 && contentIndex < holder.pollIds.size()) {
-            Poll poll = polls.get(holder.pollIds.get(contentIndex));
+    private void clickList(Player player, PollListHolder holder, int slot,
+                           org.bukkit.event.inventory.ClickType click) {
+        String control = holder.controls.get(slot);
+        menu("list").click(player, control, click);
+        String pollId = holder.pollIds.get(slot);
+        if (pollId != null) {
+            Poll poll = polls.get(pollId);
             if (poll == null) {
                 open(player, holder.page);
             } else if (poll.votes.containsKey(player.getUniqueId())) {
@@ -158,9 +162,10 @@ final class PollModule implements Listener {
             } else {
                 openVote(player, poll, holder.page);
             }
-        } else if (slot == 45 && holder.page > 0) {
+        } else if ("previous-page".equals(control) && holder.page > 0) {
             open(player, holder.page - 1);
-        } else if (slot == 53 && (holder.page + 1) * PAGE_SIZE < sorted().size()) {
+        } else if ("next-page".equals(control)
+            && (holder.page + 1) * holder.pageSize < sorted().size()) {
             open(player, holder.page + 1);
         }
     }
@@ -189,14 +194,27 @@ final class PollModule implements Listener {
     }
 
     private void open(Player player, int requestedPage) {
+        RivetMenu menu = menu("list");
+        int size = menu.size(54);
+        List<Integer> contentSlots = menu.slots("poll", size,
+            java.util.Arrays.stream(RivetGui.CONTENT_SLOTS).boxed().toList());
+        if (contentSlots.isEmpty()) contentSlots = List.of(Math.min(22, size - 1));
+        int pageSize = contentSlots.size();
         List<Poll> all = sorted();
-        int lastPage = Math.max(0, (all.size() - 1) / PAGE_SIZE);
+        int lastPage = Math.max(0, (all.size() - 1) / pageSize);
         int page = Math.max(0, Math.min(requestedPage, lastPage));
-        List<Poll> shown = all.subList(page * PAGE_SIZE, Math.min(all.size(), (page + 1) * PAGE_SIZE));
-        PollListHolder holder = new PollListHolder(player.getUniqueId(), page,
-            shown.stream().map(Poll::id).toList());
-        holder.inventory = plugin.getServer().createInventory(holder, 54, RivetGui.title("Polls"));
-        RivetGui.frame(holder.inventory);
+        List<Poll> shown = all.subList(page * pageSize, Math.min(all.size(), (page + 1) * pageSize));
+        PollListHolder holder = new PollListHolder(player.getUniqueId(), page, pageSize);
+        TagResolver pageTags = TagResolver.resolver(
+            Placeholder.unparsed("page", Integer.toString(page + 1)),
+            Placeholder.unparsed("pages", Integer.toString(lastPage + 1)),
+            Placeholder.unparsed("count", Integer.toString(all.size())),
+            Placeholder.unparsed("remaining", Integer.toString(unvotedCount(all, player.getUniqueId()))));
+        holder.inventory = plugin.getServer().createInventory(holder, size,
+            menu.title("<white>Polls</white>", pageTags));
+        menu.place(holder.inventory, "filler", menu.item("filler",
+            Material.GRAY_STAINED_GLASS_PANE, Component.empty(), List.of(), false),
+            List.of(), holder.controls);
 
         for (int index = 0; index < shown.size(); index++) {
             Poll poll = shown.get(index);
@@ -210,43 +228,78 @@ final class PollModule implements Listener {
                 : Component.text("Your vote: " + (vote ? "Yes" : "No"), RivetPalette.SECONDARY));
             Material icon = vote == null ? Material.WRITABLE_BOOK
                 : vote ? Material.LIME_DYE : Material.RED_DYE;
-            holder.inventory.setItem(RivetGui.CONTENT_SLOTS[index],
-                RivetGui.item(icon, Component.text(poll.name, NamedTextColor.WHITE), lore));
+            int slot = contentSlots.get(index);
+            TagResolver pollTags = TagResolver.resolver(pageTags,
+                resultTags(poll),
+                Placeholder.unparsed("name", poll.name),
+                Placeholder.unparsed("description", poll.description),
+                Placeholder.unparsed("status", vote == null ? "Click to vote"
+                    : "Your vote: " + (vote ? "Yes" : "No")));
+            holder.inventory.setItem(slot, menu.item("poll",
+                RivetGui.item(icon, Component.text(poll.name, NamedTextColor.WHITE), lore), pollTags));
+            holder.pollIds.put(slot, poll.id);
+            holder.controls.put(slot, "poll");
         }
         if (all.isEmpty()) {
-            holder.inventory.setItem(22, RivetGui.button(Material.PAPER, "No polls yet",
-                "An administrator can create one with /poll create"));
+            menu.place(holder.inventory, "empty", menu.item("empty", Material.PAPER,
+                "<white>No polls yet</white>",
+                List.of("<gray>An administrator can create one with /poll create</gray>")),
+                List.of(22), holder.controls);
         }
         if (page > 0) {
-            holder.inventory.setItem(45, RivetGui.button(Material.ARROW, "Previous page"));
+            menu.place(holder.inventory, "previous-page", menu.item("previous-page", Material.ARROW,
+                "<white>Previous page</white>", List.of()), List.of(45), holder.controls);
         }
-        holder.inventory.setItem(49, RivetGui.button(Material.CLOCK, "Polls",
-            "Page " + (page + 1) + " of " + (lastPage + 1),
-            unvotedCount(all, player.getUniqueId()) + " awaiting your vote"));
+        menu.place(holder.inventory, "page-info", menu.item("page-info", Material.CLOCK,
+            "<white>Polls</white>", List.of("<gray>Page %page% of %pages%</gray>",
+                "<gray>%remaining% awaiting your vote</gray>"), pageTags),
+            List.of(49), holder.controls);
         if (page < lastPage) {
-            holder.inventory.setItem(53, RivetGui.button(Material.ARROW, "Next page"));
+            menu.place(holder.inventory, "next-page", menu.item("next-page", Material.ARROW,
+                "<white>Next page</white>", List.of()), List.of(53), holder.controls);
         }
+        menu.placeStaticItems(holder.inventory,
+            java.util.Set.of("filler", "poll", "empty", "previous-page", "page-info", "next-page"),
+            holder.controls, pageTags);
         player.openInventory(holder.inventory);
+        menu.open(player, pageTags);
     }
 
     private void openVote(Player player, Poll poll, int returnPage) {
+        RivetMenu menu = menu("vote");
+        int size = menu.size(27);
         VoteHolder holder = new VoteHolder(player.getUniqueId(), poll.id, returnPage);
-        holder.inventory = plugin.getServer().createInventory(holder, 27, RivetGui.title("Vote"));
-        for (int slot = 0; slot < holder.inventory.getSize(); slot++) {
-            holder.inventory.setItem(slot, RivetGui.pane(Material.GRAY_STAINED_GLASS_PANE));
-        }
-        holder.inventory.setItem(11, RivetGui.button(Material.LIME_CONCRETE, "Yes",
-            "Click to vote Yes"));
+        TagResolver tags = TagResolver.resolver(resultTags(poll),
+            Placeholder.unparsed("name", poll.name),
+            Placeholder.unparsed("description", poll.description));
+        holder.inventory = plugin.getServer().createInventory(holder, size,
+            menu.title("<white>Vote</white>", tags));
+        menu.place(holder.inventory, "filler", menu.item("filler",
+            Material.GRAY_STAINED_GLASS_PANE, Component.empty(), List.of(), false),
+            java.util.stream.IntStream.range(0, size).boxed().toList(), holder.controls);
+        menu.place(holder.inventory, "yes", menu.item("yes", Material.LIME_CONCRETE,
+            "<white>Yes</white>", List.of("<gray>Click to vote Yes</gray>")),
+            List.of(Math.min(11, size - 1)), holder.controls);
         List<Component> lore = new ArrayList<>();
         wrap(poll.description, 38).forEach(line -> lore.add(Component.text(line, NamedTextColor.GRAY)));
         lore.add(Component.empty());
         lore.add(results(poll));
-        holder.inventory.setItem(13, RivetGui.item(Material.PAPER,
-            Component.text(poll.name, NamedTextColor.WHITE), lore));
-        holder.inventory.setItem(15, RivetGui.button(Material.RED_CONCRETE, "No",
-            "Click to vote No"));
-        holder.inventory.setItem(22, RivetGui.button(Material.ARROW, "Back to polls"));
+        menu.place(holder.inventory, "poll", menu.item("poll",
+            RivetGui.item(Material.PAPER, Component.text(poll.name, NamedTextColor.WHITE), lore), tags),
+            List.of(Math.min(13, size - 1)), holder.controls);
+        menu.place(holder.inventory, "no", menu.item("no", Material.RED_CONCRETE,
+            "<white>No</white>", List.of("<gray>Click to vote No</gray>")),
+            List.of(Math.min(15, size - 1)), holder.controls);
+        menu.place(holder.inventory, "back", menu.item("back", Material.ARROW,
+            "<white>Back to polls</white>", List.of()), List.of(Math.min(22, size - 1)), holder.controls);
+        menu.placeStaticItems(holder.inventory,
+            java.util.Set.of("filler", "yes", "poll", "no", "back"), holder.controls, tags);
         player.openInventory(holder.inventory);
+        menu.open(player, tags);
+    }
+
+    private RivetMenu menu(String name) {
+        return new RivetMenu(plugin, plugin.settings("polls"), "gui." + name);
     }
 
     private List<Poll> sorted() {
@@ -432,13 +485,15 @@ final class PollModule implements Listener {
     private static final class PollListHolder implements PollHolder {
         private final UUID owner;
         private final int page;
-        private final List<String> pollIds;
+        private final int pageSize;
+        private final Map<Integer, String> pollIds = new HashMap<>();
+        private final Map<Integer, String> controls = new HashMap<>();
         private Inventory inventory;
 
-        private PollListHolder(UUID owner, int page, List<String> pollIds) {
+        private PollListHolder(UUID owner, int page, int pageSize) {
             this.owner = owner;
             this.page = page;
-            this.pollIds = pollIds;
+            this.pageSize = pageSize;
         }
 
         @Override
@@ -456,6 +511,7 @@ final class PollModule implements Listener {
         private final UUID owner;
         private final String pollId;
         private final int returnPage;
+        private final Map<Integer, String> controls = new HashMap<>();
         private Inventory inventory;
 
         private VoteHolder(UUID owner, String pollId, int returnPage) {

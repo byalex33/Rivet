@@ -114,11 +114,56 @@ Substantial modules own a file under `settings/`. Small mechanics are grouped in
 
 Named colors and gradients under `chat-styles` become permission names such as `rivet.chat.color.red` and `rivet.chat.gradient.sunset`. The bundled gradients include a curated set of popular published [RGBirdflop community presets](https://www.birdflop.com/resources/rgb/presets/), stored with `birdflop-` keys. Their colour stops are translated to MiniMessage gradients. Newly bundled preset keys are merged into an existing `settings/chat.yml` on startup without replacing server edits. Custom six-digit hex colors, custom two-color gradients, and rainbow share `rivet.chat.style.custom` and can each be disabled. Tags follow `rivet.chat.tag.<name>`. Player selectors show only choices the player may use.
 
-Chat style and tag selectors use a framed, paginated layout with live previews and active-selection feedback. The filter and snapshot tools share the same menu language, while backpacks preserve every storage slot and only apply the branded title treatment.
+Chat style and tag selectors use a paginated layout with live previews and active-selection feedback. Their titles, sizes, content slots, controls, materials, names, lore, open actions, and click actions use the shared menu format described below.
 
 Mentions are rendered per viewer: a matching player sees their own highlighted `@Name`, while other viewers keep the ordinary message style. The optional sound is resolved like other Rivet sounds. The anti-spam section intentionally contains only a cooldown and a similarity percentage; `rivet.chat.antispam.bypass` skips both checks.
 
 Style and tag displays use a visual-only MiniMessage parser. Colors, gradients, rainbow, reset, and safe decorations are supported, but player-controlled cosmetics cannot create clicks, hovers, commands, URLs, insertions, NBT, fonts, or selectors. Rivet-generated `[item]` hover data remains intact.
+
+### Inventory menus
+
+Every Rivet-owned inventory GUI uses a DeluxeMenus-style section. This covers the trash,
+backpack, item filter, auto breeder, poll browser/vote screen, chat-style selector, chat-tag selector, and every
+inventory-backup browser/restore screen. Vanilla player inventories, ender chests, and
+villager trading screens keep their native layouts.
+
+```yaml
+gui:
+  menu_title: '<white>Example Menu</white>'
+  size: 54
+  open_commands:
+    - '[sound] block.chest.open'
+  items:
+    close:
+      material: BARRIER
+      slot: 49
+      display_name: '<red>Close</red>'
+      lore:
+        - '<gray>Click to close this menu.</gray>'
+      click_commands:
+        - '[close]'
+```
+
+Like DeluxeMenus, `slot` and `slots` are zero-based. `slots` accepts numbers, lists,
+comma-separated values, and inclusive ranges such as `10-16`. `material`, `display_name`,
+`lore`, `amount`, and `glow` control item appearance. `click_commands` applies to every
+click; `left_click_commands`, `right_click_commands`, `shift_left_click_commands`,
+`shift_right_click_commands`, and `middle_click_commands` can add click-specific actions.
+Unknown item keys create ordinary decorative/action items. The bundled semantic keys such
+as `option`, `filtered-item`, `previous-page`, `restore`, and `confirm` retain their Rivet
+behavior when moved or restyled.
+
+Dynamic menus document their available `%placeholders%` directly in the bundled YAML.
+`%material%` means Rivet uses the runtime material for that item. A configured backpack
+item reserves its slots from storage; any older stored item behind a newly reserved slot
+remains in `data/backpacks.yml` and becomes visible again when the decoration is removed.
+Snapshot preview menus remain 54 slots so their saved inventory mapping cannot be
+truncated. Existing legacy `title`, `rows`, `name`, and one-based trash slots remain
+supported, so upgrading does not require replacing a live settings file.
+
+`/rivet reload` applies menu YAML changes. Open backpacks and auto-breeder inventories are
+safely saved and closed during that reload so their changed sizes and slot maps can be
+rebuilt on the next open.
 
 ### Death messages
 
@@ -271,8 +316,10 @@ messages:
       - '[sound] entity.player.levelup 0.8 1.2'
 ```
 
-Supported actions are `[message]`, `[broadcast]`, `[actionbar]`, `[title]`, `[sound]`,
-`[particle]`, `[firework]`, `[bossbar]`, `[toast]`, `[lightning]`, and `[close]`.
+Supported actions are `[message]`, `[broadcast]`, `[player]`, `[console]`,
+`[actionbar]`, `[title]`, `[sound]`, `[particle]`, `[firework]`, `[bossbar]`, `[toast]`,
+`[lightning]`, and `[close]`. `[player]` runs a command as the clicking player and
+`[console]` runs one as the server console; a leading slash is optional.
 Titles use `title | subtitle | fade-in ticks | stay ticks | fade-out ticks`. Fireworks use
 `#RRGGBB,#RRGGBB | type | power | count | gap ticks`. Rivet upgrades legacy message strings
 and action lists to this structure on startup without replacing customized text.

@@ -1,7 +1,7 @@
 gui:
-  # Inventory rows, from 1 to 6. Slots are numbered from 1.
-  rows: 6
-  title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Trash Bin</white>"
+  # DeluxeMenus-style schema. Slots are zero-based (0-53).
+  menu_title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Trash Bin</white>"
+  size: 54
   # GUI actions support:
   # [message] <text>
   # [broadcast] <text>
@@ -14,23 +14,23 @@ gui:
   # [bossbar] [-d:seconds] [-c:color] [-s:style] <text>
   # [lightning] (visual only), and [close]
   open_commands:
-    enabled: true
-    actions:
-      - '[sound] block.chest.open'
-      - '[message] <white>The trash has been opened.</white>'
+    - '[sound] block.chest.open'
+    - '[message] <white>The trash has been opened.</white>'
   items:
-    'fillerItems1':
+    filler-top:
       material: GRAY_STAINED_GLASS_PANE
-      slots: 46-49
-      name: ''
+      slots: 45-48
+      display_name: ''
       lore: ''
-    'closeMenu':
+    close:
       material: BARRIER
-      slot: 50
-      name: '<red><bold>Close Trash</bold></red>'
+      slot: 49
+      display_name: '<red><bold>Close Trash</bold></red>'
       lore: '<gray>Items left above are destroyed on close.</gray>'
-    'fillerItems2':
+      click_commands:
+        - '[close]'
+    filler-bottom:
       material: GRAY_STAINED_GLASS_PANE
-      slots: 51-54
-      name: ''
+      slots: 50-53
+      display_name: ''
       lore: ''

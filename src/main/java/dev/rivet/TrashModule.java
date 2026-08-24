@@ -3,7 +3,6 @@ package dev.rivet;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,10 +16,10 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 final class TrashModule implements Listener {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
@@ -39,16 +38,18 @@ final class TrashModule implements Listener {
             player.sendMessage(MM.deserialize("<white>Usage: /trash"));
             return true;
         }
-        int rows = Math.max(1, Math.min(6, settings.getInt("gui.rows", 6)));
+        boolean legacy = settings.contains("gui.title");
+        RivetMenu menu = new RivetMenu(plugin, settings, "gui", legacy);
+        int size = menu.size(54);
         TrashHolder holder = new TrashHolder();
-        String configuredTitle = settings.getString("gui.title",
-            "<#f72a4c>Trash — items are destroyed</#f72a4c>");
-        Component title = configuredTitle.equals("<#f72a4c>Trash — items are destroyed</#f72a4c>")
-            ? RivetGui.title("Trash Bin") : MM.deserialize(configuredTitle);
-        holder.inventory = plugin.getServer().createInventory(holder, rows * 9, title);
-        addConfiguredItems(holder);
+        String legacyTitle = settings.getString("gui.title", "");
+        Component title = legacy && !legacyTitle.equals(
+            "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Trash Bin</white>")
+                ? MM.deserialize(legacyTitle) : menu.title("<white>Trash Bin</white>");
+        holder.inventory = plugin.getServer().createInventory(holder, size, title);
+        menu.placeStaticItems(holder.inventory, Set.of(), holder.controls);
         player.openInventory(holder.inventory);
-        plugin.messageActions().run(player, settings, "gui.open_commands", List.of());
+        menu.open(player);
         return true;
     }
 
@@ -58,13 +59,20 @@ final class TrashModule implements Listener {
             return;
         }
         int slot = event.getRawSlot();
-        if (slot >= 0 && slot < holder.inventory.getSize() && holder.actions.containsKey(slot)) {
+        if (slot >= 0 && slot < holder.inventory.getSize() && holder.controls.containsKey(slot)) {
             event.setCancelled(true);
             if (event.getWhoClicked() instanceof Player player) {
-                guiActions.run(player, holder.actions.get(slot));
+                String key = holder.controls.get(slot);
+                new RivetMenu(plugin, settings, "gui", settings.contains("gui.title"))
+                    .click(player, key, event.getClick());
+                if (key.equalsIgnoreCase("closeMenu")
+                    && RivetMenu.actions(settings.getConfigurationSection("gui.items." + key),
+                        "click_commands").isEmpty()) {
+                    player.closeInventory();
+                }
             }
         } else if (event.getAction() == InventoryAction.COLLECT_TO_CURSOR
-            && holder.actions.keySet().stream().map(holder.inventory::getItem)
+            && holder.controls.keySet().stream().map(holder.inventory::getItem)
                 .anyMatch(item -> item != null && item.isSimilar(event.getCursor()))) {
             // A double-click may collect trash, but must not collect decorative GUI items.
             event.setCancelled(true);
@@ -74,7 +82,7 @@ final class TrashModule implements Listener {
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
         if (event.getView().getTopInventory().getHolder(false) instanceof TrashHolder holder
-            && event.getRawSlots().stream().anyMatch(holder.actions::containsKey)) {
+            && event.getRawSlots().stream().anyMatch(holder.controls::containsKey)) {
             event.setCancelled(true);
         }
     }
@@ -86,90 +94,14 @@ final class TrashModule implements Listener {
         }
     }
 
-    private void addConfiguredItems(TrashHolder holder) {
-        ConfigurationSection items = settings.getConfigurationSection("gui.items");
-        if (items == null) {
-            return;
-        }
-        for (String key : items.getKeys(false)) {
-            ConfigurationSection configured = items.getConfigurationSection(key);
-            if (configured == null) {
-                continue;
-            }
-            Material material = Material.matchMaterial(configured.getString("material", ""));
-            if (material == null || material.isAir() || !material.isItem()) {
-                plugin.getLogger().warning("Invalid trash GUI material at gui.items." + key
-                    + ".material; skipping the item.");
-                continue;
-            }
-            ItemStack item = new ItemStack(material);
-            item.editMeta(meta -> {
-                if (configured.contains("name")) {
-                    meta.displayName(MM.deserialize(configured.getString("name", "")));
-                }
-                List<String> lore = configuredLore(configured.get("lore"));
-                if (!lore.isEmpty()) {
-                    meta.lore(lore.stream().map(MM::deserialize).toList());
-                }
-            });
-            List<String> actions = new ArrayList<>(configured.getStringList("click_commands"));
-            if (key.equalsIgnoreCase("closeMenu")
-                && actions.stream().noneMatch(action -> action.trim().equalsIgnoreCase("[close]"))) {
-                actions.add("[close]");
-            }
-            for (int slot : configuredSlots(configured, holder.inventory.getSize())) {
-                holder.inventory.setItem(slot, item.clone());
-                holder.actions.put(slot, List.copyOf(actions));
-            }
-        }
-    }
-
-    private static List<String> configuredLore(Object configured) {
-        if (configured instanceof String line) {
-            return line.isEmpty() ? List.of() : List.of(line);
-        }
-        if (configured instanceof List<?> lines) {
-            return lines.stream().filter(String.class::isInstance).map(String.class::cast).toList();
-        }
-        return List.of();
-    }
-
-    static List<Integer> configuredSlots(ConfigurationSection item, int inventorySize) {
-        List<Integer> slots = new ArrayList<>();
-        if (item.contains("slot")) {
-            addSlots(slots, item.get("slot"), inventorySize);
-        }
-        if (item.contains("slots")) {
-            addSlots(slots, item.get("slots"), inventorySize);
-        }
-        return slots.stream().distinct().toList();
-    }
-
-    private static void addSlots(List<Integer> slots, Object configured, int inventorySize) {
-        if (configured instanceof List<?> values) {
-            values.forEach(value -> addSlots(slots, value, inventorySize));
-            return;
-        }
-        String value = String.valueOf(configured).trim();
-        for (String part : value.split(",")) {
-            String[] range = part.trim().split("-", 2);
-            try {
-                int start = Integer.parseInt(range[0].trim());
-                int end = range.length == 1 ? start : Integer.parseInt(range[1].trim());
-                for (int slot = Math.min(start, end); slot <= Math.max(start, end); slot++) {
-                    if (slot >= 1 && slot <= inventorySize) {
-                        slots.add(slot - 1);
-                    }
-                }
-            } catch (NumberFormatException ignored) {
-                // Ignore malformed entries while keeping the rest of the GUI usable.
-            }
-        }
+    static List<Integer> configuredSlots(org.bukkit.configuration.ConfigurationSection item,
+                                         int inventorySize) {
+        return RivetMenu.configuredSlots(item, inventorySize, true);
     }
 
     private static final class TrashHolder implements InventoryHolder {
         private Inventory inventory;
-        private final Map<Integer, List<String>> actions = new HashMap<>();
+        private final Map<Integer, String> controls = new HashMap<>();
 
         @Override
         public @NotNull Inventory getInventory() {

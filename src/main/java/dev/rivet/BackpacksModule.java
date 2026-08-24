@@ -9,9 +9,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,7 +51,7 @@ final class BackpacksModule implements Listener {
         }
         Inventory inventory = open.computeIfAbsent(player.getUniqueId(), ignored -> load(player));
         player.openInventory(inventory);
-        plugin.messageActions().run(player, settings, "gui.open_commands", List.of());
+        menu().open(player);
         return true;
     }
 
@@ -72,11 +75,31 @@ final class BackpacksModule implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onClick(InventoryClickEvent event) {
+        if (event.getView().getTopInventory().getHolder(false) instanceof BackpackHolder holder
+            && event.getRawSlot() >= 0 && holder.controls.containsKey(event.getRawSlot())) {
+            event.setCancelled(true);
+            if (event.getWhoClicked() instanceof Player player) {
+                menu().click(player, holder.controls.get(event.getRawSlot()), event.getClick());
+            }
+            return;
+        }
+        if (event.getView().getTopInventory().getHolder(false) instanceof BackpackHolder holder
+            && event.getAction() == InventoryAction.COLLECT_TO_CURSOR
+            && holder.controls.keySet().stream().map(holder.inventory::getItem)
+                .anyMatch(item -> item != null && item.isSimilar(event.getCursor()))) {
+            event.setCancelled(true);
+            return;
+        }
         saveNextTick(event.getWhoClicked().getUniqueId(), event.getView().getTopInventory());
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onDrag(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder(false) instanceof BackpackHolder holder
+            && event.getRawSlots().stream().anyMatch(holder.controls::containsKey)) {
+            event.setCancelled(true);
+            return;
+        }
         saveNextTick(event.getWhoClicked().getUniqueId(), event.getView().getTopInventory());
     }
 
@@ -91,13 +114,30 @@ final class BackpacksModule implements Listener {
         });
     }
 
+    void reloadGui() {
+        new HashMap<>(open).forEach((uuid, inventory) -> {
+            save(uuid, inventory);
+            Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null && player.getOpenInventory().getTopInventory() == inventory) {
+                player.closeInventory();
+            }
+            open.remove(uuid);
+        });
+    }
+
     private Inventory load(Player player) {
-        int rows = resolvedRows(settings.getInt("default-rows", 3),
+        RivetMenu menu = menu();
+        int configuredRows = settings.contains("default-rows")
+            ? Math.clamp(settings.getInt("default-rows", 3), 1, 6) : menu.size(27) / 9;
+        int rows = resolvedRows(configuredRows,
             row -> player.hasPermission("rivet.backpack.rows." + row));
-        String configuredTitle = settings.getString("title", "<#f72a4c>Backpack");
-        Component title = configuredTitle.equals("<#f72a4c>Backpack")
-            ? RivetGui.title("Backpack") : MM.deserialize(configuredTitle);
-        Inventory inventory = plugin.getServer().createInventory(null, rows * 9, title);
+        String legacyTitle = settings.getString("title", "");
+        Component title = !legacyTitle.isBlank()
+            && !legacyTitle.equals("<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Backpack</white>")
+                ? MM.deserialize(legacyTitle) : menu.title("<white>Backpack</white>");
+        BackpackHolder holder = new BackpackHolder();
+        Inventory inventory = plugin.getServer().createInventory(holder, rows * 9, title);
+        holder.inventory = inventory;
         List<?> stored = data.getList(path(player.getUniqueId()), List.of());
         for (int slot = 0; slot < Math.min(inventory.getSize(), stored.size()); slot++) {
             if (stored.get(slot) instanceof ItemStack item) {
@@ -108,6 +148,7 @@ final class BackpacksModule implements Listener {
             .anyMatch(ItemStack.class::isInstance)) {
             message(player, "overflow", "<white>Items above your current backpack size are safely retained until you regain more rows.</white>");
         }
+        menu.placeStaticItems(inventory, java.util.Set.of(), holder.controls);
         return inventory;
     }
 
@@ -132,6 +173,14 @@ final class BackpacksModule implements Listener {
         }
         List<ItemStack> visible = java.util.Arrays.stream(inventory.getContents())
             .map(item -> item == null ? null : item.clone()).toList();
+        if (inventory.getHolder(false) instanceof BackpackHolder holder) {
+            visible = new ArrayList<>(visible);
+            for (int slot : holder.controls.keySet()) {
+                if (slot < visible.size()) {
+                    visible.set(slot, slot < previous.size() ? previous.get(slot) : null);
+                }
+            }
+        }
         List<ItemStack> contents = mergeContents(previous, visible, 54);
         data.set(path(player), contents);
         try {
@@ -143,6 +192,10 @@ final class BackpacksModule implements Listener {
 
     private void message(Player player, String key, String fallback) {
         plugin.messageActions().run(player, settings, "messages." + key, fallback);
+    }
+
+    private RivetMenu menu() {
+        return new RivetMenu(plugin, settings, "gui");
     }
 
     private static String path(UUID player) {
@@ -169,5 +222,15 @@ final class BackpacksModule implements Listener {
             merged.set(slot, visible.get(slot));
         }
         return merged;
+    }
+
+    private static final class BackpackHolder implements InventoryHolder {
+        private final Map<Integer, String> controls = new HashMap<>();
+        private Inventory inventory;
+
+        @Override
+        public @NotNull Inventory getInventory() {
+            return inventory;
+        }
     }
 }

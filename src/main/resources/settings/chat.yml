@@ -88,6 +88,39 @@ anti-spam:
     enabled: true
     threshold: 85
 
+# DeluxeMenus-style inventory selectors. Slots are zero-based (0-53).
+gui:
+  chat-styles:
+    menu_title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Chat Styles</white>"
+    size: 54
+    open_commands: []
+    items:
+      filler: { material: GRAY_STAINED_GLASS_PANE, slots: [0-9, 17-18, 26-27, 35-36, 44-53], display_name: '' }
+      option:
+        material: '%material%'
+        slots: [10-16, 19-25, 28-34, 37-43]
+        display_name: '%display%'
+        lore: ['<dark_gray>%description%</dark_gray>', '', '<#f72a4c>%status%</#f72a4c>']
+      previous-page: { material: ARROW, slot: 45, display_name: '<white>Previous page</white>', lore: ['<gray>View earlier choices</gray>'] }
+      page-info: { material: BOOK, slot: 49, display_name: '<white>Page %page% of %pages%</white>', lore: ['<gray>%count% available choices</gray>', '<gray>Current: %current%</gray>'] }
+      reset: { material: MILK_BUCKET, slot: 50, display_name: '<white>Reset to default</white>', lore: ['<gray>Clear your current selection</gray>'] }
+      next-page: { material: ARROW, slot: 53, display_name: '<white>Next page</white>', lore: ['<gray>View more choices</gray>'] }
+  chat-tags:
+    menu_title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Chat Tags</white>"
+    size: 54
+    open_commands: []
+    items:
+      filler: { material: GRAY_STAINED_GLASS_PANE, slots: [0-9, 17-18, 26-27, 35-36, 44-53], display_name: '' }
+      option:
+        material: '%material%'
+        slots: [10-16, 19-25, 28-34, 37-43]
+        display_name: '%display%'
+        lore: ['<dark_gray>%description%</dark_gray>', '', '<#f72a4c>%status%</#f72a4c>']
+      previous-page: { material: ARROW, slot: 45, display_name: '<white>Previous page</white>', lore: ['<gray>View earlier choices</gray>'] }
+      page-info: { material: BOOK, slot: 49, display_name: '<white>Page %page% of %pages%</white>', lore: ['<gray>%count% available choices</gray>', '<gray>Current: %current%</gray>'] }
+      reset: { material: BARRIER, slot: 50, display_name: '<white>Remove chat tag</white>', lore: ['<gray>Clear your current selection</gray>'] }
+      next-page: { material: ARROW, slot: 53, display_name: '<white>Next page</white>', lore: ['<gray>View more choices</gray>'] }
+
 social-spy:
   format: "<#f72a4c>[spy] %sender% → %recipient%:</#f72a4c> <white>%message%</white>"
   messages:

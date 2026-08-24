@@ -3,6 +3,7 @@ package dev.rivet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -51,8 +52,9 @@ final class RivetMenu {
     }
 
     int size(int fallback) {
-        int configured = section == null ? fallback : section.getInt("size",
-            section.contains("rows") ? section.getInt("rows") * 9 : fallback);
+        int configured = section == null ? fallback
+            : legacyOneBasedSlots && section.contains("rows") ? section.getInt("rows") * 9
+            : section.getInt("size", section.contains("rows") ? section.getInt("rows") * 9 : fallback);
         if (configured < 9 || configured > 54 || configured % 9 != 0) {
             plugin.getLogger().warning("Invalid " + path + ".size '" + configured
                 + "'; using " + fallback + ". Size must be a multiple of 9 from 9 to 54.");
@@ -66,7 +68,7 @@ final class RivetMenu {
     }
 
     void open(Player player, TagResolver... placeholders) {
-        plugin.guiActions().run(player, openCommands(), TagResolver.resolver(placeholders));
+        plugin.guiActions().run(player, openCommands(), playerPlaceholders(player, placeholders));
     }
 
     List<Integer> slots(String key, int inventorySize, List<Integer> fallback) {
@@ -74,7 +76,9 @@ final class RivetMenu {
         if (item == null || (!item.contains("slot") && !item.contains("slots"))) {
             return fallback.stream().filter(slot -> slot >= 0 && slot < inventorySize).distinct().toList();
         }
-        return configuredSlots(item, inventorySize, legacyOneBasedSlots);
+        boolean oneBased = legacyOneBasedSlots
+            && (!item.contains("display_name") || item.contains("name"));
+        return configuredSlots(item, inventorySize, oneBased);
     }
 
     ItemStack item(String key, Material fallbackMaterial, Component fallbackName,
@@ -166,7 +170,13 @@ final class RivetMenu {
         if (specific != null) {
             configured.addAll(actions(itemSection(key), specific));
         }
-        plugin.guiActions().run(player, configured, TagResolver.resolver(placeholders));
+        plugin.guiActions().run(player, configured, playerPlaceholders(player, placeholders));
+    }
+
+    private static TagResolver playerPlaceholders(Player player, TagResolver[] placeholders) {
+        TagResolver[] all = java.util.Arrays.copyOf(placeholders, placeholders.length + 1);
+        all[placeholders.length] = Placeholder.unparsed("player", player.getName());
+        return TagResolver.resolver(all);
     }
 
     private ConfigurationSection itemSection(String key) {

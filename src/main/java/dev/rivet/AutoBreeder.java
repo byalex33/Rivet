@@ -74,11 +74,6 @@ final class AutoBreeder implements Listener {
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
     private static final String CONFIG_PATH = "auto-breeders";
     private static final int RANGE = 8;
-    private static final int GUI_SIZE = 27;
-    private static final int INPUT_END = 9;
-    private static final int EGG_START = 9;
-    private static final int EGG_END = 18;
-    private static final int EXPERIENCE_SLOT = 22;
     private static final int BREED_INTERVAL_SECONDS = 5;
     private static final long PENDING_BREED_MILLIS = 35_000;
     private static final Map<EntityType, Material> ANIMALS = Map.ofEntries(
@@ -203,7 +198,8 @@ final class AutoBreeder implements Listener {
         }
         event.setCancelled(true);
         event.getPlayer().openInventory(inventory(key(block)));
-        plugin.guiActions().run(event.getPlayer(), settings.getStringList("gui.open_commands"));
+        EntityType animal = animal(key(block));
+        menu().open(event.getPlayer(), displayPlaceholders(animal, food(key(block))));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -306,10 +302,21 @@ final class AutoBreeder implements Listener {
         }
 
         int rawSlot = event.getRawSlot();
-        if (rawSlot == EXPERIENCE_SLOT && event.getClickedInventory() == top) {
+        if (holder.experienceSlots.contains(rawSlot) && event.getClickedInventory() == top) {
             event.setCancelled(true);
             if (event.getWhoClicked() instanceof Player player) {
                 claimExperience(holder.key, player, top);
+                menu().click(player, "experience", event.getClick(),
+                    displayPlaceholders(animal(holder.key), food(holder.key)));
+            }
+            return;
+        }
+
+        if (event.getClickedInventory() == top && holder.controls.containsKey(rawSlot)) {
+            event.setCancelled(true);
+            if (event.getWhoClicked() instanceof Player player) {
+                menu().click(player, holder.controls.get(rawSlot), event.getClick(),
+                    displayPlaceholders(animal(holder.key), food(holder.key)));
             }
             return;
         }
@@ -319,7 +326,7 @@ final class AutoBreeder implements Listener {
             event.setCancelled(true);
             ItemStack item = event.getCurrentItem();
             if (item != null && item.getType() == food(holder.key)) {
-                int moved = addToInput(top, item);
+                int moved = addToInput(top, item, holder.inputSlots);
                 if (moved == item.getAmount()) {
                     event.getClickedInventory().setItem(event.getSlot(), null);
                 } else if (moved > 0) {
@@ -331,11 +338,11 @@ final class AutoBreeder implements Listener {
         }
 
         if (event.getClickedInventory() == top) {
-            if (!inputSlot(rawSlot) && insertionAction(event.getAction())) {
+            if (!holder.inputSlots.contains(rawSlot) && insertionAction(event.getAction())) {
                 event.setCancelled(true);
                 return;
             }
-            if (inputSlot(rawSlot) && !validInput(event, food(holder.key))) {
+            if (holder.inputSlots.contains(rawSlot) && !validInput(event, food(holder.key))) {
                 event.setCancelled(true);
                 return;
             }
@@ -351,7 +358,7 @@ final class AutoBreeder implements Listener {
         }
         Set<Integer> topSlots = event.getRawSlots().stream()
             .filter(slot -> slot < top.getSize()).collect(Collectors.toSet());
-        if (!topSlots.isEmpty() && (topSlots.stream().anyMatch(slot -> !inputSlot(slot))
+        if (!topSlots.isEmpty() && (topSlots.stream().anyMatch(slot -> !holder.inputSlots.contains(slot))
             || event.getOldCursor().getType() != food(holder.key))) {
             event.setCancelled(true);
             return;
@@ -371,6 +378,13 @@ final class AutoBreeder implements Listener {
         inventories.forEach(this::persist);
         loadedHolograms.clear();
         recipeKeys.forEach(Bukkit::removeRecipe);
+    }
+
+    void reloadGui() {
+        inventories.forEach(this::persist);
+        inventories.values().forEach(inventory ->
+            List.copyOf(inventory.getViewers()).forEach(HumanEntity::closeInventory));
+        inventories.clear();
     }
 
     boolean command(CommandSender sender, String[] args) {
@@ -620,24 +634,39 @@ final class AutoBreeder implements Listener {
 
     private Inventory inventory(String key) {
         return inventories.computeIfAbsent(key, ignored -> {
-            BreederHolder holder = new BreederHolder(key);
             EntityType animal = animal(key);
-            String configuredTitle = settings.getString("display.inventory-title", "%animal% Auto Breeder");
-            Component title = configuredTitle.equals("%animal% Auto Breeder")
-                ? RivetGui.title(displayName(animal) + " Breeder")
-                : MM.deserialize(configuredTitle, Placeholder.unparsed("animal", displayName(animal)));
-            Inventory inventory = Bukkit.createInventory(holder, GUI_SIZE, title);
+            RivetMenu menu = menu();
+            int size = menu.size(27);
+            List<Integer> inputSlots = menu.slots("food-storage", size,
+                java.util.stream.IntStream.range(0, Math.min(9, size)).boxed().toList());
+            List<Integer> eggSlots = menu.slots("egg-storage", size,
+                java.util.stream.IntStream.range(9, Math.min(18, size)).boxed().toList());
+            List<Integer> experienceSlots = menu.slots("experience", size,
+                size > 22 ? List.of(22) : List.of(size - 1));
+            BreederHolder holder = new BreederHolder(key, inputSlots, eggSlots, experienceSlots);
+            TagResolver[] placeholders = displayPlaceholders(animal, food(key));
+            String legacyTitle = settings.getString("display.inventory-title",
+                "%animal% Auto Breeder");
+            Component title = !legacyTitle.equals("%animal% Auto Breeder")
+                && !legacyTitle.equals("<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>%animal% Breeder</white>")
+                    ? MM.deserialize(legacyTitle, placeholders)
+                    : menu.title("<white>%animal% Auto Breeder</white>", placeholders);
+            Inventory inventory = Bukkit.createInventory(holder, size, title);
             holder.inventory = inventory;
-            fill(inventory, food(key), Math.max(0, data.getInt(path(key) + ".food")),
-                0, INPUT_END);
-            renderEggs(inventory, Math.max(0, data.getInt(path(key) + ".eggs")));
-            ItemStack footer = RivetGui.pane(Material.GRAY_STAINED_GLASS_PANE);
-            for (int slot = EGG_END; slot < GUI_SIZE; slot++) {
-                inventory.setItem(slot, footer);
-            }
-            renderExperience(inventory, storedExperience(key));
+            fill(inventory, food(key), Math.max(0, data.getInt(path(key) + ".food")), inputSlots);
+            renderEggs(inventory, Math.max(0, data.getInt(path(key) + ".eggs")), eggSlots);
+            menu.place(inventory, "filler", menu.item("filler", Material.GRAY_STAINED_GLASS_PANE,
+                Component.empty(), List.of(), false, placeholders), List.of(), holder.controls);
+            renderExperience(inventory, storedExperience(key), experienceSlots);
+            menu.placeStaticItems(inventory,
+                Set.of("food-storage", "egg-storage", "experience", "filler"),
+                holder.controls, placeholders);
             return inventory;
         });
+    }
+
+    private RivetMenu menu() {
+        return new RivetMenu(plugin, settings, "gui");
     }
 
     private void tickBreeders() {
@@ -666,7 +695,8 @@ final class AutoBreeder implements Listener {
             EntityType animal = animal(key);
             Material food = ANIMALS.get(animal);
             Inventory inventory = inventory(key);
-            if (food(inventory, food) < 2) {
+            BreederHolder holder = (BreederHolder) inventory.getHolder(false);
+            if (food(inventory, food, holder.inputSlots) < 2) {
                 continue;
             }
             List<Animals> animals = location.getWorld().getNearbyEntities(location.clone().add(.5, .5, .5),
@@ -681,7 +711,8 @@ final class AutoBreeder implements Listener {
                 continue;
             }
 
-            consumeFood(inventory, food, 2);
+            consumeFood(inventory, food, 2,
+                holder.inputSlots);
             if (food == Material.TROPICAL_FISH_BUCKET) {
                 for (int bucket = 0; bucket < pair.length; bucket++) {
                     location.getWorld().dropItemNaturally(location, new ItemStack(Material.WATER_BUCKET));
@@ -779,10 +810,12 @@ final class AutoBreeder implements Listener {
         Inventory inventory = inventories.remove(key);
         EntityType animal = animal(key);
         Material food = ANIMALS.get(animal);
+        BreederHolder holder = inventory == null ? null
+            : (BreederHolder) inventory.getHolder(false);
         int amount = inventory == null
-            ? data.getInt(path(key) + ".food") : food(inventory, food);
+            ? data.getInt(path(key) + ".food") : food(inventory, food, holder.inputSlots);
         int eggs = inventory == null
-            ? data.getInt(path(key) + ".eggs") : eggs(inventory);
+            ? data.getInt(path(key) + ".eggs") : eggs(inventory, holder.eggSlots);
         int experience = storedExperience(key);
         breeders.remove(key);
         pendingBreeds.entrySet().removeIf(entry -> entry.getValue().key.equals(key));
@@ -815,8 +848,9 @@ final class AutoBreeder implements Listener {
         if (!breeders.contains(key)) {
             return;
         }
-        data.set(path(key) + ".food", food(inventory, food(key)));
-        data.set(path(key) + ".eggs", eggs(inventory));
+        BreederHolder holder = (BreederHolder) inventory.getHolder(false);
+        data.set(path(key) + ".food", food(inventory, food(key), holder.inputSlots));
+        data.set(path(key) + ".eggs", eggs(inventory, holder.eggSlots));
         save();
         updateHologram(key);
     }
@@ -876,7 +910,7 @@ final class AutoBreeder implements Listener {
     private int storedFood(String key) {
         Inventory inventory = inventories.get(key);
         return inventory == null ? Math.max(0, data.getInt(path(key) + ".food"))
-            : food(inventory, food(key));
+            : food(inventory, food(key), ((BreederHolder) inventory.getHolder(false)).inputSlots);
     }
 
     private List<Entity> holograms(String key, Location location) {
@@ -965,16 +999,21 @@ final class AutoBreeder implements Listener {
     private int addEggs(String key, int amount) {
         Inventory inventory = inventories.get(key);
         int stored = inventory == null
-            ? Math.max(0, data.getInt(path(key) + ".eggs")) : eggs(inventory);
+            ? Math.max(0, data.getInt(path(key) + ".eggs"))
+            : eggs(inventory, ((BreederHolder) inventory.getHolder(false)).eggSlots);
+        int slots = inventory == null ? menu().slots("egg-storage", menu().size(27),
+            java.util.stream.IntStream.range(9, 18).boxed().toList()).size()
+            : ((BreederHolder) inventory.getHolder(false)).eggSlots.size();
         int collected = collectableOutput(stored, amount,
-            (EGG_END - EGG_START) * Material.EGG.getMaxStackSize());
+            slots * Material.EGG.getMaxStackSize());
         if (collected == 0) {
             return 0;
         }
         int total = stored + collected;
         data.set(path(key) + ".eggs", total);
         if (inventory != null) {
-            renderEggs(inventory, total);
+            renderEggs(inventory, total,
+                ((BreederHolder) inventory.getHolder(false)).eggSlots);
         }
         save();
         return collected;
@@ -985,7 +1024,8 @@ final class AutoBreeder implements Listener {
         data.set(path(key) + ".experience", total);
         Inventory inventory = inventories.get(key);
         if (inventory != null) {
-            renderExperience(inventory, total);
+            renderExperience(inventory, total,
+                ((BreederHolder) inventory.getHolder(false)).experienceSlots);
         }
         save();
     }
@@ -996,7 +1036,8 @@ final class AutoBreeder implements Listener {
             return;
         }
         data.set(path(key) + ".experience", 0);
-        renderExperience(inventory, 0);
+        renderExperience(inventory, 0,
+            ((BreederHolder) inventory.getHolder(false)).experienceSlots);
         save();
         player.giveExp(experience);
         plugin.messageActions().run(player, settings, "messages.experience-collected", "actionbar",
@@ -1008,42 +1049,48 @@ final class AutoBreeder implements Listener {
         return Math.max(0, data.getInt(path(key) + ".experience"));
     }
 
-    private void renderExperience(Inventory inventory, int amount) {
-        ItemStack button = new ItemStack(Material.EXPERIENCE_BOTTLE);
+    private void renderExperience(Inventory inventory, int amount, List<Integer> slots) {
+        TagResolver placeholder = Placeholder.unparsed("amount", Integer.toString(amount));
+        ItemStack button = menu().item("experience", Material.EXPERIENCE_BOTTLE,
+            text("gui.experience-item.name", "<#f72a4c>Stored XP: %amount%</#f72a4c>", placeholder),
+            settings.getStringList("gui.experience-item.lore").isEmpty()
+                ? List.of(MM.deserialize("<white>Click to collect stored experience.</white>"))
+                : settings.getStringList("gui.experience-item.lore").stream()
+                    .map(line -> MM.deserialize(line, placeholder)).toList(), false, placeholder);
         button.editMeta(meta -> {
-            TagResolver placeholder = Placeholder.unparsed("amount", Integer.toString(amount));
-            meta.displayName(text("gui.experience-item.name",
-                "<#f72a4c>Stored XP: %amount%</#f72a4c>", placeholder));
-            List<String> lore = settings.getStringList("gui.experience-item.lore");
-            if (lore.isEmpty()) {
-                lore = List.of("<white>Click to collect stored experience.</white>");
-            }
-            meta.lore(lore.stream().map(line -> MM.deserialize(line, placeholder)).toList());
             meta.getPersistentDataContainer().set(
                 experienceButtonKey, PersistentDataType.BYTE, (byte) 1);
         });
-        inventory.setItem(EXPERIENCE_SLOT, button);
+        for (int slot : slots) {
+            inventory.setItem(slot, button.clone());
+        }
     }
 
-    private static void renderEggs(Inventory inventory, int amount) {
-        for (int slot = EGG_START; slot < EGG_END; slot++) {
+    private static void renderEggs(Inventory inventory, int amount, List<Integer> slots) {
+        for (int slot : slots) {
             inventory.setItem(slot, null);
         }
-        fill(inventory, Material.EGG, amount, EGG_START, EGG_END);
+        fill(inventory, Material.EGG, amount, slots);
     }
 
     private static void fill(Inventory inventory, Material material, int amount,
-                             int firstSlot, int endSlot) {
-        for (int slot = firstSlot; slot < endSlot && amount > 0; slot++) {
+                             List<Integer> slots) {
+        for (int slot : slots) {
+            if (amount <= 0) {
+                break;
+            }
             int stack = Math.min(amount, material.getMaxStackSize());
             inventory.setItem(slot, new ItemStack(material, stack));
             amount -= stack;
         }
     }
 
-    private static int addToInput(Inventory inventory, ItemStack item) {
+    private static int addToInput(Inventory inventory, ItemStack item, List<Integer> slots) {
         int remaining = item.getAmount();
-        for (int slot = 0; slot < INPUT_END && remaining > 0; slot++) {
+        for (int slot : slots) {
+            if (remaining <= 0) {
+                break;
+            }
             ItemStack stored = inventory.getItem(slot);
             if (stored == null || !stored.isSimilar(item)
                 || stored.getAmount() >= stored.getMaxStackSize()) {
@@ -1053,7 +1100,10 @@ final class AutoBreeder implements Listener {
             stored.add(added);
             remaining -= added;
         }
-        for (int slot = 0; slot < INPUT_END && remaining > 0; slot++) {
+        for (int slot : slots) {
+            if (remaining <= 0) {
+                break;
+            }
             ItemStack stored = inventory.getItem(slot);
             if (stored != null && !stored.getType().isAir()) {
                 continue;
@@ -1065,10 +1115,6 @@ final class AutoBreeder implements Listener {
             remaining -= added;
         }
         return item.getAmount() - remaining;
-    }
-
-    private static boolean inputSlot(int slot) {
-        return slot >= 0 && slot < INPUT_END;
     }
 
     private static boolean insertionAction(InventoryAction action) {
@@ -1102,9 +1148,10 @@ final class AutoBreeder implements Listener {
             Math.max(0L, current) + Math.max(0L, addition));
     }
 
-    private static int food(Inventory inventory, Material food) {
+    private static int food(Inventory inventory, Material food, List<Integer> slots) {
         int amount = 0;
-        for (ItemStack item : inventory.getContents()) {
+        for (int slot : slots) {
+            ItemStack item = inventory.getItem(slot);
             if (item != null && item.getType() == food) {
                 amount += item.getAmount();
             }
@@ -1112,9 +1159,9 @@ final class AutoBreeder implements Listener {
         return amount;
     }
 
-    private static int eggs(Inventory inventory) {
+    private static int eggs(Inventory inventory, List<Integer> slots) {
         int amount = 0;
-        for (int slot = EGG_START; slot < EGG_END; slot++) {
+        for (int slot : slots) {
             ItemStack item = inventory.getItem(slot);
             if (item != null && item.getType() == Material.EGG) {
                 amount += item.getAmount();
@@ -1123,8 +1170,10 @@ final class AutoBreeder implements Listener {
         return amount;
     }
 
-    private static void consumeFood(Inventory inventory, Material food, int amount) {
-        for (ItemStack item : inventory.getContents()) {
+    private static void consumeFood(Inventory inventory, Material food, int amount,
+                                    List<Integer> slots) {
+        for (int slot : slots) {
+            ItemStack item = inventory.getItem(slot);
             if (item == null || item.getType() != food) {
                 continue;
             }
@@ -1174,10 +1223,18 @@ final class AutoBreeder implements Listener {
 
     private static final class BreederHolder implements InventoryHolder {
         private final String key;
+        private final List<Integer> inputSlots;
+        private final List<Integer> eggSlots;
+        private final List<Integer> experienceSlots;
+        private final Map<Integer, String> controls = new HashMap<>();
         private Inventory inventory;
 
-        private BreederHolder(String key) {
+        private BreederHolder(String key, List<Integer> inputSlots, List<Integer> eggSlots,
+                              List<Integer> experienceSlots) {
             this.key = key;
+            this.inputSlots = List.copyOf(inputSlots);
+            this.eggSlots = List.copyOf(eggSlots);
+            this.experienceSlots = List.copyOf(experienceSlots);
         }
 
         @Override

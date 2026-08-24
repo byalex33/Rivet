@@ -2054,6 +2054,12 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             if (chat != null) {
                 chat.reload();
             }
+            if (autoBreeder != null) {
+                autoBreeder.reloadGui();
+            }
+            if (backpacks != null) {
+                backpacks.reloadGui();
+            }
             if (announcements != null) {
                 announcements.reload();
             }

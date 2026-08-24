@@ -160,21 +160,24 @@ final class ChatModule implements Listener {
             || event.getRawSlot() >= holder.inventory.getSize()) {
             return;
         }
-        String choice = holder.choices.get(event.getRawSlot());
+        int slot = event.getRawSlot();
+        String choice = holder.choices.get(slot);
+        String control = holder.controls.get(slot);
         if (choice == null) {
-            if (event.getRawSlot() == 45 && holder.page > 0) {
+            if ("previous-page".equals(control) && holder.page > 0) {
                 openGui(player, holder.type, holder.options, holder.page - 1);
-            } else if (event.getRawSlot() == 50) {
+            } else if ("reset".equals(control)) {
                 player.closeInventory();
                 if (holder.type == GuiType.STYLE) {
                     applyStyle(player, player, null);
                 } else {
                     applyTag(player, player, null);
                 }
-            } else if (event.getRawSlot() == 53
-                && (holder.page + 1) * RivetGui.CONTENT_SLOTS.length < holder.options.size()) {
+            } else if ("next-page".equals(control)
+                && (holder.page + 1) * holder.pageSize < holder.options.size()) {
                 openGui(player, holder.type, holder.options, holder.page + 1);
             }
+            menu(holder.type).click(player, control, event.getClick());
             return;
         }
         player.closeInventory();
@@ -183,6 +186,7 @@ final class ChatModule implements Listener {
         } else {
             applyTag(player, player, choice.equals("reset") ? null : choice);
         }
+        menu(holder.type).click(player, "option", event.getClick());
     }
 
     @EventHandler
@@ -597,53 +601,82 @@ final class ChatModule implements Listener {
     }
 
     private void openGui(Player player, GuiType type, List<GuiOption> options, int requestedPage) {
-        int pageSize = RivetGui.CONTENT_SLOTS.length;
+        RivetMenu menu = menu(type);
+        int size = menu.size(54);
+        List<Integer> contentSlots = menu.slots("option", size,
+            java.util.Arrays.stream(RivetGui.CONTENT_SLOTS).boxed().toList());
+        if (contentSlots.isEmpty()) {
+            contentSlots = List.of(Math.min(22, size - 1));
+        }
+        int pageSize = contentSlots.size();
         int pages = Math.max(1, (options.size() + pageSize - 1) / pageSize);
         int page = Math.clamp(requestedPage, 0, pages - 1);
-        ChatGuiHolder holder = new ChatGuiHolder(player.getUniqueId(), type, List.copyOf(options), page);
-        holder.inventory = plugin.getServer().createInventory(holder, 54,
-            RivetGui.title(type == GuiType.STYLE ? "Chat Styles" : "Chat Tags"));
-        RivetGui.frame(holder.inventory);
+        ChatGuiHolder holder = new ChatGuiHolder(player.getUniqueId(), type,
+            List.copyOf(options), page, pageSize);
+        TagResolver pagePlaceholders = TagResolver.resolver(
+            Placeholder.unparsed("page", Integer.toString(page + 1)),
+            Placeholder.unparsed("pages", Integer.toString(pages)));
+        holder.inventory = plugin.getServer().createInventory(holder, size,
+            menu.title(type == GuiType.STYLE ? "<white>Chat Styles</white>" : "<white>Chat Tags</white>",
+                pagePlaceholders));
+        menu.place(holder.inventory, "filler", menu.item("filler",
+            Material.GRAY_STAINED_GLASS_PANE, Component.empty(), List.of(), false),
+            List.of(), holder.controls);
         String selected = type == GuiType.STYLE
             ? styles.get(player.getUniqueId()) : selectedTags.get(player.getUniqueId());
         int start = page * pageSize;
         for (int offset = 0; offset < pageSize && start + offset < options.size(); offset++) {
             GuiOption option = options.get(start + offset);
-            int slot = RivetGui.CONTENT_SLOTS[offset];
-            ItemStack item = new ItemStack(option.material);
-            ItemMeta meta = item.getItemMeta();
             boolean active = option.value.equals(selected);
-            meta.displayName(option.display.decoration(TextDecoration.ITALIC, false));
-            meta.lore(List.of(
+            TagResolver optionPlaceholders = TagResolver.resolver(pagePlaceholders,
+                Placeholder.component("display", option.display),
+                Placeholder.unparsed("description", option.description),
+                Placeholder.unparsed("status", active ? "✓ Currently selected" : "Click to apply"));
+            ItemStack item = menu.item("option", option.material, option.display, List.of(
                 Component.text(option.description, NamedTextColor.DARK_GRAY)
                     .decoration(TextDecoration.ITALIC, false),
                 Component.empty(),
                 Component.text(active ? "✓ Currently selected" : "Click to apply",
                     active ? NamedTextColor.GREEN : RivetPalette.SECONDARY)
-                    .decoration(TextDecoration.ITALIC, false)));
-            meta.setEnchantmentGlintOverride(active);
-            item.setItemMeta(meta);
+                    .decoration(TextDecoration.ITALIC, false)), active, optionPlaceholders);
+            int slot = contentSlots.get(offset);
             holder.inventory.setItem(slot, item);
             holder.choices.put(slot, option.value);
+            holder.controls.put(slot, "option");
         }
         if (page > 0) {
-            holder.inventory.setItem(45, RivetGui.button(Material.ARROW, "Previous page",
-                "View earlier choices"));
+            menu.place(holder.inventory, "previous-page", menu.item("previous-page", Material.ARROW,
+                "<white>Previous page</white>", List.of("<gray>View earlier choices</gray>")),
+                List.of(45), holder.controls);
         }
         String current = selected == null ? (type == GuiType.STYLE ? "Default" : "No tag")
             : styleLabel(selected.substring(selected.indexOf(':') + 1));
-        holder.inventory.setItem(49, RivetGui.button(Material.BOOK,
-            "Page " + (page + 1) + " of " + pages, options.size() + " available choices",
-            "Current: " + current));
-        holder.inventory.setItem(50, RivetGui.button(
+        TagResolver statusPlaceholders = TagResolver.resolver(pagePlaceholders,
+            Placeholder.unparsed("count", Integer.toString(options.size())),
+            Placeholder.unparsed("current", current));
+        menu.place(holder.inventory, "page-info", menu.item("page-info", Material.BOOK,
+            "<white>Page %page% of %pages%</white>",
+            List.of("<gray>%count% available choices</gray>", "<gray>Current: %current%</gray>"),
+            statusPlaceholders), List.of(49), holder.controls);
+        menu.place(holder.inventory, "reset", menu.item("reset",
             type == GuiType.STYLE ? Material.MILK_BUCKET : Material.BARRIER,
-            type == GuiType.STYLE ? "Reset to default" : "Remove chat tag",
-            "Clear your current selection"));
+            type == GuiType.STYLE ? "<white>Reset to default</white>" : "<white>Remove chat tag</white>",
+            List.of("<gray>Clear your current selection</gray>")), List.of(50), holder.controls);
         if (page + 1 < pages) {
-            holder.inventory.setItem(53, RivetGui.button(Material.ARROW, "Next page",
-                "View more choices"));
+            menu.place(holder.inventory, "next-page", menu.item("next-page", Material.ARROW,
+                "<white>Next page</white>", List.of("<gray>View more choices</gray>")),
+                List.of(53), holder.controls);
         }
+        menu.placeStaticItems(holder.inventory,
+            java.util.Set.of("filler", "option", "previous-page", "page-info", "reset", "next-page"),
+            holder.controls, statusPlaceholders);
         player.openInventory(holder.inventory);
+        menu.open(player, statusPlaceholders);
+    }
+
+    private RivetMenu menu(GuiType type) {
+        return new RivetMenu(plugin, plugin.settings("chat"),
+            type == GuiType.STYLE ? "gui.chat-styles" : "gui.chat-tags");
     }
 
     private static String styleLabel(String name) {
@@ -1145,14 +1178,18 @@ final class ChatModule implements Listener {
         private final GuiType type;
         private final List<GuiOption> options;
         private final int page;
+        private final int pageSize;
         private final Map<Integer, String> choices = new HashMap<>();
+        private final Map<Integer, String> controls = new HashMap<>();
         private Inventory inventory;
 
-        private ChatGuiHolder(UUID owner, GuiType type, List<GuiOption> options, int page) {
+        private ChatGuiHolder(UUID owner, GuiType type, List<GuiOption> options, int page,
+                              int pageSize) {
             this.owner = owner;
             this.type = type;
             this.options = options;
             this.page = page;
+            this.pageSize = pageSize;
         }
 
         @Override

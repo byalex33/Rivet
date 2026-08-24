@@ -9,8 +9,54 @@ feedback:
   sound: ""
 
 gui:
-  title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Item Filter</white>"
+  # DeluxeMenus-style schema. Slots are zero-based (0-53).
+  menu_title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Item Filter</white>"
+  size: 54
   open_commands: []
+  items:
+    filler:
+      material: GRAY_STAINED_GLASS_PANE
+      slots: [0-9, 17-18, 26-27, 35-36, 44-53]
+      display_name: ''
+    filtered-item:
+      material: '%material%'
+      slots: [10-16, 19-25, 28-34, 37-43]
+      display_name: '<white>%item%</white>'
+      lore:
+        - '<dark_gray>Blocked from pickup</dark_gray>'
+        - ''
+        - '<#f72a4c>Click to remove</#f72a4c>'
+    empty:
+      material: HOPPER
+      slot: 22
+      display_name: '<white>No filtered items</white>'
+      lore: ['<gray>Hold an item and use Add held item below</gray>']
+    previous-page:
+      material: ARROW
+      slot: 45
+      display_name: '<white>Previous page</white>'
+    add-held-item:
+      material: HOPPER
+      slot: 47
+      display_name: '<white>Add held item</white>'
+      lore: ['<gray>Adds the item in your main hand</gray>']
+    status:
+      material: '%material%'
+      slot: 49
+      display_name: '<white>Filtering %status%</white>'
+      lore:
+        - '<gray>Page %page% of %pages%</gray>'
+        - '<gray>%used% of %maximum% slots used</gray>'
+        - '<#f72a4c>Click to toggle</#f72a4c>'
+    clear-all:
+      material: BARRIER
+      slot: 51
+      display_name: '<white>Clear all filters</white>'
+      lore: ['<gray>Shift-click to confirm</gray>']
+    next-page:
+      material: ARROW
+      slot: 53
+      display_name: '<white>Next page</white>'
 
 messages:
   blocked-pickup:

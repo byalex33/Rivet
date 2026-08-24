@@ -3,7 +3,9 @@ package dev.rivet;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -32,6 +34,7 @@ import java.util.UUID;
 
 final class GuiActions {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
+    private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
     private final RivetPlugin plugin;
     private final Set<ActiveBar> bossBars = new HashSet<>();
     private final Map<NamespacedKey, ActiveToast> toasts = new HashMap<>();
@@ -45,6 +48,8 @@ final class GuiActions {
     }
 
     void run(Player player, List<String> configuredActions, TagResolver placeholders) {
+        TagResolver resolved = TagResolver.resolver(placeholders,
+            Placeholder.unparsed("player", player.getName()));
         for (String configured : configuredActions) {
             Action action = parseAction(configured);
             if (action == null) {
@@ -54,19 +59,44 @@ final class GuiActions {
             switch (action.tag()) {
                 case "message" -> player.sendMessage(MM.deserialize(action.value(), placeholders));
                 case "broadcast" -> plugin.getServer().broadcast(
-                    MM.deserialize(action.value(), placeholders));
+                    MM.deserialize(action.value(), resolved));
+                case "player", "command" -> runPlayerCommand(player,
+                    command(action.value(), player, resolved));
+                case "console" -> runConsoleCommand(command(action.value(), player, resolved));
                 case "sound" -> sound(player, action.value());
-                case "toast" -> toast(player, action.value(), placeholders);
+                case "toast" -> toast(player, action.value(), resolved);
                 case "actionbar", "action-bar" -> player.sendActionBar(
-                    MM.deserialize(action.value(), placeholders));
+                    MM.deserialize(action.value(), resolved));
                 case "particle", "particles" -> particle(player, action.value());
                 case "firework" -> firework(player, action.value());
-                case "title" -> title(player, action.value(), placeholders);
-                case "bossbar", "boss-bar" -> bossBar(player, action.value(), placeholders);
+                case "title" -> title(player, action.value(), resolved);
+                case "bossbar", "boss-bar" -> bossBar(player, action.value(), resolved);
                 case "lightning" -> player.getWorld().strikeLightningEffect(player.getLocation());
                 case "close" -> player.closeInventory();
                 default -> plugin.getLogger().warning("Unknown GUI action tag '[" + action.tag() + "]'.");
             }
+        }
+    }
+
+    private static String command(String configured, Player player, TagResolver placeholders) {
+        String value = configured.replace("%player_name%", player.getName());
+        String command = PLAIN.serialize(MM.deserialize(value, placeholders)).trim();
+        return command.startsWith("/") ? command.substring(1) : command;
+    }
+
+    private void runPlayerCommand(Player player, String command) {
+        if (command.isBlank()) {
+            warn("player command", command);
+        } else {
+            player.performCommand(command);
+        }
+    }
+
+    private void runConsoleCommand(String command) {
+        if (command.isBlank()) {
+            warn("console command", command);
+        } else {
+            plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), command);
         }
     }
 

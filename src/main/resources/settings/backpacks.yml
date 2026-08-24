@@ -1,11 +1,12 @@
-# Personal persistent storage. Rows are clamped to the standard 1-6 range.
-default-rows: 3
-title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Backpack</white>"
+# Personal persistent storage. Row permissions may increase the configured size.
 
 gui:
-  open_commands:
-    enabled: true
-    actions: []
+  # DeluxeMenus-style schema. Slots are zero-based. Configured items reserve
+  # their slots; any stored item behind a reserved slot remains safely saved.
+  menu_title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Backpack</white>"
+  size: 27
+  open_commands: []
+  items: {}
 
 # World names are matched case-insensitively. Leave empty to allow every world.
 blocked-worlds: []

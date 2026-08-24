@@ -3,6 +3,7 @@ package dev.rivet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
@@ -29,7 +30,6 @@ import java.util.UUID;
 
 final class FilterModule implements Listener {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
-    private static final int PAGE_SIZE = RivetGui.CONTENT_SLOTS.length;
     private final RivetPlugin plugin;
     private final YamlConfiguration data;
     private final Map<UUID, FilterState> filters = new HashMap<>();
@@ -114,9 +114,9 @@ final class FilterModule implements Listener {
             return;
         }
         int slot = event.getRawSlot();
-        int contentIndex = RivetGui.contentIndex(slot);
-        if (contentIndex >= 0 && contentIndex < holder.items.size()) {
-            Material material = holder.items.get(contentIndex);
+        Material material = holder.items.get(slot);
+        String control = holder.controls.get(slot);
+        if (material != null) {
             if (remove(state(player.getUniqueId()).items(), material)) {
                 if (save(player)) {
                     send(player, "<white>Removed <#f72a4c>" + display(material) + "</#f72a4c> from your filter.");
@@ -126,24 +126,29 @@ final class FilterModule implements Listener {
                 }
             }
             open(player, holder.page);
-        } else if (slot == 45 && holder.page > 0) {
+        } else if ("previous-page".equals(control) && holder.page > 0) {
             open(player, holder.page - 1);
-        } else if (slot == 47) {
+        } else if ("add-held-item".equals(control)) {
             addHeld(player);
             open(player, holder.page);
-        } else if (slot == 49) {
+        } else if ("status".equals(control)) {
             toggle(player, new String[]{"toggle"});
             open(player, holder.page);
-        } else if (slot == 51) {
+        } else if ("clear-all".equals(control)) {
             if (event.isShiftClick()) {
                 clear(player, new String[]{"clear"});
                 open(player, 0);
             } else {
                 send(player, "<white>Shift-click the clear button to confirm.");
             }
-        } else if (slot == 53 && (holder.page + 1) * PAGE_SIZE < sorted(player).size()) {
+        } else if ("next-page".equals(control)
+            && (holder.page + 1) * holder.pageSize < sorted(player).size()) {
             open(player, holder.page + 1);
         }
+        new RivetMenu(plugin, plugin.settings("filter"), "gui",
+            plugin.settings("filter").contains("gui.title"))
+            .click(player, material == null ? control : "filtered-item", event.getClick(),
+                Placeholder.unparsed("item", material == null ? "" : display(material)));
     }
 
     void shutdown() {
@@ -277,48 +282,83 @@ final class FilterModule implements Listener {
     }
 
     private void open(Player player, int requestedPage) {
+        YamlConfiguration settings = plugin.settings("filter");
+        boolean legacy = settings.contains("gui.title");
+        RivetMenu menu = new RivetMenu(plugin, settings, "gui", legacy);
+        int size = menu.size(54);
+        List<Integer> contentSlots = menu.slots("filtered-item", size,
+            java.util.Arrays.stream(RivetGui.CONTENT_SLOTS).boxed().toList());
+        if (contentSlots.isEmpty()) {
+            contentSlots = List.of(22);
+        }
+        int pageSize = contentSlots.size();
         List<Material> all = sorted(player);
-        int lastPage = Math.max(0, (all.size() - 1) / PAGE_SIZE);
+        int lastPage = Math.max(0, (all.size() - 1) / pageSize);
         int page = Math.max(0, Math.min(requestedPage, lastPage));
-        List<Material> pageItems = new ArrayList<>(all.subList(page * PAGE_SIZE,
-            Math.min(all.size(), (page + 1) * PAGE_SIZE)));
-        FilterHolder holder = new FilterHolder(player.getUniqueId(), page, pageItems);
-        String configuredTitle = plugin.settings("filter").getString("gui.title", "<white>Item Filter");
-        Component title = configuredTitle.equals("<white>Item Filter")
-            ? RivetGui.title("Item Filter") : MM.deserialize(configuredTitle);
-        holder.inventory = plugin.getServer().createInventory(holder, 54, title);
-        RivetGui.frame(holder.inventory);
+        List<Material> pageItems = new ArrayList<>(all.subList(page * pageSize,
+            Math.min(all.size(), (page + 1) * pageSize)));
+        FilterHolder holder = new FilterHolder(player.getUniqueId(), page, pageSize);
+        TagResolver pagePlaceholders = TagResolver.resolver(
+            Placeholder.unparsed("page", Integer.toString(page + 1)),
+            Placeholder.unparsed("pages", Integer.toString(lastPage + 1)));
+        String legacyTitle = settings.getString("gui.title", "");
+        Component title = legacy && !legacyTitle.equals(
+            "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Item Filter</white>")
+                ? MM.deserialize(legacyTitle, pagePlaceholders)
+                : menu.title("<white>Item Filter</white>", pagePlaceholders);
+        holder.inventory = plugin.getServer().createInventory(holder, size, title);
+        Set<String> handled = Set.of("filler", "filtered-item", "empty", "previous-page",
+            "add-held-item", "status", "clear-all", "next-page");
+        menu.place(holder.inventory, "filler", menu.item("filler",
+            Material.GRAY_STAINED_GLASS_PANE, Component.empty(), List.of(), false),
+            List.of(), holder.controls);
         for (int index = 0; index < pageItems.size(); index++) {
             Material material = pageItems.get(index);
-            ItemStack icon = RivetGui.item(material,
+            ItemStack icon = menu.item("filtered-item", material,
                 MM.deserialize("<white>" + titleCase(display(material)) + "</white>"),
                 List.of(MM.deserialize("<dark_gray>Blocked from pickup</dark_gray>"),
-                    Component.empty(), MM.deserialize("<#f72a4c>Click to remove</#f72a4c>")));
-            holder.inventory.setItem(RivetGui.CONTENT_SLOTS[index], icon);
+                    Component.empty(), MM.deserialize("<#f72a4c>Click to remove</#f72a4c>")), false,
+                Placeholder.unparsed("item", titleCase(display(material))),
+                Placeholder.unparsed("material", material.name()));
+            int slot = contentSlots.get(index);
+            holder.inventory.setItem(slot, icon);
+            holder.items.put(slot, material);
+            holder.controls.put(slot, "filtered-item");
         }
         if (pageItems.isEmpty()) {
-            holder.inventory.setItem(22, RivetGui.button(Material.HOPPER, "No filtered items",
-                "Hold an item and use Add held item below"));
+            menu.place(holder.inventory, "empty", menu.item("empty", Material.HOPPER,
+                "<white>No filtered items</white>",
+                List.of("<gray>Hold an item and use Add held item below</gray>")),
+                List.of(22), holder.controls);
         }
         if (page > 0) {
-            holder.inventory.setItem(45, RivetGui.button(Material.ARROW, "Previous page"));
+            menu.place(holder.inventory, "previous-page", menu.item("previous-page", Material.ARROW,
+                "<white>Previous page</white>", List.of()), List.of(45), holder.controls);
         }
-        holder.inventory.setItem(47, RivetGui.button(Material.HOPPER, "Add held item",
-            "Adds the item in your main hand"));
+        menu.place(holder.inventory, "add-held-item", menu.item("add-held-item", Material.HOPPER,
+            "<white>Add held item</white>", List.of("<gray>Adds the item in your main hand</gray>")),
+            List.of(47), holder.controls);
         boolean enabled = state(player.getUniqueId()).enabled();
-        int maximum = Math.max(1, plugin.settings("filter").getInt("maximum-size", 50));
-        holder.inventory.setItem(49, RivetGui.button(enabled ? Material.LIME_DYE : Material.GRAY_DYE,
-            enabled ? "Filtering enabled" : "Filtering paused",
-            "Page " + (page + 1) + " of " + (lastPage + 1), all.size() + " of "
-                + maximum + " slots used", "Click to " + (enabled ? "pause" : "enable")));
-        holder.inventory.setItem(51, RivetGui.button(Material.BARRIER, "Clear all filters",
-            "Shift-click to confirm"));
+        int maximum = Math.max(1, settings.getInt("maximum-size", 50));
+        TagResolver statusPlaceholders = TagResolver.resolver(pagePlaceholders,
+            Placeholder.unparsed("status", enabled ? "enabled" : "paused"),
+            Placeholder.unparsed("used", Integer.toString(all.size())),
+            Placeholder.unparsed("maximum", Integer.toString(maximum)));
+        menu.place(holder.inventory, "status", menu.item("status",
+            enabled ? Material.LIME_DYE : Material.GRAY_DYE,
+            "<white>Filtering %status%</white>", List.of("<gray>Page %page% of %pages%</gray>",
+                "<gray>%used% of %maximum% slots used</gray>", "<#f72a4c>Click to toggle</#f72a4c>"),
+            statusPlaceholders), List.of(49), holder.controls);
+        menu.place(holder.inventory, "clear-all", menu.item("clear-all", Material.BARRIER,
+            "<white>Clear all filters</white>", List.of("<gray>Shift-click to confirm</gray>")),
+            List.of(51), holder.controls);
         if (page < lastPage) {
-            holder.inventory.setItem(53, RivetGui.button(Material.ARROW, "Next page"));
+            menu.place(holder.inventory, "next-page", menu.item("next-page", Material.ARROW,
+                "<white>Next page</white>", List.of()), List.of(53), holder.controls);
         }
+        menu.placeStaticItems(holder.inventory, handled, holder.controls, statusPlaceholders);
         player.openInventory(holder.inventory);
-        plugin.guiActions().run(player,
-            plugin.settings("filter").getStringList("gui.open_commands"));
+        menu.open(player, statusPlaceholders);
     }
 
     private static String titleCase(String value) {
@@ -434,13 +474,15 @@ final class FilterModule implements Listener {
     private static final class FilterHolder implements InventoryHolder {
         private final UUID owner;
         private final int page;
-        private final List<Material> items;
+        private final int pageSize;
+        private final Map<Integer, Material> items = new HashMap<>();
+        private final Map<Integer, String> controls = new HashMap<>();
         private Inventory inventory;
 
-        private FilterHolder(UUID owner, int page, List<Material> items) {
+        private FilterHolder(UUID owner, int page, int pageSize) {
             this.owner = owner;
             this.page = page;
-            this.items = items;
+            this.pageSize = pageSize;
         }
 
         @Override
