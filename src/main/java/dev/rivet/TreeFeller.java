@@ -86,10 +86,12 @@ final class TreeFeller implements Listener {
         }
 
         if (settings.getBoolean("tree-feller.enabled", true)
+            && player.hasPermission("rivet.treefeller")
             && isAxe(tool.getType()) && isTreeTrunk(base.getType())
             && !isTreeTrunk(base.getRelative(0, -1, 0).getType())) {
             fellTree(event, player, base, tool);
         } else if (settings.getBoolean("veinminer.enabled", true)
+            && player.hasPermission("rivet.veinminer")
             && isPickaxe(tool.getType()) && oreKey(base.getType()) != null
             && !base.getDrops(tool, player).isEmpty()) {
             mineVein(event, player, base, tool);

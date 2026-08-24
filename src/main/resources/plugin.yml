@@ -352,6 +352,7 @@ commands:
   snapshot:
     description: Browse, search, create and restore inventory backups
     usage: /snapshot <view <player>|save <player>|saveall|search <item>|cleanup>
+    permission: rivet.snapshots
   ride:
     description: Ride the entity you are looking at
     permission: rivet.ride
@@ -384,6 +385,7 @@ commands:
     aliases: [logs]
     description: Inspect and search the gameplay audit log
     usage: /log <inspect|lookup|page|reload>
+    permission: rivet.logs
   rivet:
     description: Show Rivet information or reload configuration
     usage: /rivet [reload]
@@ -664,6 +666,21 @@ permissions:
     default: op
   rivet.nv:
     default: op
+  rivet.treefeller:
+    default: true
+  rivet.veinminer:
+    default: true
+  rivet.snapshots:
+    default: op
+    children:
+      rivet.snapshots.view: true
+      rivet.snapshots.others: true
+      rivet.snapshots.restore: true
+      rivet.snapshots.teleport: true
+      rivet.snapshots.create: true
+      rivet.snapshots.search: true
+      rivet.snapshots.cleanup: true
+      rivet.snapshots.export: true
   rivet.snapshots.view:
     default: op
   rivet.snapshots.others:
@@ -698,6 +715,14 @@ permissions:
     default: true
   rivet.lagg:
     default: op
+  rivet.logs:
+    default: op
+    children:
+      rivet.logs.lookup: true
+      rivet.logs.inspect: true
+      rivet.logs.reload: true
+      rivet.logs.commands: true
+      rivet.logs.teleport: true
   rivet.logs.lookup:
     default: op
   rivet.logs.inspect:

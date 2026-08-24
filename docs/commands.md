@@ -1315,7 +1315,7 @@ Clear eligible dropped item entities or check the next automatic cleanup.
 ### `/log`
 
 - **Syntax:** `/log <inspect|lookup|page|reload>`
-- **Permissions:** `rivet.logs.inspect`, `rivet.logs.lookup`, or `rivet.logs.reload`, depending on the subcommand
+- **Permissions:** `rivet.logs`, plus `rivet.logs.inspect`, `rivet.logs.lookup`, or `rivet.logs.reload`, depending on the subcommand
 - **Default:** `op`
 - **Aliases:** `/logs`
 
@@ -1341,7 +1341,7 @@ A bare player lookup covers the configured default time globally. A bare `/log l
 ### `/snapshot`
 
 - **Syntax:** `/snapshot <view <player>|save <player>|saveall|search <item>|cleanup>`
-- **Permissions:** `rivet.snapshots.view`, `.create`, `.search`, or `.cleanup`, depending on the subcommand; `.others` for another player
+- **Permissions:** `rivet.snapshots`, plus `rivet.snapshots.view`, `.create`, `.search`, or `.cleanup`, depending on the subcommand; `.others` for another player
 - **Default:** `op`
 - **Aliases:** None
 

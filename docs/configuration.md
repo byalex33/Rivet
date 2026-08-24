@@ -193,6 +193,8 @@ their attached cocoa and naturally anchored hanging vines are removed with the t
 attached-block limit bounds that extra growth scan. Warped and crimson stems use their
 matching wart-block canopies and embedded shroomlights in place of ordinary leaves. Existing
 settings files receive new defaults automatically without replacing customized values.
+Players require `rivet.treefeller` for whole-tree felling and `rivet.veinminer` for connected
+mining; both permission nodes default to `true`.
 
 ### Teleport policy
 
