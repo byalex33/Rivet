@@ -1,0 +1,8 @@
+# Delay before reminding a joining player about polls they have not answered.
+reminder-delay-ticks: 40
+
+messages:
+  reminder:
+    enabled: true
+    actions:
+      - "[message] <white>You haven't voted on a poll yet. <click:run_command:'/poll'><#f72a4c>Click me to open the poll GUI.</#f72a4c></click></white>"

@@ -1,6 +1,6 @@
 # Command reference
 
-Rivet registers 101 commands. Every command below has a stable link used by the documentation sidebar.
+Rivet registers 102 commands. Every command below has a stable link used by the documentation sidebar.
 
 ## Syntax conventions
 
@@ -19,7 +19,7 @@ Rivet registers 101 commands. Every command below has a stable link used by the 
 | Chat and identity | [`/msg`](#msg), [`/r`](#r), [`/socialspy`](#socialspy), [`/ignore`](#ignore), [`/chatcolor`](#chatcolor), [`/tag`](#tag), [`/me`](#me), [`/nick`](#nick), [`/afk`](#afk), [`/afkcheck`](#afkcheck) |
 | Inventory and items | [`/clear`](#clear), [`/i`](#i), [`/condense`](#condense), [`/donate`](#donate), [`/giveall`](#giveall), [`/scan`](#scan), [`/invsee`](#invsee), [`/enderchest`](#enderchest), [`/repair`](#repair), [`/rename`](#rename), [`/lore`](#lore), [`/hat`](#hat), [`/trash`](#trash), [`/backpack`](#backpack) |
 | World and environment | [`/flat`](#flat), [`/flatworld`](#flatworld), [`/voidworld`](#voidworld), [`/worldspawn`](#worldspawn), [`/setworldspawn`](#setworldspawn), [`/killall`](#killall), [`/findbiome`](#findbiome), [`/top`](#top), [`/tree`](#tree), [`/day`](#day), [`/night`](#night), [`/noon`](#noon), [`/midnight`](#midnight), [`/sun`](#sun), [`/rain`](#rain), [`/thunder`](#thunder) |
-| Gameplay systems | [`/givebreeder`](#givebreeder), [`/restorationcore`](#restorationcore), [`/kit`](#kit), [`/daily`](#daily), [`/filter`](#filter), [`/magnet`](#magnet), [`/head`](#head) |
+| Gameplay systems | [`/givebreeder`](#givebreeder), [`/restorationcore`](#restorationcore), [`/kit`](#kit), [`/daily`](#daily), [`/filter`](#filter), [`/magnet`](#magnet), [`/poll`](#poll), [`/head`](#head) |
 | Player information and utilities | [`/stats`](#stats), [`/playtime`](#playtime), [`/seen`](#seen), [`/craft`](#craft), [`/anvil`](#anvil), [`/smithing`](#smithing), [`/stonecutter`](#stonecutter), [`/grindstone`](#grindstone), [`/jump`](#jump), [`/list`](#list), [`/nv`](#nv), [`/ping`](#ping), [`/ride`](#ride), [`/sit`](#sit), [`/lay`](#lay), [`/crawl`](#crawl) |
 | Staff and moderation | [`/gmc`](#gmc), [`/gms`](#gms), [`/vanish`](#vanish), [`/fly`](#fly), [`/flyspeed`](#flyspeed), [`/commandspy`](#commandspy), [`/heal`](#heal), [`/feed`](#feed), [`/god`](#god), [`/bossbarmsg`](#bossbarmsg), [`/note`](#note), [`/sameip`](#sameip), [`/toast`](#toast) |
 | Server administration | [`/perm`](#perm), [`/hologram`](#hologram), [`/clearhologram`](#clearhologram), [`/lagg`](#lagg), [`/log`](#log), [`/snapshot`](#snapshot), [`/help`](#help), [`/rivet`](#rivet) |
@@ -821,6 +821,24 @@ Toggle persistent automatic collection of eligible dropped items within the conf
 radius. A dropped stack is collected only when the player's storage inventory can accept
 the entire stack; otherwise it remains untouched. Item ownership and cancellable pickup
 events are respected.
+
+<a id="poll"></a>
+
+### `/poll`
+
+- **Syntax:** `/poll` or `/poll create <name> <description>`
+- **Permissions:** `rivet.poll`; `rivet.poll.create` for `create`
+- **Default:** `true` for voting; `op` for creating
+- **Aliases:** None
+
+Open the persistent poll GUI. Polls are yes/no questions; click an unanswered poll and
+then choose **Yes** or **No**. Votes are final and the list shows the current totals plus
+your recorded choice.
+
+`/poll create <name> <description>` creates a new poll. The name is one 1-32 character
+identifier containing letters, numbers, underscores, or hyphens, while every remaining
+argument forms the description. Players with any unanswered poll receive a clickable
+reminder shortly after login.
 
 <a id="head"></a>
 

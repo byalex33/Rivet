@@ -307,6 +307,10 @@ commands:
     description: Toggle automatic nearby item collection
     usage: /magnet
     permission: rivet.magnet
+  poll:
+    description: Open the polls GUI or create a yes/no poll
+    usage: /poll or /poll create <name> <description>
+    permission: rivet.poll
   hat:
     description: Wear the item in your main hand
     permission: rivet.hat
@@ -622,6 +626,10 @@ permissions:
     default: true
   rivet.magnet:
     default: true
+  rivet.poll:
+    default: true
+  rivet.poll.create:
+    default: op
   rivet.filter.admin:
     default: op
   rivet.hat:

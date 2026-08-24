@@ -38,3 +38,4 @@ logs: true
 death-messages: true
 snapshots: true
 magnet: true
+polls: true

@@ -71,6 +71,7 @@
     - [/daily](commands.md#daily)
     - [/filter](commands.md#filter)
     - [/magnet](commands.md#magnet)
+    - [/poll](commands.md#poll)
     - [/head](commands.md#head)
   - Player information and utilities
     - [/stats](commands.md#stats)

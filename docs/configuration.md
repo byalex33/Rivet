@@ -34,6 +34,7 @@ plugins/Rivet/
 |   |-- nicknames.yml
 |   |-- permissions.yml
 |   |-- poses.yml
+|   |-- polls.yml
 |   |-- rtp.yml
 |   |-- spawn.yml
 |   |-- snapshots.yml
@@ -88,6 +89,7 @@ This file contains feature switches only. Every value must be `true` or `false`.
 | `near` | Disabled |
 | `nicknames` | Enabled |
 | `permissions` | Disabled |
+| `polls` | Enabled |
 | `poses` | Disabled |
 | `rtp` | Disabled |
 | `snapshots` | Enabled |
@@ -173,6 +175,12 @@ the default is 8 blocks. Each player's toggle is persisted in `data/magnet.yml`.
 collection fires Paper's cancellable pickup events and requires room for the entire dropped
 stack, so pickup filters and inventory-capacity limits are preserved.
 
+### Polls
+
+`settings/polls.yml` controls the delay before a joining player is reminded about any
+poll they have not answered and the clickable reminder message. Poll definitions and
+UUID-keyed yes/no votes are stored in `data/polls.yml`.
+
 ### Statistics and Seen v2
 
 `settings/statistics.yml` controls the configurable `/stats`, `/playtime`, and `/seen`
@@ -219,7 +227,7 @@ preserve vanilla entity damage while preventing block damage and block drops.
 
 ## Runtime data
 
-Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, magnet toggles, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, and inventory snapshots use `snapshots.db`; neither uses YAML for payload data.
+Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, magnet toggles, polls and votes, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, and inventory snapshots use `snapshots.db`; neither uses YAML for payload data.
 
 Do not hand-edit runtime data while the server is running. Rivet may overwrite an external change the next time it saves that module.
 

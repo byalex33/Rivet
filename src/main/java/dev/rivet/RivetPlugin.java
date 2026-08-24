@@ -131,6 +131,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private DeathMessagesModule deathMessages;
     private SnapshotModule snapshots;
     private MagnetModule magnet;
+    private PollModule polls;
     private GuiActions guiActions;
     private MessageActions messageActions;
     private RivetConfig files;
@@ -289,6 +290,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (moduleEnabled("magnet")) {
             magnet = new MagnetModule(this);
+        }
+        if (moduleEnabled("polls")) {
+            polls = new PollModule(this);
+            getServer().getPluginManager().registerEvents(polls, this);
         }
         if (moduleEnabled("help")) {
             help = new HelpModule(this);
@@ -628,6 +633,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (name.equals("scan")) {
             return scans.command(sender, args);
         }
+        if (name.equals("poll")) {
+            return polls.command(sender, args);
+        }
         if (!(sender instanceof Player player)) {
             send(sender, "<white>This command is only available to players.");
             return true;
@@ -737,6 +745,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "givebreeder" -> autoBreeder.completions(sender, args);
                 case "restorationcore" -> creeperRestoration.completions(sender, args);
                 case "scan" -> scans.completions(sender, args);
+                case "poll" -> polls.completions(sender, args);
                 case "msg", "tp" -> args.length == 1 ? getServer().getOnlinePlayers().stream()
                     .filter(player -> !(sender instanceof Player viewer) || viewer.canSee(player))
                     .map(Player::getName).sorted(String.CASE_INSENSITIVE_ORDER).toList() : List.of();
@@ -2143,6 +2152,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                  "condense", "donate", "giveall", "hat", "scan" -> "inventory";
             case "filter" -> "filter";
             case "magnet" -> "magnet";
+            case "poll" -> "polls";
             case "help" -> "help";
             case "lagg" -> "lagg";
             case "log" -> "logs";
