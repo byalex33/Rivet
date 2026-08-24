@@ -150,6 +150,48 @@ public final class SnapshotModuleTest {
     }
 
     @Test
+    public void categoryLimitsPruneOnlyMatchingBackups() throws Exception {
+        try (SnapshotStorage storage = storage()) {
+            UUID player = UUID.randomUUID();
+            long now = System.currentTimeMillis();
+            YamlConfiguration configuration = new YamlConfiguration();
+            configuration.set("save-limits.total", -1);
+            configuration.set("save-limits.death", 1);
+            SnapshotSettings limited = new SnapshotSettings(configuration);
+            storage.saveNow(captured(player, "Alex", "DEATH", now - 2_000, "FALL",
+                stateWithAmount(1)), limited);
+            storage.saveNow(captured(player, "Alex", "MANUAL", now - 1_000, null,
+                stateWithAmount(2)), limited);
+            storage.saveNow(captured(player, "Alex", "DEATH", now, "LAVA",
+                stateWithAmount(3)), limited);
+
+            assertEquals(List.of("DEATH", "MANUAL"), storage.listNow(player, -1).stream()
+                .map(SnapshotRecord::reason).toList());
+        }
+    }
+
+    @Test
+    public void searchesMaterialsAcrossInventoryEquipmentAndOffhand() {
+        assertTrue(SnapshotModule.matchesSearch(detailedState(), "diamond"));
+        assertTrue(SnapshotModule.matchesSearch(detailedState(), "shield"));
+        assertFalse(SnapshotModule.matchesSearch(detailedState(), "netherite"));
+    }
+
+    @Test
+    public void migratesOnlyTheUntouchedLegacyUsageMessage() {
+        YamlConfiguration configuration = new YamlConfiguration();
+        configuration.set("messages.usage.actions", List.of(
+            "[message] <white>%tag% Usage: /snapshot &lt;player&gt;</white>"));
+        assertTrue(SnapshotModule.migrateLegacyConfiguration(configuration));
+        assertTrue(configuration.getStringList("messages.usage.actions").getFirst()
+            .contains("saveall"));
+        configuration.set("messages.usage.actions", List.of("[message] Custom usage"));
+        assertFalse(SnapshotModule.migrateLegacyConfiguration(configuration));
+        assertEquals(List.of("[message] Custom usage"),
+            configuration.getStringList("messages.usage.actions"));
+    }
+
+    @Test
     public void allSnapshotGuiHoldersAreReadOnlyAndConfirmationOrdersSafetyFirst() {
         UUID uuid = UUID.randomUUID();
         SnapshotModule.SnapshotTarget target = new SnapshotModule.SnapshotTarget(uuid, "Alex");
@@ -215,15 +257,24 @@ public final class SnapshotModuleTest {
         YamlConfiguration configuration = YamlConfiguration.loadConfiguration(
             new InputStreamReader(resource, StandardCharsets.UTF_8));
         SnapshotSettings defaults = new SnapshotSettings(configuration);
-        assertEquals(10, defaults.maxPerPlayer());
-        assertEquals(30, defaults.retentionDays());
+        assertEquals(-1, defaults.maxPerPlayer());
+        assertEquals(14, defaults.retentionDays());
         assertTrue(defaults.deduplicate());
         assertTrue(defaults.saveOnDeath());
+        assertTrue(defaults.allCategory());
+        assertTrue(defaults.automaticBackups());
+        assertEquals(180, defaults.automaticIntervalSeconds());
+        assertTrue(defaults.enabled("ENDER_CHEST"));
+        assertTrue(defaults.enabled("CONTAINER_CLOSE"));
+        assertEquals(-1, defaults.limit("DEATH"));
+        assertEquals(1_000, defaults.searchMaximumMatches());
         assertTrue(defaults.createSafetySnapshot());
         assertTrue(defaults.requireConfirmation());
         assertTrue(defaults.auditCreations());
         for (String path : List.of("messages.denied.actions", "messages.denied-others.actions",
                  "messages.denied-restore.actions", "messages.denied-teleport.actions",
+                 "messages.denied-export.actions", "messages.searching.actions",
+                 "messages.cleaned-up.actions", "messages.exported.actions",
                  "messages.restored.actions", "messages.restored-target.actions",
                  "messages.safety-failed.actions", "messages.restore-failed.actions")) {
             assertTrue(path, configuration.isList(path));

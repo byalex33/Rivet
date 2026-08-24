@@ -141,10 +141,15 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.seen` | `true` | [`/seen`](commands.md#seen) |
 | `rivet.seen.location` | `op` | Shows current/last known coordinates and recorded death details in [`/seen`](commands.md#seen). |
 | `rivet.nv` | `op` | Toggles infinite Night Vision with [`/nv`](commands.md#nv). |
-| `rivet.snapshots.view` | `op` | Opens your own snapshot browser with [`/snapshot`](commands.md#snapshot). |
-| `rivet.snapshots.others` | `op` | Allows [`/snapshot`](commands.md#snapshot) to browse another player's snapshots. |
-| `rivet.snapshots.restore` | `op` | Restores a selected snapshot to its online target after the configured safety flow. |
-| `rivet.snapshots.teleport` | `op` | Teleports to a selected snapshot's saved location. |
+| `rivet.snapshots.view` | `op` | Opens your own backup browser with [`/snapshot`](commands.md#snapshot). |
+| `rivet.snapshots.others` | `op` | Allows [`/snapshot`](commands.md#snapshot) to browse another player's backups. |
+| `rivet.snapshots.create` | `op` | Creates manual backups with `/snapshot save` and `saveall`. |
+| `rivet.snapshots.search` | `op` | Searches saved item contents with `/snapshot search`. |
+| `rivet.snapshots.cleanup` | `op` | Applies configured retention and save limits with `/snapshot cleanup`. |
+| `rivet.snapshots.restore` | `op` | Restores a selected backup to its online target after the configured safety flow. |
+| `rivet.snapshots.teleport` | `op` | Teleports to a selected backup's saved location. |
+| `rivet.snapshots.export` | `op` | Exports a selected backup into shulker boxes. |
+| `rivet.snapshots.dontsave` | `false` | Excludes a player from all inventory-backup triggers. |
 | `rivet.ride` | `op` | [`/ride`](commands.md#ride) |
 | `rivet.sameip` | `op` | [`/sameip`](commands.md#sameip) |
 | `rivet.toast` | `op` | [`/toast`](commands.md#toast) |

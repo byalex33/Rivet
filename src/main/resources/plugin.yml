@@ -345,9 +345,8 @@ commands:
     usage: /nv
     permission: rivet.nv
   snapshot:
-    description: Browse and restore recent inventory snapshots
-    usage: /snapshot <player>
-    permission: rivet.snapshots.view
+    description: Browse, search, create and restore inventory backups
+    usage: /snapshot <view <player>|save <player>|saveall|search <item>|cleanup>
   ride:
     description: Ride the entity you are looking at
     permission: rivet.ride
@@ -666,6 +665,16 @@ permissions:
     default: op
   rivet.snapshots.teleport:
     default: op
+  rivet.snapshots.create:
+    default: op
+  rivet.snapshots.search:
+    default: op
+  rivet.snapshots.cleanup:
+    default: op
+  rivet.snapshots.export:
+    default: op
+  rivet.snapshots.dontsave:
+    default: false
   rivet.ride:
     default: op
   rivet.sameip:

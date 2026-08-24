@@ -13,6 +13,8 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -54,6 +56,10 @@ final class SnapshotStorage implements Closeable {
         return supply(() -> listNow(player, limit));
     }
 
+    CompletableFuture<List<SnapshotRecord>> search(String query, int maximum, int timeoutSeconds) {
+        return supply(() -> searchNow(query, maximum, timeoutSeconds));
+    }
+
     CompletableFuture<SnapshotRecord> load(long id) {
         return supply(() -> loadNow(id));
     }
@@ -64,7 +70,7 @@ final class SnapshotStorage implements Closeable {
 
     CompletableFuture<CleanupResult> cleanup(SnapshotSettings settings) {
         return supply(() -> cleanupNow(System.currentTimeMillis()
-            - Duration.ofDays(settings.retentionDays()).toMillis(), settings.maxPerPlayer()));
+            - Duration.ofDays(settings.retentionDays()).toMillis(), settings));
     }
 
     SnapshotRecord saveNow(CapturedSnapshot captured, SnapshotSettings settings)
@@ -108,7 +114,8 @@ final class SnapshotStorage implements Closeable {
                     id = keys.getLong(1);
                 }
             }
-            cleanupPlayer(captured.playerUuid(), settings.maxPerPlayer());
+            cleanupPlayer(captured.playerUuid(), captured.reason(), settings.limit(captured.reason()),
+                settings.maxPerPlayer());
             connection.commit();
             return new SnapshotRecord(id, captured.playerUuid(), captured.playerName(),
                 captured.reason(), captured.timestamp(), captured.world(), captured.x(),
@@ -127,7 +134,7 @@ final class SnapshotStorage implements Closeable {
             ORDER BY timestamp DESC, id DESC LIMIT ?
             """)) {
             statement.setString(1, player.toString());
-            statement.setInt(2, Math.max(1, limit));
+            statement.setInt(2, limit < 0 ? Integer.MAX_VALUE : Math.max(1, limit));
             try (ResultSet results = statement.executeQuery()) {
                 List<SnapshotRecord> records = new ArrayList<>();
                 while (results.next()) {
@@ -135,6 +142,25 @@ final class SnapshotStorage implements Closeable {
                 }
                 return List.copyOf(records);
             }
+        }
+    }
+
+    List<SnapshotRecord> searchNow(String query, int maximum, int timeoutSeconds)
+        throws SQLException, IOException {
+        long deadline = System.nanoTime() + Duration.ofSeconds(timeoutSeconds).toNanos();
+        try (PreparedStatement statement = connection.prepareStatement("""
+            SELECT s.*, b.data FROM snapshots s
+            JOIN snapshot_blobs b ON b.blob_key = s.blob_key
+            ORDER BY s.timestamp DESC, s.id DESC
+            """); ResultSet results = statement.executeQuery()) {
+            List<SnapshotRecord> records = new ArrayList<>();
+            while (results.next() && records.size() < maximum && System.nanoTime() < deadline) {
+                SnapshotState state = SnapshotCodec.decode(results.getBytes("data"));
+                if (SnapshotModule.matchesSearch(state, query)) {
+                    records.add(record(results, state));
+                }
+            }
+            return List.copyOf(records);
         }
     }
 
@@ -164,22 +190,52 @@ final class SnapshotStorage implements Closeable {
     }
 
     CleanupResult cleanupNow(long cutoff, int maxPerPlayer) throws SQLException {
+        return cleanupNow(cutoff, maxPerPlayer, Map.of());
+    }
+
+    CleanupResult cleanupNow(long cutoff, SnapshotSettings settings) throws SQLException {
+        return cleanupNow(cutoff, settings.maxPerPlayer(), settings.saveLimits());
+    }
+
+    private CleanupResult cleanupNow(long cutoff, int maxPerPlayer,
+                                     Map<String, Integer> categoryLimits) throws SQLException {
         boolean autoCommit = connection.getAutoCommit();
         connection.setAutoCommit(false);
         try {
             int expired = deleteExpired(cutoff);
-            int excess;
-            try (PreparedStatement statement = connection.prepareStatement("""
-                DELETE FROM snapshots WHERE id IN (
-                    SELECT id FROM (
-                        SELECT id, ROW_NUMBER() OVER (
-                            PARTITION BY player_uuid ORDER BY timestamp DESC, id DESC
-                        ) AS row_number FROM snapshots
-                    ) ranked WHERE row_number > ?
-                )
-                """)) {
-                statement.setInt(1, Math.max(1, maxPerPlayer));
-                excess = statement.executeUpdate();
+            int excess = 0;
+            if (maxPerPlayer >= 0) {
+                try (PreparedStatement statement = connection.prepareStatement("""
+                    DELETE FROM snapshots WHERE id IN (
+                        SELECT id FROM (
+                            SELECT id, ROW_NUMBER() OVER (
+                                PARTITION BY player_uuid ORDER BY timestamp DESC, id DESC
+                            ) AS row_number FROM snapshots
+                        ) ranked WHERE row_number > ?
+                    )
+                    """)) {
+                    statement.setInt(1, maxPerPlayer);
+                    excess += statement.executeUpdate();
+                }
+            }
+            for (Map.Entry<String, Integer> entry : categoryLimits.entrySet()) {
+                if (entry.getValue() < 0 || entry.getKey().equals("total")) {
+                    continue;
+                }
+                try (PreparedStatement statement = connection.prepareStatement("""
+                    DELETE FROM snapshots WHERE id IN (
+                        SELECT id FROM (
+                            SELECT id, ROW_NUMBER() OVER (
+                                PARTITION BY player_uuid, reason ORDER BY timestamp DESC, id DESC
+                            ) AS row_number FROM snapshots
+                            WHERE lower(replace(reason, '_', '-')) = ?
+                        ) ranked WHERE row_number > ?
+                    )
+                    """)) {
+                    statement.setString(1, entry.getKey().toLowerCase(Locale.ROOT));
+                    statement.setInt(2, entry.getValue());
+                    excess += statement.executeUpdate();
+                }
             }
             int blobs = deleteOrphanBlobs();
             connection.commit();
@@ -256,16 +312,32 @@ final class SnapshotStorage implements Closeable {
         }
     }
 
-    private void cleanupPlayer(UUID player, int maximum) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("""
-            DELETE FROM snapshots WHERE id IN (
-                SELECT id FROM snapshots WHERE player_uuid = ?
-                ORDER BY timestamp DESC, id DESC LIMIT -1 OFFSET ?
-            )
-            """)) {
-            statement.setString(1, player.toString());
-            statement.setInt(2, Math.max(1, maximum));
-            statement.executeUpdate();
+    private void cleanupPlayer(UUID player, String reason, int reasonMaximum,
+                               int totalMaximum) throws SQLException {
+        if (reasonMaximum >= 0) {
+            try (PreparedStatement statement = connection.prepareStatement("""
+                DELETE FROM snapshots WHERE id IN (
+                    SELECT id FROM snapshots WHERE player_uuid = ? AND reason = ?
+                    ORDER BY timestamp DESC, id DESC LIMIT -1 OFFSET ?
+                )
+                """)) {
+                statement.setString(1, player.toString());
+                statement.setString(2, reason);
+                statement.setInt(3, reasonMaximum);
+                statement.executeUpdate();
+            }
+        }
+        if (totalMaximum >= 0) {
+            try (PreparedStatement statement = connection.prepareStatement("""
+                DELETE FROM snapshots WHERE id IN (
+                    SELECT id FROM snapshots WHERE player_uuid = ?
+                    ORDER BY timestamp DESC, id DESC LIMIT -1 OFFSET ?
+                )
+                """)) {
+                statement.setString(1, player.toString());
+                statement.setInt(2, totalMaximum);
+                statement.executeUpdate();
+            }
         }
     }
 

@@ -66,7 +66,7 @@ explosions do not create creeper-restoration craters because no blocks are destr
 | Join and leave | `join-leave` | Enabled | Join/leave messages, welcome titles, MOTD, and first-join behavior. |
 | Help | `help` | Enabled | Permission-aware interactive command pages. |
 | Gameplay audit | `logs` | Enabled | Batched SQLite logging, compact player/time/radius lookups, and clickable block or container inspection. |
-| Inventory snapshots | `snapshots` | Enabled | Deduplicated SQLite death snapshots with read-only previews, retention, and confirmed safety-first restores. |
+| Inventory backups | `snapshots` | Enabled | AxInventoryRestore-style category browsing, event/automatic/manual backups, search, shulker export, and safety-first restores on SQLite. |
 
 ## Gameplay audit
 
@@ -76,23 +76,24 @@ Rivet records block placement and breaking, container additions and removals, it
 
 The SQLite rows retain actor UUID/name, action, location, target, amount, before/after state, and explanatory or serialized item metadata. Snapshot creation and restore audit rows contain only staff, target, snapshot ID, reason, and location metadata; inventory contents remain exclusively in the snapshot database.
 
-## Inventory snapshots
+## Inventory backups
 
-When enabled, Rivet captures the player's inventory, armour, offhand, XP, health, hunger,
-saturation, and location during a death event, then compresses and persists the detached
-state asynchronously. Death cause and player identity remain searchable metadata. The
-default policy retains the newest 10 snapshots per player for 30 days.
+When enabled, Rivet captures player state on death, join, quit, world change, gamemode
+change, supported-container close, a configurable automatic interval, and staff-requested
+manual saves. Ender chest closes create a separate restorable ender-chest category. Empty
+inventories and players with `rivet.snapshots.dontsave` are skipped. The default policy
+retains backups for 14 days with unlimited per-category counts.
 
 Inventory payloads are binary GZIP data in `plugins/Rivet/snapshots.db`. Identical payloads
 share one content-addressed blob by default, while snapshot rows retain their independent
 reason, time, and location. Expired rows, over-limit rows, and unreferenced blobs are
-cleaned transactionally without scanning player entities or running periodic backups.
+cleaned transactionally. Category and total save limits can prune older rows independently.
 
-[`/snapshot`](commands.md#snapshot) provides a read-only list and exact-layout preview.
-Restores require an online target, a separate permission, and confirmation by default.
-Before replacing anything, Rivet persists a `PRE_RESTORE` copy of the target's current
-state; a failed safety save aborts the restore. Restoring legacy death data can never set a
-player to zero health, preventing an immediate second death and duplicate drop cycle.
+[`/snapshot`](commands.md#snapshot) provides category menus, item-content search, read-only
+exact-layout previews, event-location teleporting, and shulker-box exports. Restores require
+an online target, a separate permission, and confirmation by default. Before replacing an
+inventory or ender chest, Rivet persists a matching safety backup; a failed safety save
+aborts the restore. Restoring legacy death data can never set a player to zero health.
 
 ## Creeper restoration
 

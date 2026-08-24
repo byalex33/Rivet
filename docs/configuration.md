@@ -200,13 +200,14 @@ High-volume entries are written asynchronously in batches to `plugins/Rivet/logs
 
 ### Inventory snapshots
 
-`settings/snapshots.yml` controls per-player maximums, retention, binary-payload
-deduplication, death capture, restore confirmation, `PRE_RESTORE` safety snapshots,
-creation auditing, and all command messages. Defaults keep 10 snapshots per player for 30
-days, deduplicate identical state, save only on death, and require both confirmation and a
-successful safety snapshot before restore.
+`settings/snapshots.yml` controls retention, binary-payload deduplication, the All category,
+automatic-backup interval, event-category switches, per-category and total save limits,
+search limits, restore confirmation, safety backups, creation auditing, and all command
+messages. Defaults keep backups for 14 days, enable every category, run automatic backups
+every 180 seconds, and leave category counts unlimited. Confirmation and a successful
+safety backup remain required before restore.
 
-Snapshot rows and compressed binary payloads live in `plugins/Rivet/snapshots.db`; no
+Backup rows and compressed binary payloads live in `plugins/Rivet/snapshots.db`; no
 inventory contents are stored in YAML or copied into `logs.db`. Database serialization,
 writes, reads, and cleanup run on one dedicated worker. Bukkit state is captured and
 restored on the server thread.

@@ -1328,22 +1328,31 @@ A bare player lookup covers the configured default time globally. A bare `/log l
 
 ### `/snapshot`
 
-- **Syntax:** `/snapshot <player>`
-- **Permissions:** `rivet.snapshots.view`; `rivet.snapshots.others` for another player
+- **Syntax:** `/snapshot <view <player>|save <player>|saveall|search <item>|cleanup>`
+- **Permissions:** `rivet.snapshots.view`, `.create`, `.search`, or `.cleanup`, depending on the subcommand; `.others` for another player
 - **Default:** `op`
 - **Aliases:** None
 
-Browse a player's recent inventory snapshots newest first.
+Browse, search, create, and clean inventory backups. `/snapshot <player>` remains a shortcut
+for `/snapshot view <player>`.
 
-Death snapshots include their reason, relative and exact time, death cause, world,
-coordinates, and snapshot ID. Clicking an entry opens a read-only preview with the exact
-saved storage-slot layout, armour, offhand, health, hunger, saturation, XP, and location.
-The GUI cancels all clicks and drags so saved items cannot be taken.
+The browser first groups backups into All, Ender Chest, Death, Join, Quit, World Change,
+Gamemode Change, Container Close, Manual, and Automatic categories. Entries show the
+player, category, relative and exact time, event information, world, coordinates, and ID.
+Clicking one opens a read-only exact-layout preview.
 
-`rivet.snapshots.teleport` enables the location button. `rivet.snapshots.restore` enables
-restore for an online, visible target. Restore replaces the target's inventory and state
-instead of merging; the default confirmation screen warns about replacement and creates a
-`PRE_RESTORE` safety snapshot before any change is applied.
+`/snapshot save` captures one online player, `saveall` captures every eligible online player,
+and `search` finds material names, custom names, lore, enchantments, and items nested in
+shulker boxes. `cleanup` applies retention and per-category limits immediately.
+
+`rivet.snapshots.teleport` enables the location button, `.export` packages saved contents
+into shulker boxes, and `.restore` replaces the matching live inventory or ender chest for
+an online, visible target. Rivet retains its confirmation and safety-backup flow before
+replacement. `rivet.snapshots.dontsave` excludes a player from every automatic and manual
+backup trigger.
+
+
+
 
 <a id="help"></a>
 
