@@ -37,6 +37,9 @@ public final class LaggModuleTest {
         assertEquals(false, settings.contains("messages.reload-failed"));
         assertEquals("[message] <white>Usage: /lagg <clear|timer></white>",
             settings.getStringList("messages.usage.actions").getFirst());
+        assertEquals(false, settings.getStringList("messages.cleanup.actions").getFirst()
+            .contains("entities"));
+        assertEquals(false, settings.getString("messages.hover-entry").contains("entities"));
         List.of("messages.hover-label", "messages.hover-header", "messages.hover-entry",
             "messages.hover-empty")
             .forEach(path -> assertEquals(path, true, settings.isString(path)));
@@ -89,6 +92,38 @@ public final class LaggModuleTest {
             Material.CACTUS, Material.BAMBOO, Material.KELP)));
         assertEquals(Set.of(Material.WHEAT, Material.CARROT),
             LaggModule.cropMaterials(List.of("wheat", "minecraft:carrot", "invalid")));
+    }
+
+    @Test
+    public void alwaysProtectsEveryShulkerBoxVariant() {
+        Set<Material> crops = Set.of();
+        assertTrue(LaggModule.protectedItem(false, false, false,
+            false, false, Material.SHULKER_BOX, crops));
+        assertTrue(LaggModule.protectedItem(false, false, false,
+            false, false, Material.RED_SHULKER_BOX, crops));
+        assertEquals(false, LaggModule.protectedItem(false, false, false,
+            false, false, Material.SHULKER_SHELL, crops));
+    }
+
+    @Test
+    public void migratesOnlyLegacyEntityCountMessagesInMemory() {
+        YamlConfiguration settings = new YamlConfiguration();
+        settings.set("messages.cleanup.actions", List.of(
+            "[broadcast] <white>Cleared <#f72a4c>%count%</#f72a4c> ground item entities "
+                + "(<#f72a4c>%amount%</#f72a4c> items). %details%</white>"));
+        settings.set("messages.hover-entry",
+            "<white>%item%:</white> <#f72a4c>%amount%</#f72a4c> items in "
+                + "<#f72a4c>%count%</#f72a4c> entities");
+        settings.set("messages.hover-empty", "<white>No eligible item entities were found.</white>");
+
+        assertTrue(LaggModule.migrateLegacyMessages(settings));
+        assertEquals(false, settings.getStringList("messages.cleanup.actions").getFirst()
+            .contains("entities"));
+        assertEquals(false, settings.getString("messages.hover-entry").contains("entities"));
+        settings.set("messages.cleanup.actions", List.of("[broadcast] Custom %count%"));
+        assertEquals(false, LaggModule.migrateLegacyMessages(settings));
+        assertEquals(List.of("[broadcast] Custom %count%"),
+            settings.getStringList("messages.cleanup.actions"));
     }
 
     @Test

@@ -1264,7 +1264,7 @@ Clear loaded auto-breeder holograms and recreate displays for active breeders. T
 
 Clear eligible dropped item entities or check the next automatic cleanup.
 
-`/lagg clear` scans loaded worlds immediately and resets the automatic cleanup countdown. `/lagg timer` shows the compact time remaining until that countdown ends. Cleanup never targets mobs, minecarts, armor stands, projectiles, or any entity other than dropped `Item` entities. Named items, plugin-tagged items, and configured crop harvests are protected by default. Use `/rivet reload` after changing `settings/lagg.yml`.
+`/lagg clear` scans loaded worlds immediately and resets the automatic cleanup countdown. `/lagg timer` shows the compact time remaining until that countdown ends. Cleanup never targets mobs, minecarts, armor stands, projectiles, or any entity other than dropped `Item` entities. Shulker boxes of every colour are always protected; named items, plugin-tagged items, and configured crop harvests are protected by default. Cleanup messages report removed item totals rather than entity-stack counts. Use `/rivet reload` after changing `settings/lagg.yml`.
 
 <a id="log"></a>
 

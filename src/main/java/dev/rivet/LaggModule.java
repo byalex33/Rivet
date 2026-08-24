@@ -27,6 +27,21 @@ final class LaggModule {
     private static final MiniMessage MM = RivetMiniMessage.miniMessage();
     private static final long DEFAULT_INTERVAL_SECONDS = 300;
     private static final long MAX_INTERVAL_SECONDS = Long.MAX_VALUE / 20;
+    private static final String LEGACY_CLEANUP_ACTION =
+        "[broadcast] <white>Cleared <#f72a4c>%count%</#f72a4c> ground item entities "
+            + "(<#f72a4c>%amount%</#f72a4c> items). %details%</white>";
+    private static final String DEFAULT_CLEANUP_ACTION =
+        "[broadcast] <white>Cleared <#f72a4c>%amount%</#f72a4c> ground items. "
+            + "%details%</white>";
+    private static final String LEGACY_HOVER_ENTRY =
+        "<white>%item%:</white> <#f72a4c>%amount%</#f72a4c> items in "
+            + "<#f72a4c>%count%</#f72a4c> entities";
+    private static final String DEFAULT_HOVER_ENTRY =
+        "<white>%item%:</white> <#f72a4c>%amount%</#f72a4c> items";
+    private static final String LEGACY_HOVER_EMPTY =
+        "<white>No eligible item entities were found.</white>";
+    private static final String DEFAULT_HOVER_EMPTY =
+        "<white>No eligible ground items were found.</white>";
     private static final Set<Material> DEFAULT_CROP_DROPS = Set.of(
         Material.WHEAT, Material.WHEAT_SEEDS, Material.CARROT, Material.POTATO,
         Material.POISONOUS_POTATO, Material.BEETROOT, Material.BEETROOT_SEEDS,
@@ -74,6 +89,7 @@ final class LaggModule {
 
     void reload() {
         shutdown();
+        migrateLegacyMessages(settings);
         long interval = cleanupIntervalSeconds(settings.getLong(
             "cleanup-interval-seconds", DEFAULT_INTERVAL_SECONDS));
         long periodTicks = interval * 20;
@@ -147,8 +163,7 @@ final class LaggModule {
             .hoverEvent(HoverEvent.showText(hover));
         plugin.messageActions().run(plugin.getServer().getOnlinePlayers(),
             plugin.getServer().getOnlinePlayers(), settings, "messages.cleanup", "broadcast",
-            "<white>Cleared <#f72a4c>%count%</#f72a4c> ground item entities "
-                + "(<#f72a4c>%amount%</#f72a4c> items). %details%</white>",
+            "<white>Cleared <#f72a4c>%amount%</#f72a4c> ground items. %details%</white>",
             Placeholder.unparsed("count", Integer.toString(result.entityCount())),
             Placeholder.unparsed("amount", Long.toString(result.itemCount())),
             Placeholder.component("details", details));
@@ -159,11 +174,9 @@ final class LaggModule {
             "<#f72a4c><bold>Removed ground items</bold></#f72a4c>"));
         if (result.removed().isEmpty()) {
             return hover.append(Component.newline()).append(MM.deserialize(settings.getString(
-                "messages.hover-empty", "<white>No eligible item entities were found.</white>")));
+                "messages.hover-empty", DEFAULT_HOVER_EMPTY)));
         }
-        String entryTemplate = settings.getString("messages.hover-entry",
-            "<white>%item%:</white> <#f72a4c>%amount%</#f72a4c> items in "
-                + "<#f72a4c>%count%</#f72a4c> entities");
+        String entryTemplate = settings.getString("messages.hover-entry", DEFAULT_HOVER_ENTRY);
         for (Map.Entry<Material, RemovedItem> entry : result.removed().entrySet()) {
             hover = hover.append(Component.newline()).append(MM.deserialize(entryTemplate,
                 Placeholder.unparsed("item", display(entry.getKey())),
@@ -231,8 +244,30 @@ final class LaggModule {
                                  boolean ignoreCrops, boolean customName,
                                  boolean persistentData, Material material,
                                  Set<Material> crops) {
-        return (ignoreCustomNames && customName) || (ignorePersistentData && persistentData)
+        return isShulkerBox(material) || (ignoreCustomNames && customName)
+            || (ignorePersistentData && persistentData)
             || (ignoreCrops && crops.contains(material));
+    }
+
+    static boolean isShulkerBox(Material material) {
+        return material == Material.SHULKER_BOX || material.name().endsWith("_SHULKER_BOX");
+    }
+
+    static boolean migrateLegacyMessages(YamlConfiguration settings) {
+        boolean changed = false;
+        if (settings.getStringList("messages.cleanup.actions").equals(List.of(LEGACY_CLEANUP_ACTION))) {
+            settings.set("messages.cleanup.actions", List.of(DEFAULT_CLEANUP_ACTION));
+            changed = true;
+        }
+        if (LEGACY_HOVER_ENTRY.equals(settings.getString("messages.hover-entry"))) {
+            settings.set("messages.hover-entry", DEFAULT_HOVER_ENTRY);
+            changed = true;
+        }
+        if (LEGACY_HOVER_EMPTY.equals(settings.getString("messages.hover-empty"))) {
+            settings.set("messages.hover-empty", DEFAULT_HOVER_EMPTY);
+            changed = true;
+        }
+        return changed;
     }
 
     static Set<Material> cropMaterials(List<String> configured) {

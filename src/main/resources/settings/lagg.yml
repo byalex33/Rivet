@@ -11,6 +11,7 @@ warning-seconds:
 broadcast-empty-cleanups: false
 
 ignore:
+  # Shulker boxes of every colour are always protected from cleanup.
   # Protect dropped items with an entity custom name or an ItemStack custom name.
   custom-names: true
   # Protect dropped items or ItemStacks carrying PersistentDataContainer data.
@@ -52,15 +53,15 @@ crop-materials:
 
 # MiniMessage tags are supported. Available placeholders vary by message:
 # warning: %seconds%, %plural%
-# cleanup: %count% (entities), %amount% (total stack contents), %details% (hover label)
-# hover-entry: %item%, %amount%, %count%
+# cleanup: %amount% (total stack contents), %details% (hover label)
+# hover-entry: %item%, %amount%
 # timer: %time% (compact duration), %seconds% (raw seconds)
 messages:
   warning: { enabled: true, actions: ['[broadcast] <white>Ground items will be cleared in <#f72a4c>%seconds%</#f72a4c> second%plural%.</white>'] }
-  cleanup: { enabled: true, actions: ['[broadcast] <white>Cleared <#f72a4c>%count%</#f72a4c> ground item entities (<#f72a4c>%amount%</#f72a4c> items). %details%</white>'] }
+  cleanup: { enabled: true, actions: ['[broadcast] <white>Cleared <#f72a4c>%amount%</#f72a4c> ground items. %details%</white>'] }
   hover-label: "<#f72a4c>[Hover for more info]</#f72a4c>"
   hover-header: "<#f72a4c><bold>Removed ground items</bold></#f72a4c>"
-  hover-entry: "<white>%item%:</white> <#f72a4c>%amount%</#f72a4c> items in <#f72a4c>%count%</#f72a4c> entities"
-  hover-empty: "<white>No eligible item entities were found.</white>"
+  hover-entry: "<white>%item%:</white> <#f72a4c>%amount%</#f72a4c> items"
+  hover-empty: "<white>No eligible ground items were found.</white>"
   timer: { enabled: true, actions: ['[message] <white>Next ground-item cleanup in <#f72a4c>%time%</#f72a4c>.</white>'] }
   usage: { enabled: true, actions: ['[message] <white>Usage: /lagg <clear|timer></white>'] }
