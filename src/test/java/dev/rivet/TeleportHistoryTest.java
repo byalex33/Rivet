@@ -33,6 +33,28 @@ public final class TeleportHistoryTest {
     }
 
     @Test
+    public void migratesOnlyTheObsoleteDeathOnlyBackMessages() {
+        YamlConfiguration graves = new YamlConfiguration();
+        graves.set("back.messages.none.actions",
+            List.of("[message] <white>No death location is saved.</white>"));
+        graves.set("back.messages.teleported.actions", List.of(
+            "[message] <white>Returned to your latest death location.</white>",
+            "[sound] minecraft:entity.enderman.teleport"));
+        graves.set("back.messages.cooldown.actions",
+            List.of("[message] A custom cooldown"));
+
+        assertTrue(RivetConfig.migrateBackHistoryMessages(graves));
+        assertEquals(List.of("[message] <white>No previous location is available.</white>"),
+            graves.getStringList("back.messages.none.actions"));
+        assertEquals(List.of("[message] <white>Returned to your previous location.</white>",
+                "[sound] minecraft:entity.enderman.teleport"),
+            graves.getStringList("back.messages.teleported.actions"));
+        assertEquals(List.of("[message] A custom cooldown"),
+            graves.getStringList("back.messages.cooldown.actions"));
+        assertFalse(RivetConfig.migrateBackHistoryMessages(graves));
+    }
+
+    @Test
     public void ignoresTinyMovesButTracksMeaningfulAndCrossWorldMoves() {
         UUID world = UUID.randomUUID();
         TeleportHistory.Snapshot origin = point(world, 10, 64, 10);

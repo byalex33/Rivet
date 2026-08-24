@@ -82,6 +82,9 @@ final class RivetConfig {
             if (name.equals("chat") && migrateLegacyChatSettings(configured)) {
                 settingsChanged = true;
             }
+            if (name.equals("graves") && migrateBackHistoryMessages(configured)) {
+                settingsChanged = true;
+            }
             settingsChanged |= mergeBundledDefaults(name, configured);
             if (migrateMessagePalette && migrateMessagePalette(configured, name)) {
                 settingsChanged = true;
@@ -527,6 +530,26 @@ final class RivetConfig {
             "chat-styles.allow-custom-gradients");
         changed |= copyLegacyChatSetting(configuration, "chat-colors.allow-rainbow",
             "chat-styles.allow-rainbow");
+        return changed;
+    }
+
+    static boolean migrateBackHistoryMessages(YamlConfiguration configuration) {
+        Map<String, String> replacements = Map.of(
+            "[message] <white>No death location is saved.</white>",
+            "[message] <white>No previous location is available.</white>",
+            "[message] <white>Returned to your latest death location.</white>",
+            "[message] <white>Returned to your previous location.</white>");
+        boolean changed = false;
+        for (String path : List.of("back.messages.none.actions",
+            "back.messages.teleported.actions")) {
+            List<String> actions = configuration.getStringList(path);
+            List<String> migrated = actions.stream()
+                .map(action -> replacements.getOrDefault(action, action)).toList();
+            if (!migrated.equals(actions)) {
+                configuration.set(path, migrated);
+                changed = true;
+            }
+        }
         return changed;
     }
 
