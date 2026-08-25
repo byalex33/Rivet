@@ -1,5 +1,6 @@
 package dev.rivet;
 
+import org.bukkit.event.inventory.ClickType;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -52,6 +53,23 @@ public class PollModuleTest {
         assertEquals(null, PollModule.pollVotePlaceholder(List.of(poll),
             "poll_missing_yes"));
         assertEquals(null, PollModule.pollVotePlaceholder(List.of(poll), "yes"));
+    }
+
+    @Test
+    public void mapsLeftAndRightClicksDirectlyToYesAndNo() {
+        assertEquals(Boolean.TRUE, PollModule.voteForClick(ClickType.LEFT));
+        assertEquals(Boolean.TRUE, PollModule.voteForClick(ClickType.SHIFT_LEFT));
+        assertEquals(Boolean.FALSE, PollModule.voteForClick(ClickType.RIGHT));
+        assertEquals(Boolean.FALSE, PollModule.voteForClick(ClickType.SHIFT_RIGHT));
+        assertEquals(null, PollModule.voteForClick(ClickType.MIDDLE));
+    }
+
+    @Test
+    public void findsPollNamesCaseInsensitivelyForAdminDeletion() {
+        PollModule.Poll poll = poll("server_event");
+
+        assertEquals(poll, PollModule.findByName(List.of(poll), "SERVER_EVENT"));
+        assertEquals(null, PollModule.findByName(List.of(poll), "missing"));
     }
 
     private static PollModule.Poll poll(String id) {

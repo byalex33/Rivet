@@ -313,8 +313,8 @@ commands:
     usage: /magnet
     permission: rivet.magnet
   poll:
-    description: Open the polls GUI or create a yes/no poll
-    usage: /poll or /poll create <name> <description>
+    description: Open, create, or delete persistent yes/no polls
+    usage: /poll, /poll create <name> <description>, or /poll delete <name>
     permission: rivet.poll
   hat:
     description: Wear the item in your main hand
@@ -637,6 +637,8 @@ permissions:
   rivet.poll:
     default: true
   rivet.poll.create:
+    default: op
+  rivet.poll.delete:
     default: op
   rivet.filter.admin:
     default: op

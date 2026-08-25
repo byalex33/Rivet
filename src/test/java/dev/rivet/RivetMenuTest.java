@@ -69,11 +69,20 @@ public final class RivetMenuTest {
         assertMenu("chat", "gui.chat-styles");
         assertMenu("chat", "gui.chat-tags");
         assertMenu("polls", "gui.list");
-        assertMenu("polls", "gui.vote");
         for (String menu : List.of("categories", "list", "player-preview", "ender-preview",
                  "confirm")) {
             assertMenu("snapshots", "gui." + menu);
         }
+    }
+
+    @Test
+    public void pollVotingDoesNotPackageASeparateVoteScreen() {
+        var resource = RivetMenuTest.class.getResourceAsStream("/settings/polls.yml");
+        assertNotNull(resource);
+        YamlConfiguration configuration = YamlConfiguration.loadConfiguration(
+            new InputStreamReader(resource, StandardCharsets.UTF_8));
+
+        assertEquals(null, configuration.getConfigurationSection("gui.vote"));
     }
 
     private static void assertMenu(String module, String path) {

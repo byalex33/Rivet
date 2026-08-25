@@ -11,6 +11,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -47,8 +48,12 @@ final class PollModule implements Listener {
         if (args.length > 0 && args[0].equalsIgnoreCase("create")) {
             return create(sender, args);
         }
+        if (args.length > 0 && args[0].equalsIgnoreCase("delete")) {
+            return delete(sender, args);
+        }
         if (args.length != 0) {
-            send(sender, "<white>Usage: /poll or /poll create &lt;name&gt; &lt;description&gt;");
+            send(sender, "<white>Usage: /poll, /poll create &lt;name&gt; &lt;description&gt;, "
+                + "or /poll delete &lt;name&gt;</white>");
             return true;
         }
         if (!(sender instanceof Player player)) {
@@ -60,8 +65,22 @@ final class PollModule implements Listener {
     }
 
     List<String> completions(CommandSender sender, String[] args) {
-        return args.length == 1 && sender.hasPermission("rivet.poll.create")
-            ? List.of("create") : List.of();
+        if (args.length == 1) {
+            List<String> choices = new ArrayList<>();
+            if (sender.hasPermission("rivet.poll.create")) {
+                choices.add("create");
+            }
+            if (sender.hasPermission("rivet.poll.delete")) {
+                choices.add("delete");
+            }
+            return choices;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("delete")
+            && sender.hasPermission("rivet.poll.delete")) {
+            return polls.values().stream().map(Poll::name)
+                .sorted(String.CASE_INSENSITIVE_ORDER).toList();
+        }
+        return List.of();
     }
 
     @EventHandler
@@ -91,16 +110,6 @@ final class PollModule implements Listener {
         }
         if (holder instanceof PollListHolder list) {
             clickList(player, list, event.getRawSlot(), event.getClick());
-        } else if (holder instanceof VoteHolder vote) {
-            String control = vote.controls.get(event.getRawSlot());
-            menu("vote").click(player, control, event.getClick());
-            if ("yes".equals(control)) {
-                vote(player, vote.pollId, true);
-            } else if ("no".equals(control)) {
-                vote(player, vote.pollId, false);
-            } else if ("back".equals(control)) {
-                open(player, vote.returnPage);
-            }
         }
     }
 
@@ -146,8 +155,34 @@ final class PollModule implements Listener {
         return true;
     }
 
+    private boolean delete(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("rivet.poll.delete")) {
+            send(sender, "<white>You do not have permission to delete polls.</white>");
+            return true;
+        }
+        if (args.length != 2) {
+            send(sender, "<white>Usage: /poll delete &lt;name&gt;</white>");
+            return true;
+        }
+        Poll poll = findByName(polls.values(), args[1]);
+        if (poll == null) {
+            send(sender, "<white>No poll named <#f72a4c>" + args[1] + "</#f72a4c> exists.</white>");
+            return true;
+        }
+
+        polls.remove(poll.id);
+        data.set("polls." + poll.id, null);
+        if (!save(sender, "The poll could not be deleted safely.")) {
+            polls.put(poll.id, poll);
+            sync(poll);
+            return true;
+        }
+        send(sender, "<white>Deleted poll <#f72a4c>" + poll.name + "</#f72a4c>.</white>");
+        return true;
+    }
+
     private void clickList(Player player, PollListHolder holder, int slot,
-                           org.bukkit.event.inventory.ClickType click) {
+                           ClickType click) {
         String control = holder.controls.get(slot);
         menu("list").click(player, control, click);
         String pollId = holder.pollIds.get(slot);
@@ -160,7 +195,10 @@ final class PollModule implements Listener {
                     + (poll.votes.get(player.getUniqueId()) ? "Yes" : "No")
                     + "</#f72a4c> on that poll.</white>");
             } else {
-                openVote(player, poll, holder.page);
+                Boolean choice = voteForClick(click);
+                if (choice != null) {
+                    vote(player, poll.id, choice, holder.page);
+                }
             }
         } else if ("previous-page".equals(control) && holder.page > 0) {
             open(player, holder.page - 1);
@@ -170,7 +208,7 @@ final class PollModule implements Listener {
         }
     }
 
-    private void vote(Player player, String pollId, boolean choice) {
+    private void vote(Player player, String pollId, boolean choice, int returnPage) {
         Poll poll = polls.get(pollId);
         if (poll == null) {
             send(player, "<white>That poll no longer exists.</white>");
@@ -179,7 +217,7 @@ final class PollModule implements Listener {
         }
         if (poll.votes.putIfAbsent(player.getUniqueId(), choice) != null) {
             send(player, "<white>You have already voted on that poll.</white>");
-            open(player, 0);
+            open(player, returnPage);
             return;
         }
         data.set("polls." + poll.id + ".votes." + player.getUniqueId(), choice ? "yes" : "no");
@@ -190,7 +228,7 @@ final class PollModule implements Listener {
         }
         send(player, "<white>Your <#f72a4c>" + (choice ? "Yes" : "No")
             + "</#f72a4c> vote was recorded for <#f72a4c>" + poll.name + "</#f72a4c>.</white>");
-        open(player, 0);
+        open(player, returnPage);
     }
 
     private void open(Player player, int requestedPage) {
@@ -223,9 +261,13 @@ final class PollModule implements Listener {
             wrap(poll.description, 38).forEach(line -> lore.add(Component.text(line, NamedTextColor.GRAY)));
             lore.add(Component.empty());
             lore.add(results(poll));
-            lore.add(vote == null
-                ? Component.text("Click to vote", RivetPalette.SECONDARY)
-                : Component.text("Your vote: " + (vote ? "Yes" : "No"), RivetPalette.SECONDARY));
+            if (vote == null) {
+                lore.add(Component.text("Left-click: Yes", RivetPalette.SECONDARY));
+                lore.add(Component.text("Right-click: No", RivetPalette.SECONDARY));
+            } else {
+                lore.add(Component.text("Your vote: " + (vote ? "Yes" : "No"),
+                    RivetPalette.SECONDARY));
+            }
             Material icon = vote == null ? Material.WRITABLE_BOOK
                 : vote ? Material.LIME_DYE : Material.RED_DYE;
             int slot = contentSlots.get(index);
@@ -233,7 +275,7 @@ final class PollModule implements Listener {
                 resultTags(poll),
                 Placeholder.unparsed("name", poll.name),
                 Placeholder.unparsed("description", poll.description),
-                Placeholder.unparsed("status", vote == null ? "Click to vote"
+                Placeholder.unparsed("status", vote == null ? "Left-click: Yes / Right-click: No"
                     : "Your vote: " + (vote ? "Yes" : "No")));
             holder.inventory.setItem(slot, menu.item("poll",
                 RivetGui.item(icon, Component.text(poll.name, NamedTextColor.WHITE), lore), pollTags));
@@ -263,39 +305,6 @@ final class PollModule implements Listener {
             holder.controls, pageTags);
         player.openInventory(holder.inventory);
         menu.open(player, pageTags);
-    }
-
-    private void openVote(Player player, Poll poll, int returnPage) {
-        RivetMenu menu = menu("vote");
-        int size = menu.size(27);
-        VoteHolder holder = new VoteHolder(player.getUniqueId(), poll.id, returnPage);
-        TagResolver tags = TagResolver.resolver(resultTags(poll),
-            Placeholder.unparsed("name", poll.name),
-            Placeholder.unparsed("description", poll.description));
-        holder.inventory = plugin.getServer().createInventory(holder, size,
-            menu.title("<white>Vote</white>", tags));
-        menu.place(holder.inventory, "filler", menu.item("filler",
-            Material.GRAY_STAINED_GLASS_PANE, Component.empty(), List.of(), false),
-            java.util.stream.IntStream.range(0, size).boxed().toList(), holder.controls);
-        menu.place(holder.inventory, "yes", menu.item("yes", Material.LIME_CONCRETE,
-            "<white>Yes</white>", List.of("<gray>Click to vote Yes</gray>")),
-            List.of(Math.min(11, size - 1)), holder.controls);
-        List<Component> lore = new ArrayList<>();
-        wrap(poll.description, 38).forEach(line -> lore.add(Component.text(line, NamedTextColor.GRAY)));
-        lore.add(Component.empty());
-        lore.add(results(poll));
-        menu.place(holder.inventory, "poll", menu.item("poll",
-            RivetGui.item(Material.PAPER, Component.text(poll.name, NamedTextColor.WHITE), lore), tags),
-            List.of(Math.min(13, size - 1)), holder.controls);
-        menu.place(holder.inventory, "no", menu.item("no", Material.RED_CONCRETE,
-            "<white>No</white>", List.of("<gray>Click to vote No</gray>")),
-            List.of(Math.min(15, size - 1)), holder.controls);
-        menu.place(holder.inventory, "back", menu.item("back", Material.ARROW,
-            "<white>Back to polls</white>", List.of()), List.of(Math.min(22, size - 1)), holder.controls);
-        menu.placeStaticItems(holder.inventory,
-            java.util.Set.of("filler", "yes", "poll", "no", "back"), holder.controls, tags);
-        player.openInventory(holder.inventory);
-        menu.open(player, tags);
     }
 
     private RivetMenu menu(String name) {
@@ -363,6 +372,25 @@ final class PollModule implements Listener {
 
     static boolean validName(String name) {
         return name != null && name.matches("[A-Za-z0-9_-]{1,32}");
+    }
+
+    static Boolean voteForClick(ClickType click) {
+        if (click.isLeftClick()) {
+            return true;
+        }
+        if (click.isRightClick()) {
+            return false;
+        }
+        return null;
+    }
+
+    static Poll findByName(Iterable<Poll> polls, String name) {
+        for (Poll poll : polls) {
+            if (poll.name.equalsIgnoreCase(name)) {
+                return poll;
+            }
+        }
+        return null;
     }
 
     static boolean hasUnvoted(Iterable<Poll> polls, UUID player) {
@@ -469,6 +497,10 @@ final class PollModule implements Listener {
             return id;
         }
 
+        String name() {
+            return name;
+        }
+
         long createdAt() {
             return createdAt;
         }
@@ -507,27 +539,4 @@ final class PollModule implements Listener {
         }
     }
 
-    private static final class VoteHolder implements PollHolder {
-        private final UUID owner;
-        private final String pollId;
-        private final int returnPage;
-        private final Map<Integer, String> controls = new HashMap<>();
-        private Inventory inventory;
-
-        private VoteHolder(UUID owner, String pollId, int returnPage) {
-            this.owner = owner;
-            this.pollId = pollId;
-            this.returnPage = returnPage;
-        }
-
-        @Override
-        public UUID owner() {
-            return owner;
-        }
-
-        @Override
-        public Inventory getInventory() {
-            return inventory;
-        }
-    }
 }

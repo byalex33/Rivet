@@ -123,7 +123,7 @@ Style and tag displays use a visual-only MiniMessage parser. Colors, gradients, 
 ### Inventory menus
 
 Every Rivet-owned inventory GUI uses a DeluxeMenus-style section. This covers the trash,
-backpack, item filter, auto breeder, poll browser/vote screen, chat-style selector, chat-tag selector, and every
+backpack, item filter, auto breeder, poll browser, chat-style selector, chat-tag selector, and every
 inventory-backup browser/restore screen. Vanilla player inventories, ender chests, and
 villager trading screens keep their native layouts.
 
@@ -227,8 +227,9 @@ stack, so pickup filters and inventory-capacity limits are preserved.
 
 `settings/polls.yml` controls the delay before a joining player is reminded about any
 poll they have not answered and the clickable reminder message. Poll definitions and
-UUID-keyed yes/no votes are stored in `data/polls.yml`. The poll result format supports
-`%yes%` and `%no%`; both contain the current vote totals.
+UUID-keyed yes/no votes are stored in `data/polls.yml`. The poll result format and poll
+GUI items support `%yes%` and `%no%`; both contain the current vote totals. Players vote
+directly in the poll browser by left-clicking for Yes or right-clicking for No.
 
 ### Statistics and Seen v2
 

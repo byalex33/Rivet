@@ -838,19 +838,21 @@ events are respected.
 
 ### `/poll`
 
-- **Syntax:** `/poll` or `/poll create <name> <description>`
-- **Permissions:** `rivet.poll`; `rivet.poll.create` for `create`
-- **Default:** `true` for voting; `op` for creating
+- **Syntax:** `/poll`, `/poll create <name> <description>`, or `/poll delete <name>`
+- **Permissions:** `rivet.poll`; `rivet.poll.create` for `create`; `rivet.poll.delete` for `delete`
+- **Default:** `true` for voting; `op` for creating and deleting
 - **Aliases:** None
 
-Open the persistent poll GUI. Polls are yes/no questions; click an unanswered poll and
-then choose **Yes** or **No**. Votes are final and the list shows the current totals plus
-your recorded choice.
+Open the persistent poll GUI. Polls are yes/no questions: left-click an unanswered poll
+for **Yes**, or right-click it for **No**. Votes are final and the list shows the current
+totals plus your recorded choice.
 
 `/poll create <name> <description>` creates a new poll. The name is one 1-32 character
 identifier containing letters, numbers, underscores, or hyphens, while every remaining
 argument forms the description. Players with any unanswered poll receive a clickable
 reminder shortly after login.
+
+`/poll delete <name>` permanently removes the named poll and all of its recorded votes.
 
 <a id="head"></a>
 

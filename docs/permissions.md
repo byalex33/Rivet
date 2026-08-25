@@ -129,6 +129,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.magnet` | `true` | Toggles nearby dropped-item collection with [`/magnet`](commands.md#magnet). |
 | `rivet.poll` | `true` | Opens the poll GUI with [`/poll`](commands.md#poll). |
 | `rivet.poll.create` | `op` | Creates persistent yes/no polls with [`/poll create`](commands.md#poll). |
+| `rivet.poll.delete` | `op` | Deletes polls and their recorded votes with [`/poll delete`](commands.md#poll). |
 | `rivet.hat` | `true` | [`/hat`](commands.md#hat) |
 | `rivet.jump` | `op` | [`/jump`](commands.md#jump) |
 | `rivet.list` | `true` | [`/list`](commands.md#list) |

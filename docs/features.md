@@ -18,7 +18,7 @@
 | Nearby players | `near` | Disabled | Visibility-aware nearby-player listing. |
 | Pickup filters | `filter` | Enabled | Persistent per-player item pickup allowlists or denylists. |
 | Item magnets | `magnet` | Enabled | Persistent per-player nearby item collection with atomic inventory-capacity checks. |
-| Polls | `polls` | Enabled | Persistent yes/no polls with a voting GUI and clickable reminders for players who have not voted. |
+| Polls | `polls` | Enabled | Persistent yes/no polls with direct left/right-click voting, admin creation/deletion, and clickable reminders. |
 | Statistics | `statistics` | Enabled | Native statistics, playtime, and compact Seen v2 activity summaries. |
 | Nicknames | `nicknames` | Enabled | Persistent nicknames with controlled MiniMessage formatting. |
 | Trash | `trash` | Enabled | A configurable disposable inventory. |
