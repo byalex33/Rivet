@@ -224,7 +224,7 @@ final class StatisticsModule implements Listener {
             ? storedLocation(data, base + ".last-location")
             : new StoredLocation(online.getWorld().getName(), online.getX(), online.getY(), online.getZ());
         plugin.messageActions().run(sender, plugin.settings("statistics"), "seen.staff-location",
-            "<dark_gray>Location:</dark_gray> <white>%world%</white> <dark_gray>•</dark_gray> <white>%coordinates%</white>",
+            defaultStaffLocationActions(),
             Placeholder.unparsed("world", location == null ? "unknown" : location.world()),
             Placeholder.unparsed("coordinates", location == null ? "unknown" : location.coordinates()));
 
@@ -232,7 +232,7 @@ final class StatisticsModule implements Listener {
         StoredLocation death = storedLocation(data, base + ".last-death.location");
         if (deathTime > 0 && death != null) {
             plugin.messageActions().run(sender, plugin.settings("statistics"), "seen.staff-death",
-                "<dark_gray>Last death:</dark_gray> <white>%last_death%</white> <dark_gray>•</dark_gray> <white>%death_location%</white>",
+                defaultStaffDeathActions(),
                 Placeholder.component("last_death", relativeTime(deathTime, now)),
                 Placeholder.unparsed("death_location", death.world() + " " + death.coordinates()));
         }
@@ -243,25 +243,61 @@ final class StatisticsModule implements Listener {
     }
 
     static List<String> defaultSeenActions(boolean online) {
-        String status = online
-            ? "<green>Online</green> <dark_gray>•</dark_gray> <white>Online for %session%</white>"
-            : "<gray>Offline</gray>";
-        return List.of(
-            "[message] %tag% <#f72a4c><bold>%player%</bold></#f72a4c> " + status,
-            "[message] <dark_gray>First join:</dark_gray> <white>%first_join%</white> <dark_gray>• Last login:</dark_gray> <white>%last_login%</white>",
-            "[message] <dark_gray>Last logout:</dark_gray> <white>%last_logout%</white> <dark_gray>• Playtime:</dark_gray> <white>%playtime%</white>");
+        List<String> actions = new java.util.ArrayList<>();
+        actions.add("[message] %tag% <white><bold>%player%</bold></white> "
+            + (online ? "<green><bold>ONLINE</bold></green>"
+                : "<red><bold>OFFLINE</bold></red>"));
+        actions.add(online
+            ? "[message] <gray>Current session:</gray> <white>%session%</white>"
+            : "[message] <gray>Last seen:</gray> <white>%last_logout%</white>");
+        actions.add("[message] <gray>First joined:</gray> <white>%first_join%</white>");
+        actions.add("[message] <gray>Last login:</gray> <white>%last_login%</white>");
+        actions.add("[message] <gray>Total playtime:</gray> <white>%playtime%</white>");
+        return List.copyOf(actions);
+    }
+
+    static List<String> defaultStaffLocationActions() {
+        return List.of("[message] <gray>Location:</gray> <white>%world%</white> "
+            + "<gray>at</gray> <white>%coordinates%</white>");
+    }
+
+    static List<String> defaultStaffDeathActions() {
+        return List.of("[message] <gray>Last death:</gray> <white>%last_death%</white> "
+            + "<gray>at</gray> <white>%death_location%</white>");
     }
 
     static boolean migrateSeenV2(YamlConfiguration settings) {
         List<String> oldOnline = List.of("[message] <white><#f72a4c>%player%</#f72a4c> is currently online (joined <#f72a4c>%duration%</#f72a4c> ago).</white>");
         List<String> oldOffline = List.of("[message] <white><#f72a4c>%player%</#f72a4c> was last seen <#f72a4c>%duration%</#f72a4c> ago (%timestamp%).</white>");
         boolean changed = false;
-        if (settings.getStringList("seen.online.actions").equals(oldOnline)) {
+        List<String> previousOnline = List.of(
+            "[message] %tag% <#f72a4c><bold>%player%</bold></#f72a4c> <green>Online</green> <dark_gray>•</dark_gray> <white>Online for %session%</white>",
+            "[message] <dark_gray>First join:</dark_gray> <white>%first_join%</white> <dark_gray>• Last login:</dark_gray> <white>%last_login%</white>",
+            "[message] <dark_gray>Last logout:</dark_gray> <white>%last_logout%</white> <dark_gray>• Playtime:</dark_gray> <white>%playtime%</white>");
+        List<String> previousOffline = List.of(
+            "[message] %tag% <#f72a4c><bold>%player%</bold></#f72a4c> <gray>Offline</gray>",
+            "[message] <dark_gray>First join:</dark_gray> <white>%first_join%</white> <dark_gray>• Last login:</dark_gray> <white>%last_login%</white>",
+            "[message] <dark_gray>Last logout:</dark_gray> <white>%last_logout%</white> <dark_gray>• Playtime:</dark_gray> <white>%playtime%</white>");
+        if (settings.getStringList("seen.online.actions").equals(oldOnline)
+            || settings.getStringList("seen.online.actions").equals(previousOnline)) {
             settings.set("seen.online.actions", defaultSeenActions(true));
             changed = true;
         }
-        if (settings.getStringList("seen.offline.actions").equals(oldOffline)) {
+        if (settings.getStringList("seen.offline.actions").equals(oldOffline)
+            || settings.getStringList("seen.offline.actions").equals(previousOffline)) {
             settings.set("seen.offline.actions", defaultSeenActions(false));
+            changed = true;
+        }
+        List<String> previousLocation = List.of(
+            "[message] <dark_gray>Location:</dark_gray> <white>%world%</white> <dark_gray>•</dark_gray> <white>%coordinates%</white>");
+        if (settings.getStringList("seen.staff-location.actions").equals(previousLocation)) {
+            settings.set("seen.staff-location.actions", defaultStaffLocationActions());
+            changed = true;
+        }
+        List<String> previousDeath = List.of(
+            "[message] <dark_gray>Last death:</dark_gray> <white>%last_death%</white> <dark_gray>•</dark_gray> <white>%death_location%</white>");
+        if (settings.getStringList("seen.staff-death.actions").equals(previousDeath)) {
+            settings.set("seen.staff-death.actions", defaultStaffDeathActions());
             changed = true;
         }
         return changed;

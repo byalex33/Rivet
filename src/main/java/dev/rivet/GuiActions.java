@@ -48,8 +48,7 @@ final class GuiActions {
     }
 
     void run(Player player, List<String> configuredActions, TagResolver placeholders) {
-        TagResolver resolved = TagResolver.resolver(placeholders,
-            Placeholder.unparsed("player", player.getName()));
+        TagResolver resolved = playerPlaceholders(player.getName(), placeholders);
         for (String configured : configuredActions) {
             Action action = parseAction(configured);
             if (action == null) {
@@ -57,7 +56,7 @@ final class GuiActions {
                 continue;
             }
             switch (action.tag()) {
-                case "message" -> player.sendMessage(MM.deserialize(action.value(), placeholders));
+                case "message" -> player.sendMessage(MM.deserialize(action.value(), resolved));
                 case "broadcast" -> plugin.getServer().broadcast(
                     MM.deserialize(action.value(), resolved));
                 case "player", "command" -> runPlayerCommand(player,
@@ -76,6 +75,12 @@ final class GuiActions {
                 default -> plugin.getLogger().warning("Unknown GUI action tag '[" + action.tag() + "]'.");
             }
         }
+    }
+
+    static TagResolver playerPlaceholders(String recipient, TagResolver placeholders) {
+        return TagResolver.resolver(
+            Placeholder.unparsed("player", recipient),
+            placeholders);
     }
 
     private static String command(String configured, Player player, TagResolver placeholders) {
