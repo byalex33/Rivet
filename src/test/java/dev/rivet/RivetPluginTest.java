@@ -10,6 +10,7 @@ import org.bukkit.entity.Mob;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.block.Action;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
 import org.junit.Test;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -236,6 +237,17 @@ public final class RivetPluginTest {
         assertEquals(Material.TORCHFLOWER_SEEDS,
             RivetPlugin.plantingItem(Material.TORCHFLOWER_CROP));
         assertNull(RivetPlugin.plantingItem(Material.SUGAR_CANE));
+    }
+
+    @Test
+    public void waterHarvestStillReservesAReplantWhenNoSeedDrops() {
+        List<ItemStack> noSeeds = new java.util.ArrayList<>();
+        RivetPlugin.PlantingReservation reservation =
+            RivetPlugin.reservePlantingItem(Material.WHEAT, noSeeds);
+        assertEquals(Material.WHEAT_SEEDS, reservation.material());
+        assertEquals(false, reservation.consumed());
+        assertEquals(true, noSeeds.isEmpty());
+        assertNull(RivetPlugin.reservePlantingItem(Material.SUGAR_CANE, noSeeds));
     }
 
     @Test

@@ -493,15 +493,15 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return;
         }
         Block block = event.getBlock();
-        Material plantingItem = plantingItem(block.getType());
-        if (plantingItem == null || !consumePlantingItem(event.getDrops(), plantingItem)) {
+        PlantingReservation reservation = reservePlantingItem(block.getType(), event.getDrops());
+        if (reservation == null) {
             return;
         }
         WaterCropKey key = new WaterCropKey(block.getWorld().getUID(), block.getBlockKey());
         PendingWaterCrop replaced = pendingWaterCrops.put(key,
-            new PendingWaterCrop(block.getType(), plantingItem));
+            new PendingWaterCrop(block.getType(), reservation));
         if (replaced != null) {
-            refundPlantingItem(block, replaced.plantingItem());
+            refundPlantingItem(block, replaced);
         }
         if (waterCropTask == null) {
             waterCropTask = getServer().getScheduler().runTaskTimer(
@@ -521,7 +521,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             Block block = world.getBlockAtKey(entry.getKey().blockKey());
             PendingWaterCrop crop = entry.getValue();
             if (block.getType() == crop.crop()) {
-                refundPlantingItem(block, crop.plantingItem());
+                refundPlantingItem(block, crop);
                 iterator.remove();
                 continue;
             }
@@ -535,7 +535,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 continue;
             }
             if (crop.addElapsedTicks(5) >= 1_200) {
-                refundPlantingItem(block, crop.plantingItem());
+                refundPlantingItem(block, crop);
                 iterator.remove();
             }
         }
@@ -553,15 +553,18 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         pendingWaterCrops.forEach((key, crop) -> {
             World world = getServer().getWorld(key.worldId());
             if (world != null) {
-                refundPlantingItem(world.getBlockAtKey(key.blockKey()), crop.plantingItem());
+                refundPlantingItem(world.getBlockAtKey(key.blockKey()), crop);
             }
         });
         pendingWaterCrops.clear();
     }
 
-    private static void refundPlantingItem(Block block, Material plantingItem) {
+    private static void refundPlantingItem(Block block, PendingWaterCrop crop) {
+        if (!crop.reservation().consumed()) {
+            return;
+        }
         block.getWorld().dropItemNaturally(
-            block.getLocation().add(.5, .5, .5), new ItemStack(plantingItem));
+            block.getLocation().add(.5, .5, .5), new ItemStack(crop.reservation().material()));
     }
 
     @EventHandler
@@ -1981,20 +1984,20 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
 
     private static final class PendingWaterCrop {
         private final Material crop;
-        private final Material plantingItem;
+        private final PlantingReservation reservation;
         private int elapsedTicks;
 
-        private PendingWaterCrop(Material crop, Material plantingItem) {
+        private PendingWaterCrop(Material crop, PlantingReservation reservation) {
             this.crop = crop;
-            this.plantingItem = plantingItem;
+            this.reservation = reservation;
         }
 
         private Material crop() {
             return crop;
         }
 
-        private Material plantingItem() {
-            return plantingItem;
+        private PlantingReservation reservation() {
+            return reservation;
         }
 
         private int addElapsedTicks(int ticks) {
@@ -2269,6 +2272,15 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             return true;
         }
         return false;
+    }
+
+    static PlantingReservation reservePlantingItem(Material crop, List<ItemStack> drops) {
+        Material plantingItem = plantingItem(crop);
+        return plantingItem == null ? null
+            : new PlantingReservation(plantingItem, consumePlantingItem(drops, plantingItem));
+    }
+
+    record PlantingReservation(Material material, boolean consumed) {
     }
 
     static boolean isDisabledIronGolemPoppyDrop(EntityType type, boolean enabled,
