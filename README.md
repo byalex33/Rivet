@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/assets/rivet-hero.png" alt="A voxel aircraft wing under construction in a vast utility workshop" width="100%">
-</p>
-
 <h1 align="center">Rivet</h1>
 
 <p align="center">
