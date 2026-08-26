@@ -1,3 +1,5 @@
+<img width="2172" height="724" alt="image" src="https://github.com/user-attachments/assets/649843a1-af3c-4c49-a728-e92f78eb38b1" />
+
 <h1 align="center">Rivet</h1>
 
 <p align="center">
