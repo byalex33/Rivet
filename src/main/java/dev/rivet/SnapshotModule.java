@@ -853,8 +853,8 @@ final class SnapshotModule implements Listener {
         };
         return item(material, Component.text(friendly(category), RivetPalette.SECONDARY)
             .decorate(TextDecoration.BOLD), List.of(
-                Component.text(count + " backup" + (count == 1 ? "" : "s"), NamedTextColor.GRAY),
-                Component.empty(), Component.text("Click to view", RivetPalette.SECONDARY)));
+                Component.text("│ " + count + " backup" + (count == 1 ? "" : "s"), NamedTextColor.GRAY),
+                Component.empty(), Component.text("│ Left-click to view", RivetPalette.SECONDARY)));
     }
 
     private ItemStack snapshotIcon(SnapshotRecord record) {
@@ -864,35 +864,35 @@ final class SnapshotModule implements Listener {
             default -> Material.BARREL;
         };
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("Player: " + record.playerName(), NamedTextColor.GRAY));
-        lore.add(Component.text("Category: " + friendly(record.reason()), NamedTextColor.GRAY));
-        lore.add(Component.text("Saved " + StatisticsModule.friendlyElapsed(
+        lore.add(Component.text("│ Player: " + record.playerName(), NamedTextColor.GRAY));
+        lore.add(Component.text("│ Category: " + friendly(record.reason()), NamedTextColor.GRAY));
+        lore.add(Component.text("│ Saved " + StatisticsModule.friendlyElapsed(
                 System.currentTimeMillis() - record.timestamp()) + " ago", NamedTextColor.WHITE)
             .hoverEvent(HoverEvent.showText(Component.text(exactTime(record.timestamp()),
                 NamedTextColor.WHITE))));
         if (record.deathCause() != null && !record.deathCause().isBlank()) {
-            lore.add(Component.text("Info: " + record.deathCause(), NamedTextColor.GRAY));
+            lore.add(Component.text("│ Info: " + record.deathCause(), NamedTextColor.GRAY));
         }
-        lore.add(Component.text(record.world() + " • " + coordinates(record), NamedTextColor.GRAY));
-        lore.add(Component.text("Backup ID: #" + record.id(), NamedTextColor.DARK_GRAY));
+        lore.add(Component.text("│ Location: " + record.world() + " • " + coordinates(record), NamedTextColor.GRAY));
+        lore.add(Component.text("│ Backup ID: #" + record.id(), NamedTextColor.DARK_GRAY));
         lore.add(Component.empty());
-        lore.add(Component.text("Click to check items", RivetPalette.SECONDARY));
+        lore.add(Component.text("│ Left-click to check items", RivetPalette.SECONDARY));
         return item(material, Component.text("Backup • " + exactTime(record.timestamp()),
             RivetPalette.SECONDARY).decorate(TextDecoration.BOLD), lore);
     }
 
     private ItemStack stateInfo(SnapshotRecord record) {
         List<Component> lore = new ArrayList<>(List.of(
-            Component.text("Player: " + record.playerName(), NamedTextColor.WHITE),
-            Component.text("Category: " + friendly(record.reason()), NamedTextColor.GRAY),
-            Component.text("Saved: " + exactTime(record.timestamp()), NamedTextColor.GRAY),
-            Component.text("Location: " + record.world() + " • " + coordinates(record),
+            Component.text("│ Player: " + record.playerName(), NamedTextColor.WHITE),
+            Component.text("│ Category: " + friendly(record.reason()), NamedTextColor.GRAY),
+            Component.text("│ Saved: " + exactTime(record.timestamp()), NamedTextColor.GRAY),
+            Component.text("│ Location: " + record.world() + " • " + coordinates(record),
                 NamedTextColor.GRAY)));
         if (!isEnderChest(record.reason())) {
             SnapshotState state = record.state();
-            lore.add(Component.text("Health: " + trim(state.health()), NamedTextColor.WHITE));
-            lore.add(Component.text("Hunger: " + state.hunger(), NamedTextColor.WHITE));
-            lore.add(Component.text("XP: level " + state.xpLevel(), NamedTextColor.WHITE));
+            lore.add(Component.text("│ Health: " + trim(state.health()), NamedTextColor.WHITE));
+            lore.add(Component.text("│ Hunger: " + state.hunger(), NamedTextColor.WHITE));
+            lore.add(Component.text("│ XP: level " + state.xpLevel(), NamedTextColor.WHITE));
         }
         return item(Material.COMPASS, Component.text("Backup details", RivetPalette.SECONDARY), lore);
     }

@@ -100,11 +100,35 @@ gui:
         material: '%material%'
         slots: [10-16, 19-25, 28-34, 37-43]
         display_name: '%display%'
-        lore: ['<dark_gray>%description%</dark_gray>', '', '<#f72a4c>%status%</#f72a4c>']
-      previous-page: { material: ARROW, slot: 45, display_name: '<white>Previous page</white>', lore: ['<gray>View earlier choices</gray>'] }
-      page-info: { material: BOOK, slot: 49, display_name: '<white>Page %page% of %pages%</white>', lore: ['<gray>%count% available choices</gray>', '<gray>Current: %current%</gray>'] }
-      reset: { material: MILK_BUCKET, slot: 50, display_name: '<white>Reset to default</white>', lore: ['<gray>Clear your current selection</gray>'] }
-      next-page: { material: ARROW, slot: 53, display_name: '<white>Next page</white>', lore: ['<gray>View more choices</gray>'] }
+        lore:
+          - '<gray>%description%</gray>'
+          - ''
+          - '<dark_gray>│</dark_gray> <#f72a4c>%status%</#f72a4c>'
+      previous-page:
+        material: ARROW
+        slot: 45
+        display_name: '<white>Previous page</white>'
+        lore:
+          - '<dark_gray>│</dark_gray> <#f72a4c>Left-click</#f72a4c> <gray>to view earlier choices.</gray>'
+      page-info:
+        material: BOOK
+        slot: 49
+        display_name: '<white>Page %page% of %pages%</white>'
+        lore:
+          - '<dark_gray>│</dark_gray> <gray>Choices:</gray> <white>%count%</white>'
+          - '<dark_gray>│</dark_gray> <gray>Current:</gray> <white>%current%</white>'
+      reset:
+        material: MILK_BUCKET
+        slot: 50
+        display_name: '<white>Reset to default</white>'
+        lore:
+          - '<dark_gray>│</dark_gray> <#f72a4c>Left-click</#f72a4c> <gray>to clear your selection.</gray>'
+      next-page:
+        material: ARROW
+        slot: 53
+        display_name: '<white>Next page</white>'
+        lore:
+          - '<dark_gray>│</dark_gray> <#f72a4c>Left-click</#f72a4c> <gray>to view more choices.</gray>'
   chat-tags:
     menu_title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Chat Tags</white>"
     size: 54
@@ -115,11 +139,35 @@ gui:
         material: '%material%'
         slots: [10-16, 19-25, 28-34, 37-43]
         display_name: '%display%'
-        lore: ['<dark_gray>%description%</dark_gray>', '', '<#f72a4c>%status%</#f72a4c>']
-      previous-page: { material: ARROW, slot: 45, display_name: '<white>Previous page</white>', lore: ['<gray>View earlier choices</gray>'] }
-      page-info: { material: BOOK, slot: 49, display_name: '<white>Page %page% of %pages%</white>', lore: ['<gray>%count% available choices</gray>', '<gray>Current: %current%</gray>'] }
-      reset: { material: BARRIER, slot: 50, display_name: '<white>Remove chat tag</white>', lore: ['<gray>Clear your current selection</gray>'] }
-      next-page: { material: ARROW, slot: 53, display_name: '<white>Next page</white>', lore: ['<gray>View more choices</gray>'] }
+        lore:
+          - '<gray>%description%</gray>'
+          - ''
+          - '<dark_gray>│</dark_gray> <#f72a4c>%status%</#f72a4c>'
+      previous-page:
+        material: ARROW
+        slot: 45
+        display_name: '<white>Previous page</white>'
+        lore:
+          - '<dark_gray>│</dark_gray> <#f72a4c>Left-click</#f72a4c> <gray>to view earlier choices.</gray>'
+      page-info:
+        material: BOOK
+        slot: 49
+        display_name: '<white>Page %page% of %pages%</white>'
+        lore:
+          - '<dark_gray>│</dark_gray> <gray>Choices:</gray> <white>%count%</white>'
+          - '<dark_gray>│</dark_gray> <gray>Current:</gray> <white>%current%</white>'
+      reset:
+        material: BARRIER
+        slot: 50
+        display_name: '<white>Remove chat tag</white>'
+        lore:
+          - '<dark_gray>│</dark_gray> <red>Left-click</red> <gray>to remove your chat tag.</gray>'
+      next-page:
+        material: ARROW
+        slot: 53
+        display_name: '<white>Next page</white>'
+        lore:
+          - '<dark_gray>│</dark_gray> <#f72a4c>Left-click</#f72a4c> <gray>to view more choices.</gray>'
 
 social-spy:
   format: "<#f72a4c>[spy] %sender% → %recipient%:</#f72a4c> <white>%message%</white>"

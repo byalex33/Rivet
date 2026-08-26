@@ -23,14 +23,17 @@ gui:
       slots: [10-16, 19-25, 28-34, 37-43]
       display_name: '<white>%item%</white>'
       lore:
-        - '<dark_gray>Blocked from pickup</dark_gray>'
+        - '<gray>This item is blocked from pickup.</gray>'
         - ''
-        - '<#f72a4c>Click to remove</#f72a4c>'
+        - '<dark_gray>│</dark_gray> <#f72a4c>Left-click</#f72a4c> <gray>to remove it.</gray>'
     empty:
       material: HOPPER
       slot: 22
       display_name: '<white>No filtered items</white>'
-      lore: ['<gray>Hold an item and use Add held item below</gray>']
+      lore:
+        - '<gray>Your pickup filter is currently empty.</gray>'
+        - ''
+        - '<dark_gray>│ Hold an item and use Add held item below.</dark_gray>'
     previous-page:
       material: ARROW
       slot: 45
@@ -39,20 +42,27 @@ gui:
       material: HOPPER
       slot: 47
       display_name: '<white>Add held item</white>'
-      lore: ['<gray>Adds the item in your main hand</gray>']
+      lore:
+        - '<gray>Add the item held in your main hand.</gray>'
+        - ''
+        - '<dark_gray>│</dark_gray> <#f72a4c>Left-click</#f72a4c> <gray>to add the item.</gray>'
     status:
       material: '%material%'
       slot: 49
       display_name: '<white>Filtering %status%</white>'
       lore:
-        - '<gray>Page %page% of %pages%</gray>'
-        - '<gray>%used% of %maximum% slots used</gray>'
-        - '<#f72a4c>Click to toggle</#f72a4c>'
+        - '<dark_gray>│</dark_gray> <gray>Page:</gray> <white>%page%/%pages%</white>'
+        - '<dark_gray>│</dark_gray> <gray>Slots:</gray> <white>%used%/%maximum%</white>'
+        - ''
+        - '<dark_gray>│</dark_gray> <#f72a4c>Left-click</#f72a4c> <gray>to toggle filtering.</gray>'
     clear-all:
       material: BARRIER
       slot: 51
       display_name: '<white>Clear all filters</white>'
-      lore: ['<gray>Shift-click to confirm</gray>']
+      lore:
+        - '<gray>Remove every item from your filter.</gray>'
+        - ''
+        - '<dark_gray>│</dark_gray> <red>Shift-click</red> <gray>to confirm.</gray>'
     next-page:
       material: ARROW
       slot: 53

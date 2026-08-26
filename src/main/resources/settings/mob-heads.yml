@@ -48,4 +48,4 @@ drop-effects:
 player-heads:
   display-name: "<#f72a4c>%player%'s Head</#f72a4c>"
   lore:
-    - "<white>Requested by %requester%</white>"
+    - '<dark_gray>│</dark_gray> <gray>Requested by:</gray> <white>%requester%</white>'

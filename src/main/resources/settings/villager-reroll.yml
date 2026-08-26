@@ -18,8 +18,10 @@ trade:
     material: NETHER_STAR
     name: '<#f72a4c><bold>↻ Reroll trades</bold></#f72a4c>'
     lore:
-      - '<white>Generate fresh vanilla trades.</white>'
-      - '<white>The emerald is not consumed.</white>'
+      - '<gray>Generate a fresh set of vanilla trades.</gray>'
+      - ''
+      - '<dark_gray>│</dark_gray> <#f72a4c>Right-click</#f72a4c> <gray>to reroll this villager.</gray>'
+      - '<dark_gray>│ The emerald is not consumed.</dark_gray>'
 
 messages:
   rerolled:

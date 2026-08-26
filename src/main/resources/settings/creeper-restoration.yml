@@ -4,8 +4,9 @@ core:
   material: echo_shard
   name: "<#f72a4c><bold>Restoration Core</bold></#f72a4c>"
   lore:
-    - "<white>Right-click to throw.</white>"
-    - "<white>Repairs a nearby creeper crater.</white>"
+    - '<gray>Repairs a nearby creeper crater.</gray>'
+    - ''
+    - '<dark_gray>│</dark_gray> <#f72a4c>Right-click</#f72a4c> <gray>to throw the core.</gray>'
   enchanted-glint: true
   projectile-speed: 1.5
   throw-cooldown-ticks: 8

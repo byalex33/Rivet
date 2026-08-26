@@ -61,6 +61,14 @@ public final class RivetMenuTest {
     }
 
     @Test
+    public void loreSupportsYamlListsAndLegacyScalarValues() {
+        assertEquals(List.of("line one", "", "line three"),
+            RivetMenu.configuredLore(List.of("line one", "", "line three")));
+        assertEquals(List.of("old line"), RivetMenu.configuredLore("old line"));
+        assertEquals(List.of(), RivetMenu.configuredLore(""));
+    }
+
+    @Test
     public void packagesEveryRivetOwnedInventoryWithTheSharedSchema() {
         assertMenu("trash", "gui");
         assertMenu("backpacks", "gui");

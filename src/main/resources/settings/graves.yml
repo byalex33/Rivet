@@ -27,4 +27,6 @@ tracking-compass:
   enabled: false
   name: "<#f72a4c>Grave Tracker</#f72a4c>"
   lore:
-    - "<white>Points to your latest active grave.</white>"
+    - '<gray>Points to your latest active grave.</gray>'
+    - ''
+    - '<dark_gray>│ Follow the compass to recover your items.</dark_gray>'

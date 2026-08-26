@@ -59,7 +59,12 @@ gui:
       filler: { material: GRAY_STAINED_GLASS_PANE, slots: [0-9, 17-18, 26-27, 35-36, 44-53], display_name: '' }
       category: { material: '%material%', slots: [10-16, 19-25, 28-34, 37-43] }
       previous-page: { material: ARROW, slot: 45, display_name: '<white>Previous page</white>' }
-      page-info: { material: BOOK, slot: 49, display_name: '<white>Page %page%/%pages%</white>', lore: ['<gray>%count% categories</gray>'] }
+      page-info:
+        material: BOOK
+        slot: 49
+        display_name: '<white>Page %page%/%pages%</white>'
+        lore:
+          - '<dark_gray>│</dark_gray> <gray>Categories:</gray> <white>%count%</white>'
       next-page: { material: ARROW, slot: 53, display_name: '<white>Next page</white>' }
   list:
     menu_title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Restore &gt; %name%</white>"
@@ -69,7 +74,15 @@ gui:
       filler: { material: GRAY_STAINED_GLASS_PANE, slots: [0-9, 17-18, 26-27, 35-36, 44-53], display_name: '' }
       snapshot: { material: '%material%', slots: [10-16, 19-25, 28-34, 37-43] }
       previous-page: { material: ARROW, slot: 45, display_name: '<white>Previous page</white>' }
-      back: { material: BARRIER, slot: 49, display_name: '<red>Back to categories</red>', lore: ['<gray>Page %page%/%pages%</gray>', '<gray>%count% backups</gray>'] }
+      back:
+        material: BARRIER
+        slot: 49
+        display_name: '<red>Back to categories</red>'
+        lore:
+          - '<dark_gray>│</dark_gray> <gray>Page:</gray> <white>%page%/%pages%</white>'
+          - '<dark_gray>│</dark_gray> <gray>Backups:</gray> <white>%count%</white>'
+          - ''
+          - '<dark_gray>│</dark_gray> <red>Left-click</red> <gray>to return to categories.</gray>'
       next-page: { material: ARROW, slot: 53, display_name: '<white>Next page</white>' }
   player-preview:
     menu_title: "<#f72a4c><bold>RIVET</bold></#f72a4c> <dark_gray>•</dark_gray> <white>Restore &gt; %player%</white>"
@@ -99,7 +112,12 @@ gui:
     open_commands: []
     items:
       filler: { material: GRAY_STAINED_GLASS_PANE, slots: 0-26, display_name: '' }
-      cancel: { material: RED_CONCRETE, slot: 11, display_name: '<red><bold>Cancel</bold></red>', lore: ['<gray>Return without changing anything</gray>'] }
+      cancel:
+        material: RED_CONCRETE
+        slot: 11
+        display_name: '<red><bold>Cancel</bold></red>'
+        lore:
+          - '<dark_gray>│</dark_gray> <red>Left-click</red> <gray>to return without making changes.</gray>'
       warning: { material: PAPER, slot: 13, display_name: '<yellow>This replaces current items</yellow>' }
       confirm: { material: LIME_CONCRETE, slot: 15, display_name: '<green><bold>Confirm restore</bold></green>' }
 

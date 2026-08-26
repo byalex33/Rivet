@@ -269,7 +269,7 @@ final class RivetMenu {
         return null;
     }
 
-    private static List<String> configuredLore(Object configured) {
+    static List<String> configuredLore(Object configured) {
         if (configured instanceof String line) {
             return line.isEmpty() ? List.of() : List.of(line);
         }

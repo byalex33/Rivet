@@ -261,11 +261,12 @@ final class PollModule implements Listener {
             wrap(poll.description, 38).forEach(line -> lore.add(Component.text(line, NamedTextColor.GRAY)));
             lore.add(Component.empty());
             lore.add(results(poll));
+            lore.add(Component.empty());
             if (vote == null) {
-                lore.add(Component.text("Left-click: Yes", RivetPalette.SECONDARY));
-                lore.add(Component.text("Right-click: No", RivetPalette.SECONDARY));
+                lore.add(Component.text("│ Left-click to vote Yes", RivetPalette.SECONDARY));
+                lore.add(Component.text("│ Right-click to vote No", RivetPalette.SECONDARY));
             } else {
-                lore.add(Component.text("Your vote: " + (vote ? "Yes" : "No"),
+                lore.add(Component.text("│ Your vote: " + (vote ? "Yes" : "No"),
                     RivetPalette.SECONDARY));
             }
             Material icon = vote == null ? Material.WRITABLE_BOOK
@@ -275,7 +276,7 @@ final class PollModule implements Listener {
                 resultTags(poll),
                 Placeholder.unparsed("name", poll.name),
                 Placeholder.unparsed("description", poll.description),
-                Placeholder.unparsed("status", vote == null ? "Left-click: Yes / Right-click: No"
+                Placeholder.unparsed("status", vote == null ? "Left-click to vote Yes | Right-click to vote No"
                     : "Your vote: " + (vote ? "Yes" : "No")));
             holder.inventory.setItem(slot, menu.item("poll",
                 RivetGui.item(icon, Component.text(poll.name, NamedTextColor.WHITE), lore), pollTags));

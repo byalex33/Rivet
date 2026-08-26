@@ -7,7 +7,7 @@ messages:
 captured-egg:
   name: "<white>Captured <#f72a4c>%mob%</#f72a4c></white>"
   lore:
-    - "<white>Contains the original creature.</white>"
+    - '<dark_gray>│ Contains the original creature.</dark_gray>'
 
 effects:
   start-sound:
