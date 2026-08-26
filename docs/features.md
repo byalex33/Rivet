@@ -63,7 +63,7 @@ explosions do not create creeper-restoration craters because no blocks are destr
 | Permissions | `permissions` | Disabled | Lightweight UUID users, weighted multi-group inheritance, explicit grants and denies, wildcards, metadata, and Bukkit attachments. |
 | Holograms | `holograms` | Enabled | Persistent text, item, and block displays with animation and visibility controls. |
 | Announcements | `announcements` | Disabled | Rotating MiniMessage announcements with sound and empty-server controls. |
-| Join and leave | `join-leave` | Enabled | Join/leave messages, welcome titles, MOTD, and first-join behavior. |
+| Join and leave | `join-leave` | Enabled | Join/leave actions, native inline heads, and configurable large skin portraits for first-time and returning players. |
 | Help | `help` | Enabled | Permission-aware interactive command pages. |
 | Gameplay audit | `logs` | Enabled | Batched SQLite logging, compact player/time/radius lookups, and clickable block or container inspection. |
 | Inventory backups | `snapshots` | Enabled | AxInventoryRestore-style category browsing, event/automatic/manual backups, search, shulker export, and safety-first restores on SQLite. |

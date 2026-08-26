@@ -24,7 +24,7 @@ plugins/Rivet/
 |   |-- holograms.yml
 |   |-- homes.yml
 |   |-- inventory.yml
-|   |-- join-leave.yml
+|   |-- join.yml
 |   |-- kits.yml
 |   |-- lagg.yml
 |   |-- logs.yml
@@ -316,6 +316,21 @@ Tagged module output uses the shared `messages.tag` MiniMessage value in `config
 
 Rivet also accepts `<lime>` as an alias for MiniMessage's bright-green `<green>` color.
 
+Minecraft 1.21.9's native player-head component is available anywhere Rivet accepts full
+MiniMessage, including GUI names and lore. Use `<head:player-name-or-uuid>` for a fixed head.
+Player-aware output such as chat and join actions also provides `%head%`, `%player_head%`,
+and `%player_uuid%`. The head is rendered by the vanilla client and requires no resource pack.
+
+### Join welcomes
+
+`settings/join.yml` controls the normal join, first-join, and leave broadcasts as well as
+delayed welcome actions. `welcome.first-join.actions` and `welcome.returning.actions` accept
+the standard action tags. The join-only `[welcome-head] profile` action renders the selected
+eight-line layout from `welcome-heads.<profile>` beside a large 8x8 portrait made from the
+player's current skin. Portrait character, hat layer, centering, surrounding blank lines,
+and all eight MiniMessage lines are configurable. If the skin cannot be downloaded, Rivet
+uses the native inline head as a graceful fallback.
+
 ## Message actions
 
 Player-facing output is configured as an event with an `enabled` switch and an ordered
@@ -334,6 +349,7 @@ Supported actions are `[message]`, `[broadcast]`, `[player]`, `[console]`,
 `[actionbar]`, `[title]`, `[sound]`, `[particle]`, `[firework]`, `[bossbar]`, `[toast]`,
 `[lightning]`, and `[close]`. `[player]` runs a command as the clicking player and
 `[console]` runs one as the server console; a leading slash is optional.
+Join welcome lists additionally support `[welcome-head] <profile>`.
 Titles use `title | subtitle | fade-in ticks | stay ticks | fade-out ticks`. Fireworks use
 `#RRGGBB,#RRGGBB | type | power | count | gap ticks`. Rivet upgrades legacy message strings
 and action lists to this structure on startup without replacing customized text.
@@ -343,6 +359,10 @@ Commands that accept player-supplied formatting limit which tags can be used. Fo
 ## Upgrading
 
 Rivet migrates supported legacy files before modules start. Existing values in the new destination take priority, and conflicting legacy files are retained rather than overwritten. Missing module switches and settings keys are added without replacing administrator choices.
+
+An existing `settings/join-leave.yml` is moved to `settings/join.yml` automatically when
+the new destination does not already exist. Customized join messages are preserved, and
+the new welcome portrait defaults are then added only where keys are missing.
 
 Legacy `chat-color` selections are copied to the new `chat-style` storage on startup and remain available in memory even if saving fails. Their original keys are retained for recovery. Existing `chat-colors` feature switches are copied to the corresponding `chat-styles` switches only when the new value is absent, and an unchanged old default chat format is upgraded to include the new placeholders.
 

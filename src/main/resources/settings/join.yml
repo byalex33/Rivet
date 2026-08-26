@@ -1,0 +1,76 @@
+join:
+  enabled: true
+  actions:
+    - '[broadcast] %head% <white>%player% joined the server.</white>'
+leave:
+  enabled: true
+  actions:
+    - '[broadcast] %head% <white>%player% left the server.</white>'
+first-join:
+  enabled: true
+  actions:
+    - '[broadcast] %head% <white>Welcome <#f72a4c>%player%</#f72a4c> to the server for the first time!</white>'
+
+# These actions run after the player has fully joined. Alongside every standard message action,
+# [welcome-head] selects one of the large portrait layouts under welcome-heads below.
+welcome:
+  delay-ticks: 20
+  first-join:
+    enabled: true
+    actions:
+      - '[welcome-head] first-join'
+      - '[sound] entity.player.levelup 0.8 1.1'
+      - '[firework] #f72a4c,#ffffff | BALL_LARGE | 1 | 1 | 10'
+  returning:
+    enabled: true
+    actions:
+      - '[welcome-head] returning'
+      - '[sound] entity.experience_orb.pickup 0.7 1.2'
+
+welcome-heads:
+  first-join:
+    enabled: true
+    character: '█'
+    show-hat-layer: true
+    center: false
+    blank-lines-before: 1
+    blank-lines-after: 1
+    lines:
+      - '<#f72a4c><bold>WELCOME TO THE SERVER</bold></#f72a4c>'
+      - '<white>It is great to have you here, <#f72a4c>%player%</#f72a4c>.</white>'
+      - ''
+      - '<dark_gray>│</dark_gray> <gray>Your first adventure starts now.</gray>'
+      - '<dark_gray>│</dark_gray> <gray>Use <white>/help</white> whenever you need a hand.</gray>'
+      - ''
+      - '<gray>Have fun and make yourself at home!</gray>'
+      - ''
+  returning:
+    enabled: true
+    character: '█'
+    show-hat-layer: true
+    center: false
+    blank-lines-before: 1
+    blank-lines-after: 1
+    lines:
+      - '<#f72a4c><bold>WELCOME BACK</bold></#f72a4c>'
+      - '<white>Good to see you again, <#f72a4c>%player%</#f72a4c>.</white>'
+      - ''
+      - '<dark_gray>│</dark_gray> <gray>Pick up where you left off.</gray>'
+      - ''
+      - '<gray>Enjoy your stay!</gray>'
+      - ''
+      - ''
+
+welcome-title:
+  enabled: true
+  actions:
+    - '[title] <#f72a4c>Welcome, %player%!</#f72a4c> | <white>Enjoy your stay.</white> | 5 | 30 | 10'
+welcome-chat:
+  enabled: false
+  actions:
+    - '[message] <white>Welcome to the server, <#f72a4c>%player%</#f72a4c>!</white>'
+motd:
+  enabled: false
+  actions:
+    - '[message] <#f72a4c><bold>Server information</bold></#f72a4c>'
+    - '[message] <white>Use <#f72a4c>/help</#f72a4c> to get started.</white>'

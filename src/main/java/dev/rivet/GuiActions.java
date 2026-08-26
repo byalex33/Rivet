@@ -48,7 +48,7 @@ final class GuiActions {
     }
 
     void run(Player player, List<String> configuredActions, TagResolver placeholders) {
-        TagResolver resolved = playerPlaceholders(player.getName(), placeholders);
+        TagResolver resolved = playerPlaceholders(player, placeholders);
         for (String configured : configuredActions) {
             Action action = parseAction(configured);
             if (action == null) {
@@ -80,6 +80,14 @@ final class GuiActions {
     static TagResolver playerPlaceholders(String recipient, TagResolver placeholders) {
         return TagResolver.resolver(
             Placeholder.unparsed("player", recipient),
+            placeholders);
+    }
+
+    static TagResolver playerPlaceholders(Player recipient, TagResolver placeholders) {
+        return TagResolver.resolver(
+            Placeholder.unparsed("player", recipient.getName()),
+            Placeholder.unparsed("player_uuid", recipient.getUniqueId().toString()),
+            RivetHeads.resolver(recipient),
             placeholders);
     }
 

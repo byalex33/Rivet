@@ -99,7 +99,7 @@ final class ChatModule implements Listener {
     void reload() {
         YamlConfiguration config = plugin.settings("chat");
         chatFormat = config.getString("format",
-            "%prefix%%tag% %player%%suffix%<dark_gray>: </dark_gray>%message%");
+            "%head% %prefix%%tag% %player%%suffix%<dark_gray>: </dark_gray>%message%");
         sentFormat = config.getString("private-messages.sent",
             "<#f72a4c>[you → %player%]</#f72a4c> <white>%message%</white>");
         receivedFormat = config.getString("private-messages.received",
@@ -503,7 +503,7 @@ final class ChatModule implements Listener {
         ChatMetadata metadata = plugin.chatMetadata(source);
         Component tag = selectedTag(source);
         return format(chatFormat, metadata.prefix(), metadata.suffix(), tag,
-            plugin.chatDisplayName(source, displayName), body);
+            plugin.chatDisplayName(source, displayName), body, source);
     }
 
     private Component selectedTag(Player player) {
@@ -1056,6 +1056,15 @@ final class ChatModule implements Listener {
         return MM.deserialize(format, Placeholder.component("prefix", prefix),
             Placeholder.component("suffix", suffix), Placeholder.component("tag", tag),
             Placeholder.component("player", player), Placeholder.component("message", message));
+    }
+
+    static Component format(String format, Component prefix, Component suffix, Component tag,
+                            Component player, Component message, Player headOwner) {
+        return MM.deserialize(format, Placeholder.component("prefix", prefix),
+            Placeholder.component("suffix", suffix), Placeholder.component("tag", tag),
+            Placeholder.component("player", player), Placeholder.component("message", message),
+            Placeholder.unparsed("player_uuid", headOwner.getUniqueId().toString()),
+            RivetHeads.resolver(headOwner));
     }
 
     static Component itemTokens(Component message, Component item) {

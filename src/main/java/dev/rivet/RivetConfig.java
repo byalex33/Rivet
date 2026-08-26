@@ -58,6 +58,7 @@ final class RivetConfig {
         migrateFile("graves.yml", "data/graves.yml");
         migrateFile("holograms.yml", "data/holograms.yml");
         migrateFile("permissions/users.yml", "data/permissions.yml");
+        migrateFile("settings/join-leave.yml", "settings/join.yml");
 
         File globalFile = new File(plugin.getDataFolder(), "config.yml");
         YamlConfiguration persistedGlobal = loadChecked(globalFile);
@@ -308,7 +309,7 @@ final class RivetConfig {
         } else if (module.equals("utilities")) {
             changed |= migrateRenamedMessage(configured, "list.format", "list.output");
             changed |= migrateRenamedMessage(configured, "ping.format", "ping.output");
-        } else if (module.equals("join-leave")) {
+        } else if (module.equals("join")) {
             changed |= migrateRenamedMessage(configured, "join.message", "join", "broadcast");
             changed |= migrateRenamedMessage(configured, "leave.message", "leave", "broadcast");
             changed |= migrateRenamedMessage(configured, "first-join.message", "first-join", "broadcast");
@@ -455,6 +456,7 @@ final class RivetConfig {
 
     private static List<String> settingsFiles() {
         java.util.ArrayList<String> names = new java.util.ArrayList<>(MODULES);
+        names.set(names.indexOf("join-leave"), "join");
         names.add("gameplay");
         names.add("teleports");
         return List.copyOf(names);
@@ -514,11 +516,13 @@ final class RivetConfig {
 
     static boolean migrateChatFormat(YamlConfiguration configuration) {
         String old = "<#f72a4c>%player%:</#f72a4c> <white>%message%</white>";
-        if (!old.equals(configuration.getString("format"))) {
+        String previous = "%prefix%%tag% %player%%suffix%<dark_gray>: </dark_gray>%message%";
+        String configured = configuration.getString("format");
+        if (!old.equals(configured) && !previous.equals(configured)) {
             return false;
         }
         configuration.set("format",
-            "%prefix%%tag% %player%%suffix%<dark_gray>: </dark_gray>%message%");
+            "%head% %prefix%%tag% %player%%suffix%<dark_gray>: </dark_gray>%message%");
         return true;
     }
 

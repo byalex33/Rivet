@@ -181,8 +181,11 @@ final class RivetMenu {
     }
 
     private static TagResolver playerPlaceholders(Player player, TagResolver[] placeholders) {
-        TagResolver[] all = java.util.Arrays.copyOf(placeholders, placeholders.length + 1);
+        TagResolver[] all = java.util.Arrays.copyOf(placeholders, placeholders.length + 3);
         all[placeholders.length] = Placeholder.unparsed("player", player.getName());
+        all[placeholders.length + 1] = Placeholder.unparsed("player_uuid",
+            player.getUniqueId().toString());
+        all[placeholders.length + 2] = RivetHeads.resolver(player);
         return TagResolver.resolver(all);
     }
 

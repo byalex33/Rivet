@@ -1,6 +1,6 @@
 # The placeholders are inserted as safe components; a player's style affects %message% only.
 # %prefix% and %suffix% use Rivet group metadata when the optional permissions module is enabled.
-format: "%prefix%%tag% %player%%suffix%<dark_gray>: </dark_gray>%message%"
+format: "%head% %prefix%%tag% %player%%suffix%<dark_gray>: </dark_gray>%message%"
 me:
   # %player% and %message% are safe component placeholders.
   format: "<#f72a4c>* %player%</#f72a4c> <white>%message%</white>"
