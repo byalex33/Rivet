@@ -132,6 +132,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private SnapshotModule snapshots;
     private MagnetModule magnet;
     private PollModule polls;
+    private ServerListModule serverList;
     private GuiActions guiActions;
     private MessageActions messageActions;
     private RivetConfig files;
@@ -294,6 +295,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("polls")) {
             polls = new PollModule(this);
             getServer().getPluginManager().registerEvents(polls, this);
+        }
+        if (moduleEnabled("server-list")) {
+            serverList = new ServerListModule(this);
+            getServer().getPluginManager().registerEvents(serverList, this);
         }
         if (moduleEnabled("help")) {
             help = new HelpModule(this);
@@ -2113,6 +2118,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             }
             if (graves != null) {
                 graves.reload();
+            }
+            if (serverList != null) {
+                serverList.reload();
             }
             if (permissions != null) {
                 permissions.reloadConfiguration();

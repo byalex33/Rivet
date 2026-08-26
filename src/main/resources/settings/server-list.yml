@@ -1,0 +1,16 @@
+# Changes the description shown in the multiplayer server list. This does not
+# send a message when a player joins. Text uses MiniMessage.
+#
+# Selection modes:
+#   ROTATE - keep one entry active for rotation-seconds, then use the next
+#   RANDOM - choose an entry for every server-list refresh
+#   FIRST  - always use the first entry
+selection: ROTATE
+rotation-seconds: 60
+
+# Supported placeholders: %online%, %maximum%, and %hostname%.
+motds:
+  - line-1: '<#f72a4c><bold>WELCOME TO THE SERVER</bold></#f72a4c> <dark_gray>│</dark_gray> <white>Survival, together.</white>'
+    line-2: '<dark_gray>│</dark_gray> <gray>Come say hello</gray> <dark_gray>•</dark_gray> <white>%online%/%maximum% online</white>'
+  - line-1: '<white><bold>BUILD. EXPLORE. CREATE.</bold></white> <dark_gray>│</dark_gray> <#f72a4c>Join the adventure</#f72a4c>'
+    line-2: '<dark_gray>│</dark_gray> <gray>Your next adventure is waiting.</gray>'

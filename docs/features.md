@@ -67,6 +67,7 @@ explosions do not create creeper-restoration craters because no blocks are destr
 | Help | `help` | Enabled | Permission-aware interactive command pages. |
 | Gameplay audit | `logs` | Enabled | Batched SQLite logging, compact player/time/radius lookups, and clickable block or container inspection. |
 | Inventory backups | `snapshots` | Enabled | AxInventoryRestore-style category browsing, event/automatic/manual backups, search, shulker export, and safety-first restores on SQLite. |
+| Server-list MOTD | `server-list` | Enabled | Configurable two-line MiniMessage descriptions with timed rotation or random selection and live player-count placeholders. |
 
 ## Gameplay audit
 

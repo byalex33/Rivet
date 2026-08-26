@@ -13,9 +13,9 @@ final class RivetMiniMessage {
         "amount", "animal", "biome", "blocks_broken", "blocks_placed", "bred",
         "command", "commands", "coordinates", "count", "current", "death_location", "deaths", "description", "display",
         "details", "distance", "duration", "first_join", "food", "id", "item", "items", "jumps",
-        "killer", "kit", "kits", "last_death", "last_login", "last_logout", "matches", "material",
+        "hostname", "killer", "kit", "kits", "last_death", "last_login", "last_logout", "matches", "material",
         "max", "maximum", "message", "mob", "mob_kills", "name", "page", "pages", "ping",
-        "percent", "player", "player_kills", "players", "playtime", "plural", "quality", "radius", "reason", "remaining",
+        "online", "percent", "player", "player_kills", "players", "playtime", "plural", "quality", "radius", "reason", "remaining",
         "prefix", "recipient", "requester", "seconds", "sender", "session", "since_first_join", "speed", "staff",
         "status", "streak", "suffix", "tag", "target", "text", "time", "timestamp", "used", "weapon", "weather", "world", "x", "y", "yes", "no", "z");
     private static final Pattern PERCENT_PLACEHOLDER = Pattern.compile(

@@ -35,6 +35,7 @@ plugins/Rivet/
 |   |-- permissions.yml
 |   |-- poses.yml
 |   |-- polls.yml
+|   |-- server-list.yml
 |   |-- rtp.yml
 |   |-- spawn.yml
 |   |-- snapshots.yml
@@ -91,6 +92,7 @@ This file contains feature switches only. Every value must be `true` or `false`.
 | `permissions` | Disabled |
 | `polls` | Enabled |
 | `poses` | Disabled |
+| `server-list` | Enabled |
 | `rtp` | Disabled |
 | `snapshots` | Enabled |
 | `spawn` | Enabled |
@@ -107,6 +109,14 @@ This file contains feature switches only. Every value must be `true` or `false`.
 ## Settings files
 
 Substantial modules own a file under `settings/`. Small mechanics are grouped in `gameplay.yml`, while cross-feature rules such as teleport timing live in a dedicated policy file. On startup, Rivet adds newly introduced default keys without replacing existing values. Messages use MiniMessage formatting and `%placeholder%` variables.
+
+### Server-list MOTD
+
+`settings/server-list.yml` changes the two-line description shown in Minecraft's multiplayer
+server list; it does not send a login message. Each entry has `line-1` and `line-2`, supports
+MiniMessage, and may use `%online%`, `%maximum%`, and `%hostname%`. `selection` can be `ROTATE`,
+`RANDOM`, or `FIRST`; rotating entries remain active for `rotation-seconds`. Text changes apply
+with `/rivet reload`, while changing the `server-list` switch in `modules.yml` requires a restart.
 
 ### Chat
 
