@@ -165,7 +165,7 @@ final class SnapshotModule implements Listener {
         if (player.getKiller() != null) {
             cause = (cause == null ? "PLAYER" : cause) + " (" + player.getKiller().getName() + ")";
         }
-        savePlayer(player, "DEATH", cause, player.getUniqueId(), player.getName());
+        savePlayer(player, "DEATH", cause);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -173,8 +173,7 @@ final class SnapshotModule implements Listener {
         if (settings.enabled("JOIN")) {
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 if (event.getPlayer().isOnline()) {
-                    savePlayer(event.getPlayer(), "JOIN", null, event.getPlayer().getUniqueId(),
-                        event.getPlayer().getName());
+                    savePlayer(event.getPlayer(), "JOIN", null);
                 }
             });
         }
@@ -183,8 +182,7 @@ final class SnapshotModule implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         if (settings.enabled("QUIT")) {
-            savePlayer(event.getPlayer(), "QUIT", null, event.getPlayer().getUniqueId(),
-                event.getPlayer().getName());
+            savePlayer(event.getPlayer(), "QUIT", null);
         }
     }
 
@@ -192,8 +190,7 @@ final class SnapshotModule implements Listener {
     public void onWorldChange(PlayerChangedWorldEvent event) {
         if (settings.enabled("WORLD_CHANGE")) {
             savePlayer(event.getPlayer(), "WORLD_CHANGE", event.getFrom().getName() + " -> "
-                + event.getPlayer().getWorld().getName(), event.getPlayer().getUniqueId(),
-                event.getPlayer().getName());
+                + event.getPlayer().getWorld().getName());
         }
     }
 
@@ -201,8 +198,7 @@ final class SnapshotModule implements Listener {
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
         if (settings.enabled("GAMEMODE_CHANGE")) {
             savePlayer(event.getPlayer(), "GAMEMODE_CHANGE", event.getPlayer().getGameMode().name()
-                + " -> " + event.getNewGameMode().name(), event.getPlayer().getUniqueId(),
-                event.getPlayer().getName());
+                + " -> " + event.getNewGameMode().name());
         }
     }
 
@@ -212,13 +208,11 @@ final class SnapshotModule implements Listener {
             || event.getInventory().getHolder(false) instanceof SnapshotGuiHolder) return;
         if (event.getInventory().getType() == InventoryType.ENDER_CHEST
             && settings.enabled("ENDER_CHEST")) {
-            saveCapturedIfUseful(captureEnderChest(player, "ENDER_CHEST", null), player,
-                player.getUniqueId(), player.getName());
+            saveCapturedIfUseful(captureEnderChest(player, "ENDER_CHEST", null), player);
         } else if (event.getInventory().getLocation() != null
             && CONTAINER_TYPES.contains(event.getInventory().getType().name())
             && settings.enabled("CONTAINER_CLOSE")) {
-            savePlayer(player, "CONTAINER_CLOSE", event.getInventory().getType().name(),
-                player.getUniqueId(), player.getName());
+            savePlayer(player, "CONTAINER_CLOSE", event.getInventory().getType().name());
         }
     }
 
@@ -294,8 +288,7 @@ final class SnapshotModule implements Listener {
                 "<white>%tag% The target player must be online and visible.</white>");
             return;
         }
-        if (!savePlayer(target, "MANUAL", "by: " + sender.getName(), actorUuid(sender, target),
-            sender.getName())) {
+        if (!savePlayer(target, "MANUAL", "by: " + sender.getName())) {
             message(sender, "messages.empty",
                 "<white>%tag% No backup was made because that inventory is empty or excluded.</white>");
             return;
@@ -309,8 +302,7 @@ final class SnapshotModule implements Listener {
         if (!require(sender, "rivet.snapshots.create")) return;
         int saved = 0;
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            if (savePlayer(player, "MANUAL", "by: " + sender.getName(), actorUuid(sender, player),
-                sender.getName())) saved++;
+            if (savePlayer(player, "MANUAL", "by: " + sender.getName())) saved++;
         }
         message(sender, "messages.manual-backup-all",
             "<white>%tag% Created manual backups for <#f72a4c>%count%</#f72a4c> players.</white>",
@@ -649,10 +641,6 @@ final class SnapshotModule implements Listener {
                     "<white>%tag% The safety backup failed, so nothing was restored.</white>");
                 return;
             }
-            if (settings.auditCreations()) {
-                plugin.recordSnapshotAudit(AuditAction.SNAPSHOT_CREATE, staff.getUniqueId(),
-                    staff.getName(), saved);
-            }
             Player current = visibleTarget(staff, target.uuid());
             if (current == null) {
                 restoresInProgress.remove(target.uuid());
@@ -670,8 +658,6 @@ final class SnapshotModule implements Listener {
                 target.getEnderChest().setStorageContents(record.state().inventory());
             } else applyState(record.state(), new BukkitRestoreTarget(target));
             target.updateInventory();
-            plugin.recordSnapshotAudit(AuditAction.SNAPSHOT_RESTORE, staff.getUniqueId(),
-                staff.getName(), record);
             message(staff, "messages.restored",
                 "<white>%tag% Restored backup <#f72a4c>#%id%</#f72a4c> to <#f72a4c>%player%</#f72a4c>.</white>",
                 Placeholder.unparsed("id", Long.toString(record.id())),
@@ -739,17 +725,15 @@ final class SnapshotModule implements Listener {
         return List.copyOf(direct);
     }
 
-    private boolean savePlayer(Player player, String reason, String cause, UUID actorUuid,
-                               String actorName) {
+    private boolean savePlayer(Player player, String reason, String cause) {
         if (!settings.enabled(reason) || player.hasPermission("rivet.snapshots.dontsave")) return false;
-        return saveCapturedIfUseful(capturePlayer(player, reason, cause), player, actorUuid, actorName);
+        return saveCapturedIfUseful(capturePlayer(player, reason, cause), player);
     }
 
-    private boolean saveCapturedIfUseful(CapturedSnapshot captured, Player player, UUID actorUuid,
-                                         String actorName) {
+    private boolean saveCapturedIfUseful(CapturedSnapshot captured, Player player) {
         if (player.hasPermission("rivet.snapshots.dontsave") || !hasItems(captured.state())
             || settings.maxPerPlayer() == 0 || settings.limit(captured.reason()) == 0) return false;
-        saveCaptured(captured, actorUuid, actorName, settings.auditCreations());
+        saveCaptured(captured);
         return true;
     }
 
@@ -778,14 +762,12 @@ final class SnapshotModule implements Listener {
             location.getY(), location.getZ(), cause, state);
     }
 
-    private void saveCaptured(CapturedSnapshot captured, UUID actorUuid, String actorName,
-                              boolean auditCreation) {
+    private void saveCaptured(CapturedSnapshot captured) {
         storage.save(captured, settings).whenComplete((record, failure) -> {
             if (failure != null || record == null) {
                 plugin.getLogger().log(Level.SEVERE, "Could not save " + captured.reason()
                     + " backup for " + captured.playerName(), failure);
-            } else if (auditCreation) onMain(() -> plugin.recordSnapshotAudit(
-                AuditAction.SNAPSHOT_CREATE, actorUuid, actorName, record));
+            }
         });
     }
 
@@ -798,7 +780,7 @@ final class SnapshotModule implements Listener {
         long ticks = settings.automaticIntervalSeconds() * 20L;
         automaticTask = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             for (Player player : plugin.getServer().getOnlinePlayers()) {
-                savePlayer(player, "AUTOMATIC", null, player.getUniqueId(), player.getName());
+                savePlayer(player, "AUTOMATIC", null);
             }
         }, ticks, ticks);
     }
@@ -1020,10 +1002,6 @@ final class SnapshotModule implements Listener {
     private void usage(CommandSender sender) {
         message(sender, "messages.usage", "<white>%tag% Usage: /snapshot "
             + "&lt;view &lt;player&gt;|save &lt;player&gt;|saveall|search &lt;item&gt;|cleanup&gt;</white>");
-    }
-
-    private static UUID actorUuid(CommandSender sender, Player fallback) {
-        return sender instanceof Player player ? player.getUniqueId() : fallback.getUniqueId();
     }
 
     private static int pages(int size) {

@@ -111,10 +111,6 @@ final class HelpModule {
     private List<CommandEntry> commands(CommandSender sender) {
         List<CommandEntry> declared = new ArrayList<>();
         plugin.getDescription().getCommands().keySet().forEach(name -> {
-            if (name.equals("log") && java.util.stream.Stream.of("rivet.logs.lookup",
-                "rivet.logs.inspect", "rivet.logs.reload").noneMatch(sender::hasPermission)) {
-                return;
-            }
             PluginCommand command = plugin.getCommand(name);
             if (command == null) {
                 return;

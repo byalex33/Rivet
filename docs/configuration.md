@@ -27,7 +27,6 @@ plugins/Rivet/
 |   |-- join.yml
 |   |-- kits.yml
 |   |-- lagg.yml
-|   |-- logs.yml
 |   |-- magnet.yml
 |   |-- mob-heads.yml
 |   |-- near.yml
@@ -51,7 +50,6 @@ plugins/Rivet/
 |   `-- worlds.yml
 |-- data/
 |   `-- generated runtime state
-|-- logs.db
 `-- snapshots.db
 ```
 
@@ -84,7 +82,6 @@ This file contains feature switches only. Every value must be `true` or `false`.
 | `join-leave` | Enabled |
 | `kits` | Disabled |
 | `lagg` | Enabled |
-| `logs` | Enabled |
 | `magnet` | Enabled |
 | `mob-heads` | Enabled |
 | `near` | Disabled |
@@ -252,25 +249,18 @@ Paper supplies first join, last login, and total playtime. Rivet stores only the
 logout location and most recent observed death in `data/statistics.yml`; older players
 show `unknown` for fields that have not yet been observed by Seen v2.
 
-### Gameplay audit log
-
-`settings/logs.yml` controls individual event categories, the retention period, excluded worlds and materials, and compact lookup page sizes. Commands are disabled by default. Enabling command logging never records chat, `/me`, private messages, or replies.
-
-High-volume entries are written asynchronously in batches to `plugins/Rivet/logs.db`. SQLite WAL mode and location, player, action, and time indexes keep gameplay writes and inspector queries lightweight. Records include before/after data and item metadata so rollback and restore can be added later without changing the basic schema; those operations are not currently exposed.
-
 ### Inventory snapshots
 
 `settings/snapshots.yml` controls retention, binary-payload deduplication, the All category,
 automatic-backup interval, event-category switches, per-category and total save limits,
-search limits, restore confirmation, safety backups, creation auditing, and all command
+search limits, restore confirmation, safety backups, and all command
 messages. Defaults keep backups for 14 days, enable every category, run automatic backups
 every 180 seconds, and leave category counts unlimited. Confirmation and a successful
 safety backup remain required before restore.
 
 Backup rows and compressed binary payloads live in `plugins/Rivet/snapshots.db`; no
-inventory contents are stored in YAML or copied into `logs.db`. Database serialization,
-writes, reads, and cleanup run on one dedicated worker. Bukkit state is captured and
-restored on the server thread.
+inventory contents are stored in YAML. Database serialization, writes, reads, and cleanup
+run on one dedicated worker. Bukkit state is captured and restored on the server thread.
 
 ### Built-in permissions
 
@@ -288,7 +278,7 @@ preserve vanilla entity damage while preventing block damage and block drops.
 
 ## Runtime data
 
-Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, magnet toggles, polls and votes, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. The audit module stores its high-volume records separately in `logs.db`, and inventory snapshots use `snapshots.db`; neither uses YAML for payload data.
+Files under `data/` contain generated state such as homes, warps, graves, teleport history, Seen v2 logout/location and death details, breeders, holograms, permission users, ignored players, chat styles and tags, filters, magnet toggles, polls and votes, nicknames, backpacks, reward claims, cooldowns, staff state, and tracked test worlds. Inventory snapshots use `snapshots.db` rather than YAML for payload data.
 
 Do not hand-edit runtime data while the server is running. Rivet may overwrite an external change the next time it saves that module.
 
@@ -300,8 +290,6 @@ Settings changes apply immediately where supported. Changes to `modules.yml` are
 
 `/rivet reload` reloads `settings/lagg.yml` and restarts the active cleanup and warning schedule.
 
-Use [`/log reload`](commands.md#log) to validate and reload only `settings/logs.yml`. Exclusions and event switches apply to new records immediately; lowering retention also schedules an immediate purge.
-
 `/rivet reload` refreshes `settings/snapshots.yml` immediately. Lower retention or maximum
 values schedule cleanup on the snapshot storage worker. The `snapshots` switch in
 `modules.yml` still requires a server restart.
@@ -312,7 +300,7 @@ values schedule cleanup on the snapshot storage worker. The `snapshots` switch i
 
 Rivet uses white for primary copy and `#f72a4c` for emphasized names and values by default. Placeholders use `%name%` syntax so angle brackets remain reserved for MiniMessage tags.
 
-Tagged module output uses the shared `messages.tag` MiniMessage value in `config.yml`. Audit headings, errors, reload feedback, and inspector state all use this shared tag rather than a logs-specific prefix.
+Tagged module output uses the shared `messages.tag` MiniMessage value in `config.yml`.
 
 Rivet also accepts `<lime>` as an alias for MiniMessage's bright-green `<green>` color.
 

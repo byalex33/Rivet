@@ -163,12 +163,6 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.tree` | `op` | [`/tree`](commands.md#tree) |
 | `rivet.help` | `true` | [`/help`](commands.md#help) |
 | `rivet.lagg` | `op` | [`/lagg clear`](commands.md#lagg), [`/lagg timer`](commands.md#lagg) |
-| `rivet.logs` | `op` | Opens [`/log`](commands.md#log) and grants its lookup, inspection, reload, command-record, and teleport subpermissions. |
-| `rivet.logs.lookup` | `op` | Searches audit history and changes lookup pages with [`/log lookup`](commands.md#log) and [`/log page`](commands.md#log). |
-| `rivet.logs.inspect` | `op` | Toggles block and container inspector mode with [`/log inspect`](commands.md#log). |
-| `rivet.logs.reload` | `op` | Reloads `settings/logs.yml` with [`/log reload`](commands.md#log). |
-| `rivet.logs.commands` | `op` | Includes command records in audit lookup results when command logging is enabled. |
-| `rivet.logs.teleport` | `op` | Makes audit coordinates clickable teleport destinations. |
 | `rivet.admin` | `op` | [`/rivet`](commands.md#rivet) |
 
 ## Rivet permission module

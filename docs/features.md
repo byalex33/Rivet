@@ -65,17 +65,8 @@ explosions do not create creeper-restoration craters because no blocks are destr
 | Announcements | `announcements` | Disabled | Rotating MiniMessage announcements with sound and empty-server controls. |
 | Join and leave | `join-leave` | Enabled | Join/leave actions, native inline heads, and configurable large skin portraits for first-time and returning players. |
 | Help | `help` | Enabled | Permission-aware interactive command pages. |
-| Gameplay audit | `logs` | Enabled | Batched SQLite logging, compact player/time/radius lookups, and clickable block or container inspection. |
 | Inventory backups | `snapshots` | Enabled | AxInventoryRestore-style category browsing, event/automatic/manual backups, search, shulker export, and safety-first restores on SQLite. |
 | Server-list MOTD | `server-list` | Enabled | Configurable two-line MiniMessage descriptions with timed rotation or random selection and live player-count placeholders. |
-
-## Gameplay audit
-
-Rivet records block placement and breaking, container additions and removals, item pickup and drops, entity kills, player deaths, sign edits, explosions, creeper and fire damage, and useful state-changing block interactions. Command logging is opt-in and always excludes public chat, `/me`, private messages, and replies.
-
-[`/log inspect`](commands.md#log) makes left- or right-clicking a block show newest-first history; containers show their inventory transactions instead. [`/log lookup`](commands.md#log) supports an optional player, compact time such as `30m` or `2h`, and a location radius. Coordinates expose exact world details on hover and teleport authorized viewers on click. Pages use clickable previous/next controls.
-
-The SQLite rows retain actor UUID/name, action, location, target, amount, before/after state, and explanatory or serialized item metadata. Snapshot creation and restore audit rows contain only staff, target, snapshot ID, reason, and location metadata; inventory contents remain exclusively in the snapshot database.
 
 ## Inventory backups
 
@@ -106,4 +97,4 @@ Container restoration, container contents, other block-entity data, activation d
 
 ## Data and privacy
 
-Rivet stores ordinary gameplay state in local YAML files under `plugins/Rivet/data/`, audit history in `plugins/Rivet/logs.db`, and compressed inventory snapshots in `plugins/Rivet/snapshots.db`. Audit command logging is disabled by default, and chat and private messages are never stored. The [`/sameip`](commands.md#sameip) command compares current session addresses without saving or displaying the raw address. Rivet uses bStats for anonymous usage metrics; server owners can use the global bStats opt-out.
+Rivet stores ordinary gameplay state in local YAML files under `plugins/Rivet/data/` and compressed inventory snapshots in `plugins/Rivet/snapshots.db`. Chat and private messages are never stored. The [`/sameip`](commands.md#sameip) command compares current session addresses without saving or displaying the raw address. Rivet uses bStats for anonymous usage metrics; server owners can use the global bStats opt-out.

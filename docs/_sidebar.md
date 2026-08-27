@@ -109,7 +109,6 @@
     - [/perm](commands.md#perm)
     - [/hologram](commands.md#hologram)
     - [/lagg](commands.md#lagg)
-    - [/log](commands.md#log)
     - [/snapshot](commands.md#snapshot)
     - [/help](commands.md#help)
     - [/rivet](commands.md#rivet)

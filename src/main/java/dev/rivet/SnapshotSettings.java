@@ -8,7 +8,7 @@ import java.util.Map;
 
 record SnapshotSettings(int maxPerPlayer, int retentionDays, boolean deduplicate,
                         boolean saveOnDeath, boolean createSafetySnapshot,
-                        boolean requireConfirmation, boolean auditCreations,
+                        boolean requireConfirmation,
                         boolean allCategory, boolean automaticBackups,
                         int automaticIntervalSeconds, Map<String, Boolean> enabledBackups,
                         Map<String, Integer> saveLimits, int searchMaximumMatches,
@@ -21,7 +21,6 @@ record SnapshotSettings(int maxPerPlayer, int retentionDays, boolean deduplicate
                 configuration.getBoolean("save-on.death", true)),
             configuration.getBoolean("restore.create-safety-snapshot", true),
             configuration.getBoolean("restore.require-confirmation", true),
-            configuration.getBoolean("audit.record-creations", true),
             configuration.getBoolean("enable-all-category", true),
             configuration.getBoolean("automatic-backup.enabled", true),
             Math.clamp(configuration.getInt("automatic-backup.seconds", 180), 1, 86_400),

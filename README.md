@@ -31,7 +31,7 @@ Rivet is a modular utility suite for modern Paper servers. It brings survival es
 | **Automation & quality of life** | Auto breeders, faster hoppers, item magnets, pickup filters, tree felling, vein mining, egg capture, mob heads, and villager trade rerolling |
 | **World tools** | Test worlds, biome search, time and weather controls, inventory scanning, creeper confetti, and crater restoration |
 | **Staff & moderation** | Vanish, flight, inventory tools, moderation history, notes, holograms, boss bars, toasts, and optional local permissions |
-| **Safety & visibility** | SQLite inventory snapshots, searchable backups, gameplay auditing, block/container inspection, configurable retention, and rollback-ready records |
+| **Safety & visibility** | SQLite inventory snapshots, searchable backups, configurable retention, and safety-first restores |
 
 Every major system can be switched independently in `modules.yml`, while feature-specific settings stay separated under `settings/`. Messages, sounds, particles, titles, boss bars, and other feedback are configurable instead of being buried in code.
 
@@ -74,7 +74,6 @@ Do not edit files under `data/` while the server is running. The [configuration 
 | [`/setspawn`](docs/commands.md#setspawn) | Sets the server spawn |
 | [`/seen`](docs/commands.md#seen) | Shows join, login, logout, and playtime information |
 | [`/snapshot`](docs/commands.md#snapshot) | Browses, searches, exports, and restores inventory backups |
-| [`/log inspect`](docs/commands.md#log) | Toggles interactive block and container history |
 | [`/rivet reload`](docs/commands.md#rivet) | Validates and reloads supported settings |
 
 Rivet has an extensive command surface, so the README intentionally stays short. Use the [complete command reference](docs/commands.md) for syntax, aliases, permissions, and direct links to every command.

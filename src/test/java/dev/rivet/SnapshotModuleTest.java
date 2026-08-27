@@ -238,20 +238,7 @@ public final class SnapshotModuleTest {
     }
 
     @Test
-    public void auditRecordsOnlySnapshotMetadataAndPackagesSafeDefaults() {
-        UUID player = UUID.randomUUID();
-        SnapshotRecord record = new SnapshotRecord(42, player, "Alex", "DEATH", 1,
-            "world", 0, 64, 0, "FALL", "secret-blob-key", detailedState());
-        String metadata = AuditModule.snapshotMetadata(record);
-
-        assertTrue(metadata.contains("snapshot_id=42"));
-        assertTrue(metadata.contains("target_uuid=" + player));
-        assertTrue(metadata.contains("target_name=Alex"));
-        assertTrue(metadata.contains("reason=DEATH"));
-        assertFalse(metadata.contains("secret-blob-key"));
-        assertFalse(metadata.toLowerCase().contains("inventory"));
-        assertFalse(metadata.contains("DIAMOND"));
-
+    public void packagesSafeSnapshotDefaults() {
         var resource = getClass().getResourceAsStream("/settings/snapshots.yml");
         assertNotNull(resource);
         YamlConfiguration configuration = YamlConfiguration.loadConfiguration(
@@ -270,7 +257,6 @@ public final class SnapshotModuleTest {
         assertEquals(1_000, defaults.searchMaximumMatches());
         assertTrue(defaults.createSafetySnapshot());
         assertTrue(defaults.requireConfirmation());
-        assertTrue(defaults.auditCreations());
         for (String path : List.of("messages.denied.actions", "messages.denied-others.actions",
                  "messages.denied-restore.actions", "messages.denied-teleport.actions",
                  "messages.denied-export.actions", "messages.searching.actions",

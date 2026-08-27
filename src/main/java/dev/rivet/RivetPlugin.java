@@ -127,7 +127,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private HelpModule help;
     private HopperModule hoppers;
     private LaggModule lagg;
-    private AuditModule audit;
     private DeathMessagesModule deathMessages;
     private SnapshotModule snapshots;
     private MagnetModule magnet;
@@ -225,17 +224,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (moduleEnabled("lagg")) {
             lagg = new LaggModule(this);
-        }
-        if (moduleEnabled("logs")) {
-            try {
-                audit = new AuditModule(this);
-                getServer().getPluginManager().registerEvents(audit, this);
-            } catch (java.sql.SQLException exception) {
-                getLogger().log(java.util.logging.Level.SEVERE,
-                    "Could not open Rivet's SQLite audit log", exception);
-                getServer().getPluginManager().disablePlugin(this);
-                return;
-            }
         }
         if (moduleEnabled("snapshots")) {
             try {
@@ -363,9 +351,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         }
         if (snapshots != null) {
             snapshots.shutdown();
-        }
-        if (audit != null) {
-            audit.shutdown();
         }
         if (afk != null) {
             afk.shutdown();
@@ -605,9 +590,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (name.equals("lagg")) {
             return lagg.command(sender, args);
         }
-        if (name.equals("log")) {
-            return audit.command(sender, args);
-        }
         if (name.equals("snapshot")) {
             return snapshots.command(sender, args);
         }
@@ -815,7 +797,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
                 case "rename" -> args.length == 1 ? List.of("clear") : List.of();
                 case "lore" -> args.length == 1 ? List.of("add", "set", "remove", "clear") : List.of();
                 case "lagg" -> args.length == 1 ? List.of("clear", "timer") : List.of();
-                case "log" -> audit.completions(sender, args);
                 case "snapshot" -> snapshots.completions(sender, args);
                 case "rivet" -> args.length == 1 ? List.of("reload") : List.of();
                 default -> List.of();
@@ -2110,9 +2091,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             if (lagg != null) {
                 lagg.reload();
             }
-            if (audit != null) {
-                audit.reload();
-            }
             if (snapshots != null) {
                 snapshots.reload();
             }
@@ -2158,24 +2136,6 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         return files.dataFile(module);
     }
 
-    void auditSyntheticBlockBreak(Player player, Block block, String beforeData) {
-        if (audit != null) {
-            audit.recordSyntheticBlockBreak(player, block, beforeData);
-        }
-    }
-
-    void ignoreAuditBlockBreakCheck(Player player, Block block) {
-        if (audit != null) {
-            audit.ignoreBlockBreakCheck(player, block);
-        }
-    }
-
-    void finishAuditBlockBreakCheck(Player player, Block block) {
-        if (audit != null) {
-            audit.finishBlockBreakCheck(player, block);
-        }
-    }
-
     void saveData(String module) throws IOException {
         files.saveData(module);
     }
@@ -2215,17 +2175,9 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
             case "poll" -> "polls";
             case "help" -> "help";
             case "lagg" -> "lagg";
-            case "log" -> "logs";
             case "snapshot" -> "snapshots";
             default -> null;
         };
-    }
-
-    void recordSnapshotAudit(AuditAction action, UUID actorUuid, String actorName,
-                             SnapshotRecord snapshot) {
-        if (audit != null) {
-            audit.recordSnapshot(action, actorUuid, actorName, snapshot);
-        }
     }
 
     static boolean commandDisabled(String command, java.util.function.Predicate<String> enabled) {

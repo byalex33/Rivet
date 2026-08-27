@@ -44,10 +44,6 @@ restore:
   create-safety-snapshot: true
   require-confirmation: true
 
-audit:
-  # Records only snapshot metadata in logs.db when the logs module is available.
-  record-creations: true
-
 # DeluxeMenus-style GUI schema. Slots are zero-based. Category and list sizes
 # may be changed; preview screens remain 54 slots so saved inventories stay exact.
 gui:

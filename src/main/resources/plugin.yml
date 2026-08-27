@@ -381,11 +381,6 @@ commands:
     description: Clear eligible dropped items or view the cleanup timer
     usage: /lagg <clear|timer>
     permission: rivet.lagg
-  log:
-    aliases: [logs]
-    description: Inspect and search the gameplay audit log
-    usage: /log <inspect|lookup|page|reload>
-    permission: rivet.logs
   rivet:
     description: Show Rivet information or reload configuration
     usage: /rivet [reload]
@@ -716,24 +711,6 @@ permissions:
   rivet.help:
     default: true
   rivet.lagg:
-    default: op
-  rivet.logs:
-    default: op
-    children:
-      rivet.logs.lookup: true
-      rivet.logs.inspect: true
-      rivet.logs.reload: true
-      rivet.logs.commands: true
-      rivet.logs.teleport: true
-  rivet.logs.lookup:
-    default: op
-  rivet.logs.inspect:
-    default: op
-  rivet.logs.reload:
-    default: op
-  rivet.logs.commands:
-    default: op
-  rivet.logs.teleport:
     default: op
   rivet.admin:
     default: op
