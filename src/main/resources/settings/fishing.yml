@@ -1,0 +1,29 @@
+# Successful catches are broadcast using MiniMessage and the placeholders below.
+# Fish messages: %player%, %catch%, %length%, and %unit%.
+# Other catch messages: %player% and %catch%.
+messages:
+  fish:
+    enabled: true
+    actions:
+      - '[broadcast] <white>%player% caught a <#f72a4c>%catch%</#f72a4c> measuring <#f72a4c>%length% %unit%</#f72a4c>!</white>'
+  catch:
+    enabled: true
+    actions:
+      - '[broadcast] <white>%player% caught <#f72a4c>%catch%</#f72a4c> while fishing!</white>'
+
+length:
+  unit: cm
+  decimal-places: 1
+  ranges:
+    cod:
+      minimum: 30.0
+      maximum: 100.0
+    salmon:
+      minimum: 50.0
+      maximum: 150.0
+    pufferfish:
+      minimum: 10.0
+      maximum: 60.0
+    tropical_fish:
+      minimum: 5.0
+      maximum: 40.0

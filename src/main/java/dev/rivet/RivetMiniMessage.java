@@ -11,13 +11,13 @@ import java.util.regex.Pattern;
 final class RivetMiniMessage {
     private static final Set<String> PLACEHOLDERS = Set.of(
         "amount", "animal", "biome", "blocks_broken", "blocks_placed", "bred",
-        "command", "commands", "coordinates", "count", "current", "death_location", "deaths", "description", "display",
+        "catch", "command", "commands", "coordinates", "count", "current", "death_location", "deaths", "description", "display",
         "details", "distance", "duration", "first_join", "food", "id", "item", "items", "jumps",
         "head", "hostname", "killer", "kit", "kits", "last_death", "last_login", "last_logout", "matches", "material",
         "max", "maximum", "message", "mob", "mob_kills", "name", "page", "pages", "ping",
-        "online", "percent", "player", "player_head", "player_kills", "player_uuid", "players", "playtime", "plural", "quality", "radius", "reason", "remaining",
+        "length", "online", "percent", "player", "player_head", "player_kills", "player_uuid", "players", "playtime", "plural", "quality", "radius", "reason", "remaining",
         "prefix", "recipient", "requester", "seconds", "sender", "session", "since_first_join", "speed", "staff",
-        "status", "streak", "suffix", "tag", "target", "text", "time", "timestamp", "used", "weapon", "weather", "world", "x", "y", "yes", "no", "z");
+        "status", "streak", "suffix", "tag", "target", "text", "time", "timestamp", "unit", "used", "weapon", "weather", "world", "x", "y", "yes", "no", "z");
     private static final Pattern PERCENT_PLACEHOLDER = Pattern.compile(
         "%([a-z][a-z0-9_-]*)%", Pattern.CASE_INSENSITIVE);
     private static final MiniMessage MINI_MESSAGE = builder().build();

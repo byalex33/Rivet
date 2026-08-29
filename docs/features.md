@@ -8,6 +8,7 @@
 | Warps | `warps` | Enabled | Named public server destinations using the shared teleport policy. |
 | Graves | `graves` | Enabled | Persistent death graves, recovery rules, tracking compasses, and smart persistent `/back` history. |
 | Death messages | `death-messages` | Enabled | Cause-specific MiniMessage pools, rare variants, safe placeholders, and hoverable killing weapons. |
+| Fishing announcements | `fishing` | Enabled | Broadcasts every successful item catch and gives fish a playful random length. |
 | Spawn | `spawn` | Enabled | Server spawn and immediate join spawning; `/spawn` uses the shared teleport policy. |
 | Chat | `chat` | Enabled | Vanilla-style formatted chat, friendly styles, tags, mentions, lightweight anti-spam, private messages, ignore lists, social spy, and item links. |
 | Kits | `kits` | Disabled | Configured item kits with permissions and persistent cooldowns. |
@@ -30,6 +31,13 @@
 Rivet replaces the broadcast component only when a configured pool is available. Player and mob kills take priority over environmental causes; other pools cover falls, fire and lava, drowning, explosions, projectiles, the void, suffocation, magic, and generic deaths. If the selected pool and `generic` are both empty, Paper's vanilla death message remains unchanged.
 
 Templates support `%player%`, `%killer%`, `%mob%`, `%weapon%`, and `%world%`. Names are inserted as components instead of parsed as MiniMessage, preventing player-controlled text from injecting tags or actions. Killing weapons keep custom names and expose the real item details on hover. `killer-health` can append a player killer's remaining health, while `rare-chance` controls the optional global funny-message pool.
+
+## Fishing announcements
+
+Successful fishing-rod item catches are announced to the server. Cod, salmon, pufferfish,
+and tropical fish also receive a randomly generated length from their configurable range;
+junk and treasure catches use a separate message without a length. Catch names retain their
+item hover details.
 
 ## World and gameplay features
 

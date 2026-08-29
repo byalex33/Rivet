@@ -39,3 +39,4 @@ snapshots: true
 magnet: true
 polls: true
 server-list: true
+fishing: true

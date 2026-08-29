@@ -18,6 +18,7 @@ plugins/Rivet/
 |   |-- egg-capture.yml
 |   |-- environment.yml
 |   |-- filter.yml
+|   |-- fishing.yml
 |   |-- gameplay.yml
 |   |-- graves.yml
 |   |-- help.yml
@@ -74,6 +75,7 @@ This file contains feature switches only. Every value must be `true` or `false`.
 | `egg-capture` | Enabled |
 | `environment` | Enabled |
 | `filter` | Enabled |
+| `fishing` | Enabled |
 | `graves` | Enabled |
 | `help` | Enabled |
 | `holograms` | Enabled |
@@ -177,6 +179,15 @@ rebuilt on the next open.
 `settings/death-messages.yml` contains a short list for each supported cause. Rivet chooses randomly within the matching list. `rare` is a global optional pool selected according to `rare-chance`; set the chance to `0` or leave the list empty to disable it. `killer-health` appends the remaining health of a player killer.
 
 Messages accept MiniMessage plus `%player%`, `%killer%`, `%mob%`, `%weapon%`, and `%world%`. Player, entity, world, and item names are inserted safely rather than parsed as formatting. Weapons preserve custom names and include a real-item hover. Empty cause lists fall back to `generic`; when both are empty, the original vanilla death message is retained.
+
+### Fishing announcements
+
+`settings/fishing.yml` controls the broadcasts produced by successful fishing-rod catches.
+`messages.fish` supports `%player%`, `%catch%`, `%length%`, and `%unit%`; `messages.catch`
+handles junk and treasure with `%player%` and `%catch%`. Each message uses the standard
+configurable action list and can be disabled independently. `length.unit`,
+`length.decimal-places`, and the per-material ranges control the playful fish measurements.
+Catch names are inserted safely and retain their item hover details.
 
 ### Creeper restoration
 

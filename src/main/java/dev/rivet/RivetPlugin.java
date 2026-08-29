@@ -128,6 +128,7 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
     private HopperModule hoppers;
     private LaggModule lagg;
     private DeathMessagesModule deathMessages;
+    private FishingModule fishing;
     private SnapshotModule snapshots;
     private MagnetModule magnet;
     private PollModule polls;
@@ -239,6 +240,10 @@ public final class RivetPlugin extends JavaPlugin implements Listener {
         if (moduleEnabled("death-messages")) {
             deathMessages = new DeathMessagesModule(this);
             getServer().getPluginManager().registerEvents(deathMessages, this);
+        }
+        if (moduleEnabled("fishing")) {
+            fishing = new FishingModule(this);
+            getServer().getPluginManager().registerEvents(fishing, this);
         }
         if (moduleEnabled("statistics")) {
             statistics = new StatisticsModule(this);
