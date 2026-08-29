@@ -49,7 +49,7 @@ The command permission is checked by Paper before Rivet handles the command. Add
 | `rivet.chat.tag.*` | `op` | Selects every configured tag. |
 | `rivet.chat.tag.others` | `op` | Allows changing another player's selected tag. |
 | `rivet.chat.mention` | `true` | Allows mentioning players in public chat. |
-| `rivet.chat.mention.notify` | `true` | Receives highlighted mentions and their configured sound. |
+| `rivet.chat.mention.notify` | `true` | Receives green name highlights and their configured sound/title notification. |
 | `rivet.chat.mention.everyone` | `op` | Allows `@everyone`. |
 | `rivet.chat.antispam.bypass` | `op` | Bypasses the lightweight chat cooldown and similarity check. |
 | `rivet.teleport` | `op` | [`/tp`](commands.md#tp) |

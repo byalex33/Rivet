@@ -534,6 +534,23 @@ final class RivetConfig {
             "chat-styles.allow-custom-gradients");
         changed |= copyLegacyChatSetting(configuration, "chat-colors.allow-rainbow",
             "chat-styles.allow-rainbow");
+        if ("<yellow>@%player%</yellow>".equals(configuration.getString("mentions.format"))) {
+            configuration.set("mentions.format", "<green>%mention%</green>");
+            changed = true;
+        }
+        if (!configuration.contains("mentions.notifications.actions")
+            && configuration.contains("mentions.sound")) {
+            java.util.ArrayList<String> actions = new java.util.ArrayList<>();
+            String sound = configuration.getString("mentions.sound", "").trim();
+            if (!sound.isEmpty()) {
+                actions.add("[sound] " + sound + " 0.8 1.2");
+            }
+            actions.add("[title] <green>You were mentioned!</green> | "
+                + "<white>%player% mentioned you.</white> | 5 | 30 | 10");
+            configuration.set("mentions.notifications.enabled", true);
+            configuration.set("mentions.notifications.actions", actions);
+            changed = true;
+        }
         return changed;
     }
 

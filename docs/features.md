@@ -10,7 +10,7 @@
 | Death messages | `death-messages` | Enabled | Cause-specific MiniMessage pools, rare variants, safe placeholders, and hoverable killing weapons. |
 | Fishing announcements | `fishing` | Enabled | Broadcasts every successful item catch and gives fish a playful random length. |
 | Spawn | `spawn` | Enabled | Server spawn and immediate join spawning; `/spawn` uses the shared teleport policy. |
-| Chat | `chat` | Enabled | Vanilla-style formatted chat, friendly styles, tags, mentions, lightweight anti-spam, private messages, ignore lists, social spy, and item links. |
+| Chat | `chat` | Enabled | Vanilla-style formatted chat, friendly styles, tags, green name mentions with sound/title pings, lightweight anti-spam, private messages, ignore lists, social spy, and item links. |
 | Kits | `kits` | Disabled | Configured item kits with permissions and persistent cooldowns. |
 | AFK | `afk` | Enabled | Manual and automatic AFK state, reasons, sleep exclusion, and status checks. |
 | Backpacks | `backpacks` | Disabled | Persistent personal storage with permission-controlled rows. |

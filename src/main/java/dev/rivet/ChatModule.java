@@ -37,6 +37,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 final class ChatModule implements Listener {
@@ -76,7 +77,6 @@ final class ChatModule implements Listener {
     private volatile String sentFormat;
     private volatile String receivedFormat;
     private volatile String mentionFormat;
-    private volatile Sound mentionSound;
     private volatile long cooldownMillis;
     private volatile int similarityThreshold;
     private volatile boolean tagsEnabled;
@@ -104,9 +104,7 @@ final class ChatModule implements Listener {
             "<#f72a4c>[you → %player%]</#f72a4c> <white>%message%</white>");
         receivedFormat = config.getString("private-messages.received",
             "<#f72a4c>[%player% → you]</#f72a4c> <white>%message%</white>");
-        mentionFormat = config.getString("mentions.format", "<yellow>@%player%</yellow>");
-        mentionSound = ConfiguredEffect.resolveSound(config.getString("mentions.sound",
-            "BLOCK_NOTE_BLOCK_PLING"));
+        mentionFormat = config.getString("mentions.format", "<green>%mention%</green>");
         cooldownMillis = parseDurationMillis(config.getString("anti-spam.cooldown", "1s"), 1_000);
         similarityThreshold = Math.max(0, Math.min(100,
             config.getInt("anti-spam.similarity.threshold", 85)));
@@ -522,9 +520,9 @@ final class ChatModule implements Listener {
             || !viewer.hasPermission("rivet.chat.mention.notify")) {
             return message;
         }
-        Component formatted = replaceMention(message, viewer.getName(), mentionComponent(viewer.getName()));
+        Component formatted = replaceMention(message, viewer.getName(), this::mentionComponent);
         if (source.hasPermission("rivet.chat.mention.everyone")) {
-            formatted = replaceMention(formatted, "everyone", mentionComponent("everyone"));
+            formatted = replaceAtMention(formatted, "everyone", this::mentionComponent);
         }
         return formatted;
     }
@@ -535,19 +533,22 @@ final class ChatModule implements Listener {
             return;
         }
         boolean everyone = source.hasPermission("rivet.chat.mention.everyone")
-            && containsMention(message, "everyone");
+            && containsAtMention(message, "everyone");
         plugin.getServer().getScheduler().runTask(plugin, () -> plugin.getServer().getOnlinePlayers().stream()
             .filter(viewer -> !viewer.equals(source) && viewer.hasPermission("rivet.chat.mention.notify"))
             .filter(viewer -> everyone || containsMention(message, viewer.getName()))
-            .forEach(viewer -> {
-                if (mentionSound != null) {
-                    viewer.playSound(viewer.getLocation(), mentionSound, 0.8f, 1.2f);
-                }
-            }));
+            .forEach(viewer -> plugin.messageActions().run(viewer, plugin.settings("chat"),
+                "mentions.notifications", List.of(
+                    "[sound] block.note_block.pling 0.8 1.2",
+                    "[title] <green>You were mentioned!</green> | "
+                        + "<white>%player% mentioned you.</white> | 5 | 30 | 10"),
+                Placeholder.unparsed("player", source.getName()))));
     }
 
-    private Component mentionComponent(String name) {
-        return SAFE_FORMATTING.deserialize(mentionFormat, Placeholder.unparsed("player", name));
+    private Component mentionComponent(String mention) {
+        String player = mention.startsWith("@") ? mention.substring(1) : mention;
+        return SAFE_FORMATTING.deserialize(mentionFormat,
+            Placeholder.unparsed("mention", mention), Placeholder.unparsed("player", player));
     }
 
     private boolean blockedByAntiSpam(Player player, String message, long now) {
@@ -1072,14 +1073,36 @@ final class ChatModule implements Listener {
     }
 
     static Component replaceMention(Component message, String name, Component replacement) {
-        Pattern mention = Pattern.compile("(?i)(?<![a-z0-9_])@" + Pattern.quote(name)
-            + "(?![a-z0-9_])");
-        return message.replaceText(builder -> builder.match(mention).replacement(replacement));
+        return replaceMention(message, name, ignored -> replacement);
+    }
+
+    static Component replaceMention(Component message, String name,
+                                    Function<String, Component> replacement) {
+        return replaceMention(message, mentionPattern(name, true), replacement);
+    }
+
+    private static Component replaceAtMention(Component message, String name,
+                                              Function<String, Component> replacement) {
+        return replaceMention(message, mentionPattern(name, false), replacement);
+    }
+
+    private static Component replaceMention(Component message, Pattern pattern,
+                                            Function<String, Component> replacement) {
+        return message.replaceText(builder -> builder.match(pattern)
+            .replacement((match, ignored) -> replacement.apply(match.group())));
     }
 
     static boolean containsMention(String message, String name) {
-        return Pattern.compile("(?i)(?<![a-z0-9_])@" + Pattern.quote(name)
-            + "(?![a-z0-9_])").matcher(message).find();
+        return mentionPattern(name, true).matcher(message).find();
+    }
+
+    private static boolean containsAtMention(String message, String name) {
+        return mentionPattern(name, false).matcher(message).find();
+    }
+
+    private static Pattern mentionPattern(String name, boolean allowPlainName) {
+        return Pattern.compile("(?i)(?<![a-z0-9_@])" + (allowPlainName ? "@?" : "@")
+            + Pattern.quote(name) + "(?![a-z0-9_])");
     }
 
     static long parseDurationMillis(String configured, long fallback) {

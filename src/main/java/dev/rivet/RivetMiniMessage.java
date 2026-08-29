@@ -14,7 +14,7 @@ final class RivetMiniMessage {
         "catch", "command", "commands", "coordinates", "count", "current", "death_location", "deaths", "description", "display",
         "details", "distance", "duration", "first_join", "food", "id", "item", "items", "jumps",
         "head", "hostname", "killer", "kit", "kits", "last_death", "last_login", "last_logout", "matches", "material",
-        "max", "maximum", "message", "mob", "mob_kills", "name", "page", "pages", "ping",
+        "max", "maximum", "mention", "message", "mob", "mob_kills", "name", "page", "pages", "ping",
         "length", "online", "percent", "player", "player_head", "player_kills", "player_uuid", "players", "playtime", "plural", "quality", "radius", "reason", "remaining",
         "prefix", "recipient", "requester", "seconds", "sender", "session", "since_first_join", "speed", "staff",
         "status", "streak", "suffix", "tag", "target", "text", "time", "timestamp", "unit", "used", "weapon", "weather", "world", "x", "y", "yes", "no", "z");

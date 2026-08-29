@@ -77,9 +77,13 @@ tags:
 
 mentions:
   enabled: true
-  format: "<yellow>@%player%</yellow>"
-  # Leave blank to disable the notification sound.
-  sound: BLOCK_NOTE_BLOCK_PLING
+  # %mention% preserves whether the sender wrote Name or @Name; %player% is the name only.
+  format: "<green>%mention%</green>"
+  notifications:
+    enabled: true
+    actions:
+      - '[sound] block.note_block.pling 0.8 1.2'
+      - '[title] <green>You were mentioned!</green> | <white>%player% mentioned you.</white> | 5 | 30 | 10'
 
 anti-spam:
   enabled: true

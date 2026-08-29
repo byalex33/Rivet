@@ -125,7 +125,12 @@ Named colors and gradients under `chat-styles` become permission names such as `
 
 Chat style and tag selectors use a paginated layout with live previews and active-selection feedback. Their titles, sizes, content slots, controls, materials, names, lore, open actions, and click actions use the shared menu format described below.
 
-Mentions are rendered per viewer: a matching player sees their own highlighted `@Name`, while other viewers keep the ordinary message style. The optional sound is resolved like other Rivet sounds. The anti-spam section intentionally contains only a cooldown and a similarity percentage; `rivet.chat.antispam.bypass` skips both checks.
+Mentions are rendered per viewer: writing a player's exact `Name` or `@Name` highlights that
+token in green for the matching player, then immediately resumes the sender's selected chat
+style. The configurable notification actions play a sound and show a title by default.
+`@everyone` remains explicit and permission-controlled. The anti-spam section intentionally
+contains only a cooldown and a similarity percentage; `rivet.chat.antispam.bypass` skips both
+checks.
 
 Style and tag displays use a visual-only MiniMessage parser. Colors, gradients, rainbow, reset, and safe decorations are supported, but player-controlled cosmetics cannot create clicks, hovers, commands, URLs, insertions, NBT, fonts, or selectors. Rivet-generated `[item]` hover data remains intact.
 
