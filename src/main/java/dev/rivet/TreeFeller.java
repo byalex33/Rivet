@@ -15,7 +15,6 @@ import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.Orientable;
 import org.bukkit.block.data.type.Leaves;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -305,6 +304,10 @@ final class TreeFeller implements Listener {
     private Set<Block> attachedJungleGrowth(Set<Block> logs, Set<Block> leaves) {
         int maximum = positiveSetting(
             "tree-feller.maximum-attached-blocks", MAX_ATTACHED_BLOCKS);
+        return attachedJungleGrowth(logs, leaves, maximum);
+    }
+
+    static Set<Block> attachedJungleGrowth(Set<Block> logs, Set<Block> leaves, int maximum) {
         Set<Block> attached = new HashSet<>();
         for (Block log : logs) {
             for (BlockFace face : HORIZONTAL_TREE_FACES) {
@@ -325,7 +328,7 @@ final class TreeFeller implements Listener {
                     return attached;
                 }
                 Block vine = anchor.getRelative(face);
-                if (!vineFaces(vine, face.getOppositeFace())) {
+                if (vine.getType() != Material.VINE) {
                     continue;
                 }
                 do {
@@ -335,12 +338,6 @@ final class TreeFeller implements Listener {
             }
         }
         return attached;
-    }
-
-    private static boolean vineFaces(Block block, BlockFace anchorFace) {
-        return block.getType() == Material.VINE
-            && block.getBlockData() instanceof MultipleFacing vine
-            && vine.hasFace(anchorFace);
     }
 
     private static boolean isLargeJungleTrunk(Block base) {
